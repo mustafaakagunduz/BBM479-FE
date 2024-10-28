@@ -8,10 +8,11 @@ import SurveyBuilder from './components/admin/SurveyBuilder';
 import SurveyBuilder2 from "@/app/components/admin/SurveyBuilder2";
 import AddSkill from "@/app/components/admin/AddSkill";
 import AddProfession from "@/app/components/admin/AddProfession";
+import LoginSignUp from "@/app/components/auth/LoginSignUp";
 
 const AdvancedComponent = () => {
   return (
-     <SurveyBuilder2 />
+     <LoginSignUp />
   );
 };
 
