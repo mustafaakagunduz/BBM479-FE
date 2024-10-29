@@ -1,19 +1,19 @@
-// src/components/AdvancedComponent.tsx
-'use client'; // Add this line to indicate it's a client component
-
+'use client';
 import React from "react";
-import { useState } from 'react';
+import { useRouter } from "next/navigation";
 
-import SurveyBuilder from './components/admin/SurveyBuilder';
-import SurveyBuilder2 from "@/app/components/admin/SurveyBuilder2";
-import AddSkill from "@/app/components/admin/AddSkill";
-import AddProfession from "@/app/components/admin/AddProfession";
-import LoginSignUp from "@/app/components/auth/LoginSignUp";
+const Home: React.FC = () => {
+    const router = useRouter();
 
-const AdvancedComponent = () => {
-  return (
-     <LoginSignUp />
-  );
+    const handleNavigation = () => {
+        router.push('/login');
+    };
+
+    return (
+        <div>
+            <p>burası anasayfa, <span onClick={handleNavigation} style={{ color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}>login ekranına gitmek için tıklatın</span></p>
+        </div>
+    );
 };
 
-export default AdvancedComponent;
+export default Home;
