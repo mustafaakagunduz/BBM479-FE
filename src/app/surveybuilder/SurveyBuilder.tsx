@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 
 // Dummy data for positions and skills
 const AVAILABLE_POSITIONS = [
@@ -22,6 +22,13 @@ const AVAILABLE_SKILLS = [
     "Agile Methodologies"
 ];
 
+const AVAILABLE_INDUSTRIES = [
+    "Finance and Banking",
+    "Healthcare and Biotechnology",
+    "Education",
+    "Information Technologies"
+];
+
 // Define the structure for a question
 type Question = {
     content: string;
@@ -34,7 +41,7 @@ type Position = {
     name: string;
 };
 
-const SurveyBuilder2: React.FC = () => {
+const SurveyBuilder: React.FC = () => {
     const [surveyTitle, setSurveyTitle] = useState<string>('');
     const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
     const [positions, setPositions] = useState<Position[]>([]);
@@ -42,6 +49,9 @@ const SurveyBuilder2: React.FC = () => {
     const [activeStep, setActiveStep] = useState<number>(0);
     const [questions, setQuestions] = useState<Question[]>([]);
     const [currentSkill, setCurrentSkill] = useState<string>('');
+    const [currentIndustry, setCurrentIndustry] = useState<string>('');
+    const [selectedIndustry, setSelectedIndustry] = useState<string>('');
+
 
     // Initialize a new question
     const createNewQuestion = (): Question => ({
@@ -67,8 +77,19 @@ const SurveyBuilder2: React.FC = () => {
         }
     };
 
+    const addIndustry = () => {
+        if (currentIndustry) {
+            setSelectedIndustry(currentIndustry);
+            setCurrentIndustry('');
+        }
+    };
+
     const removeSkill = (skillToRemove: string) => {
         setSelectedSkills(selectedSkills.filter(skill => skill !== skillToRemove));
+    };
+
+    const removeIndustry = () => {
+        setSelectedIndustry('');
     };
 
     // Question management functions
@@ -125,6 +146,45 @@ const SurveyBuilder2: React.FC = () => {
                         </div>
 
                         <div className="space-y-4">
+                            <label className="text-lg font-medium text-gray-700">Select the Industry of the
+                                Survey</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={currentIndustry}
+                                    onChange={(e) => setCurrentIndustry(e.target.value)}
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-black"
+                                >
+                                    <option value="">Select an industry</option>
+                                    {AVAILABLE_INDUSTRIES.filter(industry => industry !== selectedIndustry).map((industry) => (
+                                        <option key={industry} value={industry}>
+                                            {industry}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={addIndustry}
+                                    disabled={!currentIndustry}
+                                    className="px-6 py-3 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-all duration-200 disabled:bg-purple-300"
+                                >
+                                    Add
+                                </button>
+                            </div>
+
+                            {/* Selected Industry Display */}
+                            {selectedIndustry && (
+                                <div className="mt-4 flex gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg">
+                                    <span>{selectedIndustry}</span>
+                                    <button
+                                        onClick={removeIndustry}
+                                        className="p-1 hover:bg-purple-200 rounded-full"
+                                    >
+                                        <X size={16}/>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-4">
                             <label className="text-lg font-medium text-gray-700">Select Skills to Measure</label>
                             <div className="flex gap-2">
                                 <select
@@ -160,7 +220,7 @@ const SurveyBuilder2: React.FC = () => {
                                             onClick={() => removeSkill(skill)}
                                             className="p-1 hover:bg-purple-200 rounded-full"
                                         >
-                                            <X size={16} />
+                                            <X size={16}/>
                                         </button>
                                     </div>
                                 ))}
@@ -176,11 +236,20 @@ const SurveyBuilder2: React.FC = () => {
             content: (
                 <Card className="bg-white/90 backdrop-blur-sm">
                     <CardHeader>
-                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        <CardTitle
+                            className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                             Select Positions
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
+
+                        {/* Seçilen Endüstri Bilgisini Göster */}
+                        {selectedIndustry && (
+                            <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg">
+                                <span>Selected Industry: {selectedIndustry}</span>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">Position</label>
                             <div className="flex gap-2">
@@ -224,7 +293,8 @@ const SurveyBuilder2: React.FC = () => {
                     </CardContent>
                 </Card>
             ),
-        },
+        }
+        ,
         {
             title: "Add Questions",
             content: (
@@ -378,4 +448,4 @@ const SurveyBuilder2: React.FC = () => {
     );
 };
 
-export default SurveyBuilder2;
+export default SurveyBuilder;
