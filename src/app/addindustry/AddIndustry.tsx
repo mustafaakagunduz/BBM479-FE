@@ -5,38 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 type Industry = {
     id: number;
     name: string;
-    description: string;
 };
 
 const initialIndustries: Industry[] = [
     {
         id: 1,
         name: "Information Technologies",
-        description: "Software development, IT services, and digital solutions"
     },
     {
         id: 2,
         name: "Healthcare and Biotechnology",
-        description: "Medical services, biotechnology research, and healthcare solutions"
     },
     {
         id: 3,
         name: "Finance and Banking",
-        description: "Financial services, banking operations, and fintech solutions"
     }
 ];
 
 const AddIndustry = () => {
     const [industries, setIndustries] = useState<Industry[]>(initialIndustries);
-    const [newIndustry, setNewIndustry] = useState({ name: '', description: '' });
+    const [newIndustry, setNewIndustry] = useState({ name: '' });
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingIndustry, setEditingIndustry] = useState<Industry | null>(null);
 
     const handleAddIndustry = () => {
-        if (newIndustry.name.trim() && newIndustry.description.trim()) {
+        if (newIndustry.name.trim()) {
             const newId = Math.max(...industries.map(i => i.id), 0) + 1;
             setIndustries([...industries, { id: newId, ...newIndustry }]);
-            setNewIndustry({ name: '', description: '' });
+            setNewIndustry({ name: '' });
         }
     };
 
@@ -46,7 +42,7 @@ const AddIndustry = () => {
     };
 
     const handleSaveEdit = () => {
-        if (editingIndustry && editingIndustry.name.trim() && editingIndustry.description.trim()) {
+        if (editingIndustry && editingIndustry.name.trim()) {
             setIndustries(industries.map(industry =>
                 industry.id === editingId ? editingIndustry : industry
             ));
@@ -79,19 +75,13 @@ const AddIndustry = () => {
                             <input
                                 type="text"
                                 value={newIndustry.name}
-                                onChange={(e) => setNewIndustry({ ...newIndustry, name: e.target.value })}
+                                onChange={(e) => setNewIndustry({ name: e.target.value })}
                                 placeholder="Industry Name"
                                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
                             />
-                            <textarea
-                                value={newIndustry.description}
-                                onChange={(e) => setNewIndustry({ ...newIndustry, description: e.target.value })}
-                                placeholder="Industry Description"
-                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent h-24 resize-none text-black"
-                            />
                             <button
                                 onClick={handleAddIndustry}
-                                disabled={!newIndustry.name.trim() || !newIndustry.description.trim()}
+                                disabled={!newIndustry.name.trim()}
                                 className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 <Plus size={20} />
@@ -115,14 +105,6 @@ const AddIndustry = () => {
                                                 })}
                                                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
                                             />
-                                            <textarea
-                                                value={editingIndustry?.description}
-                                                onChange={(e) => setEditingIndustry({
-                                                    ...editingIndustry!,
-                                                    description: e.target.value
-                                                })}
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 h-24 resize-none text-black"
-                                            />
                                             <div className="flex gap-2 justify-end">
                                                 <button
                                                     onClick={handleCancelEdit}
@@ -145,7 +127,6 @@ const AddIndustry = () => {
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <h3 className="text-lg font-semibold text-black">{industry.name}</h3>
-                                                <p className="mt-1 text-black">{industry.description}</p>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button
