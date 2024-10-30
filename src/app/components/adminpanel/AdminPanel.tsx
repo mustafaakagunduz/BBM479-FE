@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardHeader, CardTitle } from '../ui/card';
 import { PenTool, Briefcase, Building2, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,7 +27,7 @@ function AdminPanel() {
         {
             title: "Add Survey to the System",
             icon: <FileSpreadsheet className="w-12 h-12 mb-4 text-purple-600" />,
-            href: "/surveybuilder",
+            href: "/addsurvey",
             description: "Create customized surveys"
         }
     ];
