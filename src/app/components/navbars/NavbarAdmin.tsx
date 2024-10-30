@@ -10,11 +10,16 @@ const NavbarAdmin: React.FC = () => {
                     DX-HRSAM
                 </Link>
 
-                {/* Ortada Admin Panel Butonu */}
-                <div className="flex-grow text-center">
+                {/* Ortada Admin Panel ve Surveys Butonları */}
+                <div className="flex-grow text-center space-x-4">
                     <Link href="/homepageadmin">
                         <button className="px-4 py-2 rounded-lg bg-white text-purple-600 hover:bg-purple-100 transition">
                             Admin Panel
+                        </button>
+                    </Link>
+                    <Link href="/surveys">
+                        <button className="px-4 py-2 rounded-lg bg-white text-purple-600 hover:bg-purple-100 transition">
+                            Surveys
                         </button>
                     </Link>
                 </div>
