@@ -1,129 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Pencil, Trash2, Plus, Check, ChevronDown } from 'lucide-react';
-import { skillService, Skill } from '../services/skillService';
-import { industryService } from '../services/industryService';
-import { toast } from 'react-hot-toast';
 
-interface Industry {
+type Skill = {
     id: number;
     name: string;
-}
+    industry: string; // Tek bir endüstri
+};
+
+const AVAILABLE_INDUSTRIES = [
+    "Finance and Banking",
+    "Healthcare and Biotechnology",
+    "Education",
+    "Information Technologies"
+];
+
+const initialSkills: Skill[] = [
+    { id: 1, name: "JavaScript Programming", industry: "Information Technologies" },
+    { id: 2, name: "UI/UX Design", industry: "Education" },
+];
 
 const AddSkill: React.FC = () => {
-    const [skills, setSkills] = useState<Skill[]>([]);
-    const [industries, setIndustries] = useState<Industry[]>([]);
+    const [skills, setSkills] = useState<Skill[]>(initialSkills);
     const [newSkill, setNewSkill] = useState<string>('');
-    const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
+    const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null); // Tek bir endüstri
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [editingSkillId, setEditingSkillId] = useState<number | null>(null);
-    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchIndustries();
-        fetchSkills();
-    }, []);
-
-    const fetchIndustries = async () => {
-        try {
-            const data = await industryService.getAllIndustries();
-            setIndustries(data);
-        } catch (error) {
-            toast.error('Failed to fetch industries');
-            console.error('Error fetching industries:', error);
-        }
-    };
-
-    const fetchSkills = async () => {
-        try {
-            setLoading(true);
-            const data = await skillService.getAllSkills();
-            setSkills(data);
-        } catch (error) {
-            toast.error('Failed to fetch skills');
-            console.error('Error fetching skills:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddSkill = async () => {
+    const handleAddSkill = () => {
         if (newSkill.trim() && selectedIndustry) {
-            try {
-                setLoading(true);
-                await skillService.createSkill({
-                    name: newSkill.trim(),
-                    industryId: selectedIndustry.id
-                });
-                await fetchSkills();
-                setNewSkill('');
-                setSelectedIndustry(null);
-                toast.success('Skill added successfully');
-            } catch (error) {
-                toast.error('Failed to add skill');
-                console.error('Error adding skill:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
-
-    const handleUpdateSkill = async () => {
-        if (editingSkillId !== null && newSkill.trim() && selectedIndustry) {
-            try {
-                setLoading(true);
-                await skillService.updateSkill(editingSkillId, {
-                    name: newSkill.trim(),
-                    industryId: selectedIndustry.id
-                });
-                await fetchSkills();
-                setEditingSkillId(null);
-                setNewSkill('');
-                setSelectedIndustry(null);
-                toast.success('Skill updated successfully');
-            } catch (error) {
-                toast.error('Failed to update skill');
-                console.error('Error updating skill:', error);
-            } finally {
-                setLoading(false);
-            }
+            const newId = Math.max(...skills.map(s => s.id), 0) + 1;
+            setSkills([...skills, { id: newId, name: newSkill.trim(), industry: selectedIndustry }]);
+            setNewSkill('');
+            setSelectedIndustry(null);
         }
     };
 
     const handleEditSkill = (skill: Skill) => {
         setEditingSkillId(skill.id);
         setNewSkill(skill.name);
-        const industry = industries.find(i => i.id === skill.industryId);
-        if (industry) {
-            setSelectedIndustry(industry);
+        setSelectedIndustry(skill.industry);
+    };
+
+    const handleUpdateSkill = () => {
+        if (editingSkillId !== null && newSkill.trim() && selectedIndustry) {
+            setSkills(prevSkills =>
+                prevSkills.map(skill =>
+                    skill.id === editingSkillId
+                        ? { ...skill, name: newSkill.trim(), industry: selectedIndustry }
+                        : skill
+                )
+            );
+            setEditingSkillId(null);
+            setNewSkill('');
+            setSelectedIndustry(null);
         }
     };
 
-    const handleDeleteSkill = async (skillId: number) => {
-        try {
-            setLoading(true);
-            await skillService.deleteSkill(skillId);
-            await fetchSkills();
-            toast.success('Skill deleted successfully');
-        } catch (error) {
-            toast.error('Failed to delete skill');
-            console.error('Error deleting skill:', error);
-        } finally {
-            setLoading(false);
-        }
+    const handleDeleteSkill = (skillId: number) => {
+        setSkills(prevSkills => prevSkills.filter(skill => skill.id !== skillId));
     };
 
-    const toggleIndustry = (industry: Industry) => {
-        setSelectedIndustry(industry);
-        setIsDropdownOpen(false);
+    const toggleIndustry = (industry: string) => {
+        setSelectedIndustry(prev => (prev === industry ? null : industry)); // Tek bir endüstri seçimi
+        setIsDropdownOpen(false); // Dropdown'u kapat
     };
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -163,22 +103,22 @@ const AddSkill: React.FC = () => {
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="w-full flex justify-between items-center px-4 py-3 bg-gray-100 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800"
                         >
-                            {selectedIndustry ? selectedIndustry.name : "Select Industry"}
+                            {selectedIndustry || "Select Industry"}
                             <ChevronDown size={20} />
                         </button>
                         {isDropdownOpen && (
                             <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                                {industries.map(industry => (
+                                {AVAILABLE_INDUSTRIES.map(industry => (
                                     <div
-                                        key={industry.id}
+                                        key={industry}
                                         onClick={() => toggleIndustry(industry)}
                                         className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
-                                            selectedIndustry?.id === industry.id
+                                            selectedIndustry === industry
                                                 ? "bg-purple-200 text-purple-800 font-medium"
                                                 : "text-gray-700"
                                         }`}
                                     >
-                                        {industry.name}
+                                        {industry}
                                     </div>
                                 ))}
                             </div>
@@ -191,7 +131,7 @@ const AddSkill: React.FC = () => {
                             <div key={skill.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200">
                                 <span className="text-gray-700">{skill.name}</span>
                                 <div className="text-sm text-gray-500">
-                                    {industries.find(i => i.id === skill.industryId)?.name || 'Unknown Industry'}
+                                    {skill.industry}
                                 </div>
                                 <div className="flex gap-2">
                                     <button

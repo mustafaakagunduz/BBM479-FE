@@ -1,47 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { industryService, Industry } from '../services/industryService';
-import { toast } from 'react-hot-toast';
+
+type Industry = {
+    id: number;
+    name: string;
+};
+
+const initialIndustries: Industry[] = [
+    {
+        id: 1,
+        name: "Information Technologies",
+    },
+    {
+        id: 2,
+        name: "Healthcare and Biotechnology",
+    },
+    {
+        id: 3,
+        name: "Finance and Banking",
+    }
+];
 
 const AddIndustry = () => {
-    const [industries, setIndustries] = useState<Industry[]>([]);
+    const [industries, setIndustries] = useState<Industry[]>(initialIndustries);
     const [newIndustry, setNewIndustry] = useState({ name: '' });
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingIndustry, setEditingIndustry] = useState<Industry | null>(null);
-    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchIndustries();
-    }, []);
-
-    const fetchIndustries = async () => {
-        try {
-            setLoading(true);
-            const data = await industryService.getAllIndustries();
-            setIndustries(data);
-        } catch (error) {
-            toast.error('Failed to fetch industries');
-            console.error('Error fetching industries:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddIndustry = async () => {
+    const handleAddIndustry = () => {
         if (newIndustry.name.trim()) {
-            try {
-                setLoading(true);
-                await industryService.createIndustry(newIndustry);
-                await fetchIndustries();
-                setNewIndustry({ name: '' });
-                toast.success('Industry added successfully');
-            } catch (error) {
-                toast.error('Failed to add industry');
-                console.error('Error adding industry:', error);
-            } finally {
-                setLoading(false);
-            }
+            const newId = Math.max(...industries.map(i => i.id), 0) + 1;
+            setIndustries([...industries, { id: newId, ...newIndustry }]);
+            setNewIndustry({ name: '' });
         }
     };
 
@@ -49,67 +40,26 @@ const AddIndustry = () => {
         setEditingId(industry.id);
         setEditingIndustry({ ...industry });
     };
-    const handleSaveEdit = async () => {
+
+    const handleSaveEdit = () => {
         if (editingIndustry && editingIndustry.name.trim()) {
-            try {
-                setLoading(true);
-                
-                // Eğer mevcut endüstri ile yeni isim aynıysa, güncelleme işlemi yapılır
-                const existingIndustry = industries.find(ind => 
-                    ind.name === editingIndustry.name && ind.id !== editingIndustry.id
-                );
-    
-                if (existingIndustry) {
-                    // Eğer aynı isimde başka bir endüstri varsa, hata döndür
-                    toast.error('Bu endüstri zaten mevcut.');
-                    return;
-                }
-    
-                // Endüstriyi güncelle
-                await industryService.updateIndustry(editingIndustry.id, {
-                    name: editingIndustry.name
-                });
-    
-                // Endüstrileri yeniden yükle
-                await fetchIndustries();
-                setEditingId(null);
-                setEditingIndustry(null);
-                toast.success('Endüstri başarıyla güncellendi');
-            } catch (error) {
-                toast.error('Endüstriyi güncellerken hata oluştu');
-                console.error('Error updating industry:', error);
-            } finally {
-                setLoading(false);
-            }
+            setIndustries(industries.map(industry =>
+                industry.id === editingId ? editingIndustry : industry
+            ));
+            setEditingId(null);
+            setEditingIndustry(null);
         }
     };
-    
+
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditingIndustry(null);
     };
 
-    const handleDeleteIndustry = async (id: number) => {
-        try {
-            setLoading(true);
-            await industryService.deleteIndustry(id);
-            await fetchIndustries();
-            toast.success('Industry deleted successfully');
-        } catch (error) {
-            toast.error('Failed to delete industry');
-            console.error('Error deleting industry:', error);
-        } finally {
-            setLoading(false);
-        }
+    const handleDeleteIndustry = (id: number) => {
+        setIndustries(industries.filter(industry => industry.id !== id));
     };
 
-    if (loading) {
-        return <div className="flex justify-center items-center min-h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-        </div>;
-    }
-
-    // Rest of the JSX remains the same as in your original component...
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-4xl mx-auto">

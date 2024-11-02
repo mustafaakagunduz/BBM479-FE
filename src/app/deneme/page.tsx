@@ -3,19 +3,15 @@ import React from "react";
 import HomePage from "@/app/components/user/HomePage";
 import MakeSurvey from "@/app/components/user/MakeSurvey";
 import SurveyResult from "@/app/components/user/SurveyResult";
-
-
-
+import AddIndustry from "@/app/addindustry/AddIndustry";
+import AddProfession from "@/app/addprofession/AddProfession";
+import AddSkill from "../addskill/AddSkill";
 const Deneme: React.FC = () => {
 
 
     return (
         <div>
-            BURAYA DENEMESİNİ YAPACAĞIMIZ COMPONENTLERİ KOY.
-            HAZIR OLUNCA COMPONENTS KLASÖRÜNE EKLE..
-            <HomePage></HomePage>
-            <MakeSurvey></MakeSurvey>
-            <SurveyResult></SurveyResult>
+          <AddProfession></AddProfession>
 
         </div>
     );
