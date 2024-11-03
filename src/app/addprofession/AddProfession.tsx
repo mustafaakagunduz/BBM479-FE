@@ -1,69 +1,47 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { Pencil, Trash2, Plus, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import {api} from "@/app/services/api";
+import {toast} from "react-hot-toast";
 
-type Skill = {
-    id: number;
-    name: string;
-    level: number;
-};
 
-type Profession = {
-    id: number;
-    name: string;
-    industry: string;
-    requiredSkills: Skill[];
-};
 
-const skillOptions = [
-    "JavaScript Programming", "UI/UX Design", "React", "CSS",
-    "Python", "Machine Learning", "Statistics", "Data Visualization",
-    "Leadership", "Agile Methodologies", "Communication", "Risk Management",
-    "Cloud Computing", "DevOps", "Database Management", "Problem Solving"
-];
-
-const industryOptions = [
-    "Information Technologies", "Healthcare", "Finance", "Education", "Management"
-];
-
-const initialProfessions: Profession[] = [
-    {
-        id: 1,
-        name: "Frontend Developer",
-        industry: "Information Technologies",
-        requiredSkills: [
-            { id: 1, name: "JavaScript Programming", level: 4 },
-            { id: 2, name: "UI/UX Design", level: 3 },
-            { id: 3, name: "React", level: 4 },
-            { id: 4, name: "CSS", level: 4 }
-        ]
-    },
-    {
-        id: 2,
-        name: "Data Scientist",
-        industry: "Information Technologies",
-        requiredSkills: [
-            { id: 5, name: "Python", level: 5 },
-            { id: 6, name: "Machine Learning", level: 4 },
-            { id: 7, name: "Statistics", level: 4 },
-            { id: 8, name: "Data Visualization", level: 3 }
-        ]
-    },
-    {
-        id: 3,
-        name: "Project Manager",
-        industry: "Management",
-        requiredSkills: [
-            { id: 9, name: "Leadership", level: 5 },
-            { id: 10, name: "Agile Methodologies", level: 4 },
-            { id: 11, name: "Communication", level: 5 },
-            { id: 12, name: "Risk Management", level: 3 }
-        ]
-    }
-];
 
 const AddProfession = () => {
-    const [professions, setProfessions] = useState<Profession[]>(initialProfessions);
+
+
+    // Type tanımlamaları
+    type Skill = {
+        id: number;
+        name: string;
+        level: number;
+        tempId?: number;
+    };
+
+    type Profession = {
+        id: number;
+        name: string;
+        industry: string;
+        industryId?: number;
+        requiredSkills: Skill[];
+    };
+
+    type Industry = {
+        id: number;
+        name: string;
+    };
+
+    type ApiSkill = {
+        id: number;
+        name: string;
+        industryId: number;
+        industryName: string;
+    };
+
+    // State tanımlamaları
+    const [industries, setIndustries] = useState<Industry[]>([]);
+    const [availableSkills, setAvailableSkills] = useState<ApiSkill[]>([]);
+    const [professions, setProfessions] = useState<Profession[]>([]);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [expandedProfession, setExpandedProfession] = useState<number | null>(null);
@@ -72,34 +50,270 @@ const AddProfession = () => {
         id: 0,
         name: "",
         industry: "",
+        industryId: undefined,
         requiredSkills: []
     });
+
+
+
+useEffect(() => {
+    const fetchIndustries = async () => {
+        try {
+            const response = await api.getAllIndustries();
+            setIndustries(response.data);
+        } catch (error) {
+            console.error('Error fetching industries:', error);
+            // Hata yönetimi eklenebilir
+        }
+    };
+
+    fetchIndustries();
+}, []);
+
+    useEffect(() => {
+        const fetchProfessions = async () => {
+            try {
+                const response = await api.getAllProfessions();
+                const formattedProfessions = formatProfessions(response.data);
+                setProfessions(formattedProfessions);
+            } catch (error) {
+                console.error('Error fetching professions:', error);
+            }
+        };
+
+        fetchProfessions();
+    }, []);
+
+    const formatProfessions = (data: any[]) => {
+        return data.map((prof: any) => ({
+            id: prof.id,
+            name: prof.name,
+            industry: prof.industryName,
+            industryId: prof.industryId,
+            requiredSkills: prof.requiredSkills.map((skill: any) => ({
+                id: skill.skillId,
+                name: skill.skillName,
+                level: skill.requiredLevel,
+                tempId: Date.now() + Math.random() // Her skill için benzersiz tempId ekliyoruz
+            }))
+        }));
+    };
+
+    const renderSkillSelect = (skill: Skill, index: number, isNewProfession: boolean) => (
+        <select
+            value={skill.id}
+            onChange={(e) => {
+                const selectedSkill = availableSkills.find(s => s.id === Number(e.target.value));
+                if (selectedSkill) {
+                    if (isNewProfession) {
+                        const updatedSkills = [...newProfession.requiredSkills];
+                        updatedSkills[index] = {
+                            ...skill,
+                            id: selectedSkill.id,
+                            name: selectedSkill.name,
+                            tempId: skill.tempId // Mevcut tempId'yi koru
+                        };
+                        setNewProfession({...newProfession, requiredSkills: updatedSkills});
+                    } else if (editingProfession) {
+                        const updatedSkills = [...editingProfession.requiredSkills];
+                        updatedSkills[index] = {
+                            ...skill,
+                            id: selectedSkill.id,
+                            name: selectedSkill.name,
+                            tempId: skill.tempId // Mevcut tempId'yi koru
+                        };
+                        setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
+                    }
+                }
+            }}
+            className="flex-1 px-3 py-2 rounded-md border border-gray-200 text-black"
+        >
+            <option key={`current-${skill.tempId || skill.id}`} value={skill.id}>
+                {skill.name}
+            </option>
+            {availableSkills
+                .filter(option => option.id !== skill.id)
+                .map(option => (
+                    <option key={`option-${option.id}-${skill.tempId || index}`} value={option.id}>
+                        {option.name}
+                    </option>
+                ))
+            }
+        </select>
+    );
+
+    const renderNewProfessionSkills = () => (
+        <div className="space-y-2">
+            {newProfession.requiredSkills.map((skill, index) => (
+                <div key={`new-skill-${skill.tempId || index}`}
+                     className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
+                    {renderSkillSelect(skill, index, true)}
+                    <LevelSelector
+                        level={skill.level}
+                        onChange={(level) => {
+                            const updatedSkills = [...newProfession.requiredSkills];
+                            updatedSkills[index] = {...skill, level};
+                            setNewProfession({...newProfession, requiredSkills: updatedSkills});
+                        }}
+                    />
+                    <button
+                        onClick={() => {
+                            const updatedSkills = newProfession.requiredSkills.filter((_, i) => i !== index);
+                            setNewProfession({...newProfession, requiredSkills: updatedSkills});
+                        }}
+                        className="text-red-600 hover:text-red-800 transition"
+                    >
+                        <Trash2 size={20}/>
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+
+    const renderExistingProfessionSkills = (profession: Profession, isEditing: boolean) => (
+        <div className="space-y-2">
+            {profession.requiredSkills.map((skill, index) => (
+                <div key={`existing-skill-${skill.tempId || skill.id}-${index}`}
+                     className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
+                    {isEditing ?
+                        renderSkillSelect(skill, index, false) :
+                        <span className="flex-1">{skill.name}</span>
+                    }
+                    <LevelSelector
+                        level={skill.level}
+                        onChange={(level) => {
+                            if (isEditing && editingProfession) {
+                                const updatedSkills = [...editingProfession.requiredSkills];
+                                updatedSkills[index] = {...skill, level};
+                                setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
+                            }
+                        }}
+                        disabled={!isEditing}
+                    />
+                    {isEditing && (
+                        <button
+                            onClick={() => handleDeleteSkill(profession.id, skill.id)}
+                            className="text-red-600 hover:text-red-800 transition"
+                        >
+                            <Trash2 size={20}/>
+                        </button>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+
+
+
+    const handleIndustryChange = async (industryId: number, isEditing: boolean = false) => {
+        try {
+            const response = await api.getSkillsByIndustry(industryId);
+            setAvailableSkills(response.data);
+            const selectedIndustry = industries.find(i => i.id === industryId);
+
+            if (isEditing && editingProfession) {
+                setEditingProfession({
+                    ...editingProfession,
+                    industryId: industryId,
+                    industry: selectedIndustry?.name || ""
+                });
+            } else {
+                setNewProfession({
+                    ...newProfession,
+                    industryId: industryId,
+                    industry: selectedIndustry?.name || ""
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching skills:', error);
+        }
+    };
+
+    const handleSaveNewProfession = async () => {
+        if (newProfession.name.trim() && newProfession.industryId && newProfession.requiredSkills.length > 0) {
+            try {
+                const professionData = {
+                    name: newProfession.name,
+                    industryId: newProfession.industryId,
+                    requiredSkills: newProfession.requiredSkills.map(skill => ({
+                        skillId: skill.id,
+                        requiredLevel: skill.level
+                    }))
+                };
+
+                const response = await api.createProfession(professionData);
+
+                // Backend'den gelen veriyi frontend formatına dönüştürüyoruz
+                const formattedProfession: Profession = {
+                    id: response.data.id,
+                    name: response.data.name,
+                    industry: newProfession.industry,
+                    industryId: response.data.industryId,
+                    requiredSkills: response.data.requiredSkills.map((skill: any) => ({
+                        id: skill.skillId,
+                        name: skill.skillName,
+                        level: skill.requiredLevel
+                    }))
+                };
+
+                setProfessions(prevProfessions => [...prevProfessions, formattedProfession]);
+                setIsAddingNew(false);
+                resetNewProfession();
+            } catch (error) {
+                console.error('Error saving profession:', error);
+            }
+        }
+    };
+
 
     const resetNewProfession = () => {
         setNewProfession({
             id: 0,
             name: "",
             industry: "",
+            industryId: undefined,  // Eksik olan property eklendi
             requiredSkills: []
         });
     };
 
     const handleAddSkillToNewProfession = () => {
-        const newSkill = { id: Date.now(), name: skillOptions[0], level: 1 };
-        setNewProfession({
-            ...newProfession,
-            requiredSkills: [...newProfession.requiredSkills, newSkill]
-        });
+        if (availableSkills.length > 0) {
+            const firstSkill = availableSkills[0];
+            // Benzersiz bir ID oluştur
+            const uniqueId = Date.now();
+            const newSkill = {
+                id: firstSkill.id,
+                name: firstSkill.name,
+                level: 1,
+                tempId: uniqueId // Geçici benzersiz ID
+            };
+            setNewProfession({
+                ...newProfession,
+                requiredSkills: [...newProfession.requiredSkills, newSkill]
+            });
+        }
     };
 
     const handleAddSkillToExistingProfession = (profession: Profession) => {
-        const newSkill = { id: Date.now(), name: skillOptions[0], level: 1 };
-        const updatedProfession = {
-            ...profession,
-            requiredSkills: [...profession.requiredSkills, newSkill]
-        };
-        setEditingProfession(updatedProfession);
+        if (availableSkills.length > 0) {
+            const firstSkill = availableSkills[0];
+            // Benzersiz bir ID oluştur
+            const uniqueId = Date.now();
+            const newSkill = {
+                id: firstSkill.id,
+                name: firstSkill.name,
+                level: 1,
+                tempId: uniqueId // Geçici benzersiz ID
+            };
+            const updatedProfession = {
+                ...profession,
+                requiredSkills: [...profession.requiredSkills, newSkill]
+            };
+            setEditingProfession(updatedProfession);
+        }
     };
+
+
 
     const handleSkillLevelChange = (professionId: number, skillId: number, level: number) => {
         if (editingProfession && editingProfession.id === professionId) {
@@ -112,22 +326,30 @@ const AddProfession = () => {
         }
     };
 
-    const handleDeleteProfession = (id: number) => {
-        setProfessions(professions.filter(prof => prof.id !== id));
-    };
-
-    const handleSaveNewProfession = () => {
-        if (newProfession.name.trim() && newProfession.industry && newProfession.requiredSkills.length > 0) {
-            const newId = Math.max(...professions.map(p => p.id), 0) + 1;
-            setProfessions([...professions, { ...newProfession, id: newId }]);
-            setIsAddingNew(false);
-            resetNewProfession();
+    const handleDeleteProfession = async (id: number) => {
+        try {
+            await api.deleteProfession(id);
+            setProfessions(prevProfessions =>
+                prevProfessions.filter(prof => prof.id !== id)
+            );
+            toast.success('Profession deleted successfully');
+        } catch (error: any) {
+            console.error('Error deleting profession:', error);
+            toast.error(error.message || 'Failed to delete profession');
         }
     };
 
+
+
     const handleStartEdit = (profession: Profession) => {
         setEditingId(profession.id);
-        setEditingProfession({ ...profession });
+        setEditingProfession({
+            ...profession,
+            requiredSkills: profession.requiredSkills.map(skill => ({
+                ...skill,
+                tempId: Date.now() + Math.random() // Her skill için benzersiz tempId ekliyoruz
+            }))
+        });
         setExpandedProfession(profession.id);
     };
 
@@ -136,13 +358,29 @@ const AddProfession = () => {
         setEditingProfession(null);
     };
 
-    const handleSaveEdit = () => {
-        if (editingProfession) {
-            setProfessions(professions.map(prof =>
-                prof.id === editingProfession.id ? editingProfession : prof
-            ));
-            setEditingId(null);
-            setEditingProfession(null);
+    const handleSaveEdit = async () => {
+        if (editingProfession && editingProfession.industryId) { // industryId kontrolü eklendi
+            try {
+                const updateData = {
+                    name: editingProfession.name,
+                    industryId: editingProfession.industryId, // artık kesinlikle number olacak
+                    requiredSkills: editingProfession.requiredSkills.map(skill => ({
+                        skillId: skill.id,
+                        requiredLevel: skill.level
+                    }))
+                };
+                await api.updateProfession(editingProfession.id, updateData);
+
+                setProfessions(prevProfessions =>
+                    prevProfessions.map(prof =>
+                        prof.id === editingProfession.id ? editingProfession : prof
+                    )
+                );
+                setEditingId(null);
+                setEditingProfession(null);
+            } catch (error) {
+                console.error('Error updating profession:', error);
+            }
         }
     };
 
@@ -182,12 +420,19 @@ const AddProfession = () => {
         </div>
     );
 
+    useEffect(() => {
+        if (editingId && editingProfession?.industryId) {
+            handleIndustryChange(editingProfession.industryId, true);
+        }
+    }, [editingId, editingProfession?.industryId]);
+
     const renderProfessionContent = (prof: Profession) => {
         const isEditing = editingId === prof.id;
         const professionToRender = isEditing ? editingProfession! : prof;
 
         return (
             <div key={prof.id} className="border border-gray-300 rounded-lg p-4 text-black">
+                {/* Header bölümü - değişiklik yok */}
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                         {isEditing ? (
@@ -202,15 +447,13 @@ const AddProfession = () => {
                                     className="px-2 py-1 border rounded mb-2"
                                 />
                                 <select
-                                    value={professionToRender.industry}
-                                    onChange={(e) => setEditingProfession({
-                                        ...professionToRender,
-                                        industry: e.target.value
-                                    })}
-                                    className="px-2 py-1 border rounded"
+                                    value={professionToRender.industryId || ""}
+                                    onChange={(e) => handleIndustryChange(Number(e.target.value), true)}
+                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple"
                                 >
-                                    {industryOptions.map(industry => (
-                                        <option key={industry} value={industry}>{industry}</option>
+                                    <option value="" disabled>Select Industry</option>
+                                    {industries.map(industry => (
+                                        <option key={industry.id} value={industry.id}>{industry.name}</option>
                                     ))}
                                 </select>
                             </>
@@ -221,6 +464,7 @@ const AddProfession = () => {
                             </>
                         )}
                     </div>
+
                     <div className="flex items-center">
                         {isEditing ? (
                             <button
@@ -247,55 +491,22 @@ const AddProfession = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Expand/Collapse button - değişiklik yok */}
                 <button
                     onClick={() => setExpandedProfession(expandedProfession === prof.id ? null : prof.id)}
                     className="flex items-center text-gray-500 hover:text-gray-600 transition mt-2"
                 >
                     {expandedProfession === prof.id ? <ChevronUp /> : <ChevronDown />}
                     <span className="ml-2">
-                        {expandedProfession === prof.id ? "Hide Skills" : "Show Skills"}
-                    </span>
+                    {expandedProfession === prof.id ? "Hide Skills" : "Show Skills"}
+                </span>
                 </button>
+
+                {/* Skills bölümü - yeni render fonksiyonlarını kullanıyoruz */}
                 {expandedProfession === prof.id && (
                     <div className="mt-4 space-y-2">
-                        {professionToRender.requiredSkills.map(skill => (
-                            <div key={skill.id} className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
-                                {isEditing ? (
-                                    <select
-                                        value={skill.name}
-                                        onChange={(e) => {
-                                            const updatedSkills = professionToRender.requiredSkills.map(s =>
-                                                s.id === skill.id ? { ...s, name: e.target.value } : s
-                                            );
-                                            setEditingProfession({
-                                                ...professionToRender,
-                                                requiredSkills: updatedSkills
-                                            });
-                                        }}
-                                        className="flex-1 px-3 py-2 rounded-md border border-gray-200"
-                                    >
-                                        {skillOptions.map(option => (
-                                            <option key={option} value={option}>{option}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <span className="flex-1">{skill.name}</span>
-                                )}
-                                <LevelSelector
-                                    level={skill.level}
-                                    onChange={(level) => handleSkillLevelChange(prof.id, skill.id, level)}
-                                    disabled={!isEditing}
-                                />
-                                {isEditing && (
-                                    <button
-                                        onClick={() => handleDeleteSkill(prof.id, skill.id)}
-                                        className="text-red-600 hover:text-red-800 transition"
-                                    >
-                                        <Trash2 size={20}/>
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                        {renderExistingProfessionSkills(professionToRender, isEditing)}
                         {isEditing && (
                             <div className="space-y-2">
                                 <button
@@ -347,54 +558,18 @@ const AddProfession = () => {
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
                                 />
                                 <select
-                                    value={newProfession.industry}
-                                    onChange={(e) => setNewProfession({...newProfession, industry: e.target.value})}
+                                    value={newProfession.industryId || ""}
+                                    onChange={(e) => handleIndustryChange(Number(e.target.value))}
                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple"
                                 >
                                     <option value="" disabled>Select Industry</option>
-                                    {industryOptions.map(industry => (
-                                        <option key={industry} value={industry}>{industry}</option>
+                                    {industries.map(industry => (
+                                        <option key={industry.id} value={industry.id}>{industry.name}</option>
                                     ))}
                                 </select>
 
+                                {renderNewProfessionSkills()} {/* Burada değişiklik yaptık */}
 
-                                <div className="space-y-2">
-                                    {newProfession.requiredSkills.map((skill, index) => (
-                                        <div key={skill.id}
-                                             className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
-                                            <select
-                                                value={skill.name}
-                                                onChange={(e) => {
-                                                    const updatedSkills = [...newProfession.requiredSkills];
-                                                    updatedSkills[index] = {...skill, name: e.target.value};
-                                                    setNewProfession({...newProfession, requiredSkills: updatedSkills});
-                                                }}
-                                                className="flex-1 px-3 py-2 rounded-md border border-gray-200 text-black"
-                                            >
-                                                {skillOptions.map(option => (
-                                                    <option key={option} value={option}>{option}</option>
-                                                ))}
-                                            </select>
-                                            <LevelSelector
-                                                level={skill.level}
-                                                onChange={(level) => {
-                                                    const updatedSkills = [...newProfession.requiredSkills];
-                                                    updatedSkills[index] = {...skill, level};
-                                                    setNewProfession({...newProfession, requiredSkills: updatedSkills});
-                                                }}
-                                            />
-                                            <button
-                                                onClick={() => {
-                                                    const updatedSkills = newProfession.requiredSkills.filter((_, i) => i !== index);
-                                                    setNewProfession({...newProfession, requiredSkills: updatedSkills});
-                                                }}
-                                                className="text-red-600 hover:text-red-800 transition"
-                                            >
-                                                <Trash2 size={20}/>
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
                                 <div className="space-y-4">
                                     <div className="flex justify-evenly">
                                         <button
