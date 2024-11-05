@@ -1,9 +1,9 @@
-// services/api.ts
+// services/ProfessionApi.ts
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:8081/api';
 
-export const api = {
+export const professionApi = {
     // Mevcut metodlar
     getAllIndustries: () => axios.get(`${BASE_URL}/industries`),
 

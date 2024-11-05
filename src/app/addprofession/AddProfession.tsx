@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import { Pencil, Trash2, Plus, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import {api} from "@/app/services/api";
+import {professionApi} from "@/app/services/ProfessionApi";
 import {toast} from "react-hot-toast";
 
 
@@ -59,7 +59,7 @@ const AddProfession = () => {
 useEffect(() => {
     const fetchIndustries = async () => {
         try {
-            const response = await api.getAllIndustries();
+            const response = await professionApi.getAllIndustries();
             setIndustries(response.data);
         } catch (error) {
             console.error('Error fetching industries:', error);
@@ -73,7 +73,7 @@ useEffect(() => {
     useEffect(() => {
         const fetchProfessions = async () => {
             try {
-                const response = await api.getAllProfessions();
+                const response = await professionApi.getAllProfessions();
                 const formattedProfessions = formatProfessions(response.data);
                 setProfessions(formattedProfessions);
             } catch (error) {
@@ -207,7 +207,7 @@ useEffect(() => {
 
     const handleIndustryChange = async (industryId: number, isEditing: boolean = false) => {
         try {
-            const response = await api.getSkillsByIndustry(industryId);
+            const response = await professionApi.getSkillsByIndustry(industryId);
             setAvailableSkills(response.data);
             const selectedIndustry = industries.find(i => i.id === industryId);
 
@@ -241,7 +241,7 @@ useEffect(() => {
                     }))
                 };
 
-                const response = await api.createProfession(professionData);
+                const response = await professionApi.createProfession(professionData);
 
                 // Backend'den gelen veriyi frontend formatına dönüştürüyoruz
                 const formattedProfession: Profession = {
@@ -328,7 +328,7 @@ useEffect(() => {
 
     const handleDeleteProfession = async (id: number) => {
         try {
-            await api.deleteProfession(id);
+            await professionApi.deleteProfession(id);
             setProfessions(prevProfessions =>
                 prevProfessions.filter(prof => prof.id !== id)
             );
@@ -369,7 +369,7 @@ useEffect(() => {
                         requiredLevel: skill.level
                     }))
                 };
-                await api.updateProfession(editingProfession.id, updateData);
+                await professionApi.updateProfession(editingProfession.id, updateData);
 
                 setProfessions(prevProfessions =>
                     prevProfessions.map(prof =>

@@ -11,6 +11,10 @@ const axiosInstance = axios.create({
 });
 
 export const surveyService = {
+
+    updateSurvey: (id: number, survey: any) =>
+        axiosInstance.put<Survey>(`/surveys/${id}`, survey),
+
     // Industry endpoints
     getIndustries: () => 
         axiosInstance.get<Industry[]>('/industries'),

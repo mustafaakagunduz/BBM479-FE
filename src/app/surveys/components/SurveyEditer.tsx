@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { surveyService } from '../services/surveyService';
-import { Industry, Skill, Question, Option ,Profession } from '../types/index';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { surveyService } from '@/app/services/surveyService';
+import { Industry, Skill, Question, Option ,Profession } from '@/app/types/index';
 interface QuestionForm {
     content: string;
     options: string[];
     selectedSkill: number; // string yerine number kullanıyoruz
 }
 
-const SurveyBuilder2: React.FC = () => {
+interface SurveyEditerProps {
+    mode?: 'create' | 'edit';
+    surveyId?: number;
+}
+
+const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }) => {
     // API data states
     const [industries, setIndustries] = useState<Industry[]>([]);
     const [skills, setSkills] = useState<Skill[]>([]);
@@ -23,6 +28,81 @@ const SurveyBuilder2: React.FC = () => {
     const [questions, setQuestions] = useState<QuestionForm[]>([]);
     const [activeStep, setActiveStep] = useState<number>(0);
     const [selectedProfessions, setSelectedProfessions] = useState<number[]>([]);
+
+    // Mevcut anketi yüklemek için yeni useEffect
+    useEffect(() => {
+        const loadSurvey = async () => {
+            if (mode === 'edit' && surveyId) {
+                try {
+                    setLoading(true);
+                    const response = await surveyService.getSurveyById(surveyId);
+                    const survey = response.data;
+
+                    // Form alanlarını doldur
+                    setSurveyTitle(survey.title);
+                    setSelectedIndustryId(survey.industryId);
+                    setSelectedProfessions(survey.selectedProfessions);
+
+                    // Soruları dönüştür
+                    const formattedQuestions = survey.questions.map(q => ({
+                        content: q.text,
+                        selectedSkill: q.skillId,
+                        options: q.options.map(opt => opt.description)
+                    }));
+                    setQuestions(formattedQuestions);
+
+                    // Seçili yetenekleri ayarla
+                    const uniqueSkills = [...new Set(survey.questions.map(q => q.skillId))];
+                    setSelectedSkills(uniqueSkills);
+
+                } catch (error) {
+                    console.error('Failed to load survey:', error);
+                }
+            }
+        };
+
+        loadSurvey();
+    }, [mode, surveyId]);
+
+    // handleSubmit fonksiyonunu güncelle
+    const handleSubmit = async () => {
+        try {
+            setLoading(true);
+
+            const surveyData = {
+                id: mode === 'edit' ? surveyId : undefined,
+                userId: 1,
+                title: surveyTitle,
+                industryId: selectedIndustryId!,
+                selectedProfessions,
+                questions: questions.map(q => ({
+                    text: q.content,
+                    skillId: q.selectedSkill,
+                    options: q.options.map((opt, index) => ({
+                        level: index + 1,
+                        description: opt
+                    }))
+                }))
+            };
+
+            if (mode === 'edit' && surveyId) {
+                await surveyService.updateSurvey(surveyId, surveyData);
+            } else {
+                await surveyService.createSurvey(surveyData);
+            }
+
+            alert(mode === 'edit' ? 'Survey updated successfully!' : 'Survey created successfully!');
+            window.location.href = '/surveys';
+
+        } catch (error) {
+            console.error('Failed to submit survey:', error);
+            alert('An error occurred while saving the survey');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
     useEffect(() => {
         const loadProfessions = async () => {
             if (selectedIndustryId) {
@@ -93,44 +173,7 @@ const SurveyBuilder2: React.FC = () => {
         selectedSkill: 0, // veya -1 kullanabilirsiniz
     });
 
-    // Handle form submission
-    const handleSubmit = async () => {
-        try {
-            setLoading(true);
-            
-            // Create survey structure
-            const surveyData = {
-                userId: 1, // This should come from auth context
-                title: surveyTitle,
-                industryId: selectedIndustryId!,
-                selectedProfessions: [],
-                questions: questions.map(q => ({
-                    text: q.content,
-                    skillId:  q.selectedSkill,
-                    options: q.options.map((opt, index) => ({
-                        level: index + 1,
-                        description: opt
-                    }))
-                }))
-            };
 
-            // Submit survey
-            const response = await surveyService.createSurvey(surveyData);
-            console.log('Survey created:', response.data);
-            
-            // Reset form
-            setActiveStep(0);
-            setQuestions([]);
-            setSurveyTitle('');
-            setSelectedIndustryId(null);
-            setSelectedSkills([]);
-            
-        } catch (error) {
-            console.error('Failed to submit survey:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const addSkill = (skillId: number) => {
         if (!selectedSkills.includes(skillId)) {
@@ -433,7 +476,7 @@ const SurveyBuilder2: React.FC = () => {
                 <div className="max-w-5xl mx-auto">
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            Survey Builder
+                            Survey Edit
                         </h1>
                         
                         {/* Steps Navigation */}
@@ -500,4 +543,4 @@ const SurveyBuilder2: React.FC = () => {
             </div>
         );
     };
-    export default SurveyBuilder2;
+    export default SurveyEditer;
