@@ -19,7 +19,7 @@ const NavbarUser: React.FC = () => {
                     </Link>
                     <Link href="/applysurvey">
                         <button className="px-4 py-2 rounded-lg bg-white text-purple-600 hover:bg-purple-100 transition">
-                            Apply the Survey
+                            View the Surveys
                         </button>
                     </Link>
                 </div>

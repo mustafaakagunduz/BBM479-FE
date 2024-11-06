@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
+//import { Alert, AlertDescription, AlertTitle } from 'src'
+import { XCircle, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { surveyService } from '../services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '../types/index';
+import {Alert, AlertDescription, AlertTitle} from "@/app/components/alert/Alert";
+
+
 interface QuestionForm {
     content: string;
     options: string[];
@@ -23,6 +29,13 @@ const SurveyBuilder: React.FC = () => {
     const [questions, setQuestions] = useState<QuestionForm[]>([]);
     const [activeStep, setActiveStep] = useState<number>(0);
     const [selectedProfessions, setSelectedProfessions] = useState<number[]>([]);
+// SurveyBuilder component'inin başındaki state tanımlamalarına:
+    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+    const [showErrorDialog, setShowErrorDialog] = useState(false);
+    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+    const [showErrorAlert, setShowErrorAlert] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
     useEffect(() => {
         const loadProfessions = async () => {
             if (selectedIndustryId) {
@@ -97,16 +110,15 @@ const SurveyBuilder: React.FC = () => {
     const handleSubmit = async () => {
         try {
             setLoading(true);
-            
-            // Create survey structure
+
             const surveyData = {
-                userId: 1, // This should come from auth context
+                userId: 1,
                 title: surveyTitle,
                 industryId: selectedIndustryId!,
-                selectedProfessions: [],
+                selectedProfessions: selectedProfessions,
                 questions: questions.map(q => ({
                     text: q.content,
-                    skillId:  q.selectedSkill,
+                    skillId: q.selectedSkill,
                     options: q.options.map((opt, index) => ({
                         level: index + 1,
                         description: opt
@@ -114,19 +126,13 @@ const SurveyBuilder: React.FC = () => {
                 }))
             };
 
-            // Submit survey
             const response = await surveyService.createSurvey(surveyData);
             console.log('Survey created:', response.data);
-            
-            // Reset form
-            setActiveStep(0);
-            setQuestions([]);
-            setSurveyTitle('');
-            setSelectedIndustryId(null);
-            setSelectedSkills([]);
-            
+            setShowSuccessDialog(true);
+
         } catch (error) {
             console.error('Failed to submit survey:', error);
+            setShowErrorDialog(true);
         } finally {
             setLoading(false);
         }
@@ -431,6 +437,39 @@ const SurveyBuilder: React.FC = () => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
+                    {showSuccessDialog && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
+                                <h2 className="text-2xl font-bold text-green-600 mb-4">Success!</h2>
+                                <p className="text-gray-600 mb-6">Survey has been successfully created!</p>
+                                <div className="flex justify-end">
+                                    <Link href="/homepageadmin">
+                                        <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                            Return to Admin Panel
+                                        </button>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showErrorDialog && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
+                                <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+                                <p className="text-gray-600 mb-6">Failed to create survey. Please try again.</p>
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => setShowErrorDialog(false)}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                             Survey Builder
@@ -499,5 +538,6 @@ const SurveyBuilder: React.FC = () => {
                 </div>
             </div>
         );
+
     };
     export default SurveyBuilder;

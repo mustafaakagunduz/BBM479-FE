@@ -17,6 +17,12 @@ export const Card: React.FC<CardProps> = ({ children, className = '', onClick })
     </div>
 );
 
+export const CardDescription: React.FC<CardProps> = ({ children, className = '' }) => (
+    <p className={`mt-2 text-sm text-gray-600 ${className}`}>
+        {children}
+    </p>
+);
+
 export const CardHeader: React.FC<CardProps> = ({ children, className = '' }) => (
     <div className={`px-6 py-4 border-b border-gray-100 ${className}`}>
       {children}
@@ -40,3 +46,4 @@ export const CardFooter: React.FC<CardProps> = ({ children, className = '' }) =>
       {children}
     </div>
 );
+
