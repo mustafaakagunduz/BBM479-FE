@@ -48,17 +48,65 @@ export default function SurveyResultPage({ params }: PageProps) {
         fetchResult();
     }, [resolvedParams.surveyId]);
 
+    useEffect(() => {
+        if (result?.id) {
+            window.history.replaceState(
+                {},
+                '',
+                `/applysurvey/apply/${resolvedParams.surveyId}/result?resultId=${result.id}`
+            );
+        }
+    }, [result?.id]);
+
+    const handleShare = () => {
+        if (result?.id) {
+            const shareUrl = `${window.location.origin}/applysurvey/results/${result.id}`;
+            navigator.clipboard.writeText(shareUrl);
+            alert('Result link copied to clipboard!');
+        }
+    };
+
     const fetchResult = async () => {
         try {
             setLoading(true);
-            // Önce sonuçları hesapla
-            await axios.post(`http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${userId}/calculate`);
-            
-            // Sonra sonuçları getir
-            const response = await axios.get(`http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${userId}`);
+            setError(null);
+
+            const API_BASE = 'http://localhost:8081/api/surveys';
+            console.log('Checking survey completion...');
+
+            const checkResponse = await axios.get(
+                `${API_BASE}/${resolvedParams.surveyId}/responses/check/${userId}`
+            );
+
+            if (!checkResponse.data.completed) {
+                setError("Please complete the survey first");
+                return;
+            }
+
+            // İlk isteğin tamamlanmasını bekle
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            console.log('Calculating results...');
+            const calcResponse = await axios.post(
+                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate`
+            );
+
+            if (calcResponse.data) {
+                setResult(calcResponse.data);
+                return; // Eğer calculate ile sonuç döndüyse, ayrıca get isteği yapma
+            }
+
+            // Kısa bir bekleme
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            console.log('Fetching results...');
+            const response = await axios.get(
+                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}`
+            );
+
             setResult(response.data);
         } catch (err: any) {
-            console.error('Error:', err);
+            console.error('Error details:', err.response?.data || err.message);
             setError(err.response?.data?.message || 'Failed to fetch survey result');
         } finally {
             setLoading(false);
@@ -115,9 +163,30 @@ export default function SurveyResultPage({ params }: PageProps) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            Your Professional Match Results
-                        </CardTitle>
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                Your Professional Match Results
+                            </CardTitle>
+
+                            {/* Sonuç ID'sini görüntüle */}
+                            <div className="text-sm text-gray-500">
+                                Result ID: {result?.id}
+                            </div>
+                        </div>
+
+                        {/* Sonuç tarihi göster */}
+                        <div className="text-sm text-gray-600">
+                            Completed on: {new Date(result?.createdAt || '').toLocaleDateString()}
+                        </div>
+
+                        {/* Paylaş butonu */}
+                        <Button
+                            onClick={handleShare}
+                            variant="ghost"
+                            className="mt-2"
+                        >
+                            Share Results
+                        </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
