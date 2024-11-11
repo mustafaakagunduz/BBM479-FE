@@ -70,17 +70,17 @@ export default function ApplySurveyPage({ params }: PageProps) {
         if (!survey || !survey.questions) {
             return;
         }
-
+    
         // Tüm sorular cevaplanmış mı kontrol et
         const allQuestionsAnswered = survey.questions.every(
             question => answers[question.id] !== undefined
         );
-
+    
         if (!allQuestionsAnswered) {
             alert('Please answer all questions before submitting.');
             return;
         }
-
+    
         try {
             const surveyResponse = {
                 userId: 1, // Şimdilik sabit bir userId
@@ -90,12 +90,12 @@ export default function ApplySurveyPage({ params }: PageProps) {
                     selectedLevel: level
                 }))
             };
-
+    
             const response = await axios.post('http://localhost:8081/api/responses', surveyResponse);
-
+    
             if (response.status === 201 || response.status === 200) {
-                alert('Survey completed successfully!');
-                router.push('/applysurvey'); // Anket listesine geri dön
+                // Sonuç sayfasına yönlendir
+                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result`);
             }
         } catch (error) {
             console.error('Error submitting survey:', error);
@@ -103,6 +103,9 @@ export default function ApplySurveyPage({ params }: PageProps) {
         }
     };
 
+    
+    
+    
     if (loading) {
         return <div className="flex justify-center">Loading survey details...</div>;
     }
