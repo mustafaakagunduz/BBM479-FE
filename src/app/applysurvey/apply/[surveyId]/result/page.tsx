@@ -133,10 +133,7 @@ export default function SurveyResultPage({ params }: PageProps) {
                                 Your Professional Match Results
                             </CardTitle>
 
-                            {/* Sonuç ID'sini görüntüle */}
-                            <div className="text-sm text-gray-500">
-                                Result ID: {result?.id}
-                            </div>
+
                         </div>
 
                         {/* Sonuç tarihi göster */}
