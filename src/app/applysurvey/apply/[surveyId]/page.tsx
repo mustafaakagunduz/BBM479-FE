@@ -70,41 +70,41 @@ export default function ApplySurveyPage({ params }: PageProps) {
         if (!survey || !survey.questions) {
             return;
         }
-    
+
         // Tüm sorular cevaplanmış mı kontrol et
         const allQuestionsAnswered = survey.questions.every(
             question => answers[question.id] !== undefined
         );
-    
+
         if (!allQuestionsAnswered) {
             alert('Please answer all questions before submitting.');
             return;
         }
-    
+
         try {
             const surveyResponse = {
-                userId: 1, // Şimdilik sabit bir userId
+                userId: 1,
                 surveyId: Number(resolvedParams.surveyId),
                 answers: Object.entries(answers).map(([questionId, level]) => ({
                     questionId: Number(questionId),
                     selectedLevel: level
                 }))
             };
-    
-            const response = await axios.post('http://localhost:8081/api/responses', surveyResponse);
-    
-            if (response.status === 201 || response.status === 200) {
-                // Sonuç sayfasına yönlendir
-                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result`);
+
+            // Önce cevapları kaydet
+            const responseResult = await axios.post('http://localhost:8081/api/responses', surveyResponse);
+
+            if (responseResult.status === 201 || responseResult.status === 200) {
+                // Yeni timestamp ile sonuç sayfasına yönlendir
+                router.push(
+                    `/applysurvey/apply/${resolvedParams.surveyId}/result?t=${Date.now()}`
+                );
             }
         } catch (error) {
             console.error('Error submitting survey:', error);
             alert('Failed to submit survey. Please try again.');
         }
     };
-
-    
-    
     
     if (loading) {
         return <div className="flex justify-center">Loading survey details...</div>;

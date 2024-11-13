@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
@@ -36,82 +36,48 @@ interface PageProps {
 }
 
 export default function SurveyResultPage({ params }: PageProps) {
-    const resolvedParams = use(params); // params'ı Promise'dan çözümlüyoruz
+    const resolvedParams = use(params);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [result, setResult] = useState<SurveyResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const userId = 1; // Şimdilik sabit. Gerçek uygulamada auth sisteminden alınacak
+    const userId = 1;
+
+    const [timestamp] = useState(Date.now());
 
     useEffect(() => {
-        fetchResult();
-    }, [resolvedParams.surveyId]);
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
 
-    useEffect(() => {
-        if (result?.id) {
-            window.history.replaceState(
-                {},
-                '',
-                `/applysurvey/apply/${resolvedParams.surveyId}/result?resultId=${result.id}`
-            );
-        }
-    }, [result?.id]);
+                const API_BASE = 'http://localhost:8081/api/surveys';
 
-    const handleShare = () => {
-        if (result?.id) {
-            const shareUrl = `${window.location.origin}/applysurvey/results/${result.id}`;
-            navigator.clipboard.writeText(shareUrl);
-            alert('Result link copied to clipboard!');
-        }
-    };
+                // Yeni sonuç hesapla - timestamp ekleyerek cache'i engelle
+                const calcResponse = await axios.post(
+                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate?t=${timestamp}`
+                );
 
-    const fetchResult = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const API_BASE = 'http://localhost:8081/api/surveys';
-            console.log('Checking survey completion...');
-
-            const checkResponse = await axios.get(
-                `${API_BASE}/${resolvedParams.surveyId}/responses/check/${userId}`
-            );
-
-            if (!checkResponse.data.completed) {
-                setError("Please complete the survey first");
-                return;
+                if (calcResponse.data) {
+                    setResult(calcResponse.data);
+                    // URL'yi temizle
+                    window.history.replaceState(
+                        {},
+                        '',
+                        `/applysurvey/apply/${resolvedParams.surveyId}/result`
+                    );
+                }
+            } catch (err: any) {
+                console.error('Error:', err);
+                setError(err.response?.data?.message || 'Failed to fetch survey result');
+            } finally {
+                setLoading(false);
             }
+        };
 
-            // İlk isteğin tamamlanmasını bekle
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            console.log('Calculating results...');
-            const calcResponse = await axios.post(
-                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate`
-            );
-
-            if (calcResponse.data) {
-                setResult(calcResponse.data);
-                return; // Eğer calculate ile sonuç döndüyse, ayrıca get isteği yapma
-            }
-
-            // Kısa bir bekleme
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            console.log('Fetching results...');
-            const response = await axios.get(
-                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}`
-            );
-
-            setResult(response.data);
-        } catch (err: any) {
-            console.error('Error details:', err.response?.data || err.message);
-            setError(err.response?.data?.message || 'Failed to fetch survey result');
-        } finally {
-            setLoading(false);
-        }
-    };
-
+        fetchData();
+    }, [resolvedParams.surveyId, searchParams, timestamp]);
 
     if (loading) {
         return (
@@ -178,14 +144,7 @@ export default function SurveyResultPage({ params }: PageProps) {
                             Completed on: {new Date(result?.createdAt || '').toLocaleDateString()}
                         </div>
 
-                        {/* Paylaş butonu */}
-                        <Button
-                            onClick={handleShare}
-                            variant="ghost"
-                            className="mt-2"
-                        >
-                            Share Results
-                        </Button>
+
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
