@@ -7,19 +7,19 @@ import Link from 'next/link';
 function AdminPanel() {
     const adminCards = [
         {
-            title: "Add Industry to the System",
+            title: "Add & Edit Industry to the System",
             icon: <Building2 className="w-12 h-12 mb-4 text-purple-600" />,
             href: "/addindustry",
             description: "Define new industry sectors"
         },
         {
-            title: "Add Skill to the System",
+            title: "Add & Edit Skill to the System",
             icon: <PenTool className="w-12 h-12 mb-4 text-purple-600" />,
             href: "/addskill",
             description: "Add and manage skills in various industries"
         },
         {
-            title: "Add Profession to the System",
+            title: "Add & Edit Profession to the System",
             icon: <Briefcase className="w-12 h-12 mb-4 text-purple-600" />,
             href: "/addprofession",
             description: "Create and update professional roles"
