@@ -1,4 +1,3 @@
-// app/applysurvey/apply/[surveyId]/result/page.tsx
 'use client';
 
 import { useEffect, useState, use } from 'react';
@@ -135,7 +134,7 @@ export default function SurveyResultPage({ params }: PageProps) {
                     <Card className="bg-red-50">
                         <CardContent className="p-6">
                             <div className="text-red-600">{error}</div>
-                            <Button 
+                            <Button
                                 onClick={() => router.push('/applysurvey')}
                                 className="mt-4"
                             >
@@ -198,17 +197,17 @@ export default function SurveyResultPage({ params }: PageProps) {
                                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                     >
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis 
+                                        <XAxis
                                             dataKey="professionName"
                                             angle={-45}
                                             textAnchor="end"
                                             height={80}
                                         />
-                                        <YAxis 
+                                        <YAxis
                                             domain={[0, 100]}
-                                            label={{ 
-                                                value: 'Match Percentage (%)', 
-                                                angle: -90, 
+                                            label={{
+                                                value: 'Match Percentage (%)',
+                                                angle: -90,
                                                 position: 'insideLeft',
                                                 style: { textAnchor: 'middle' }
                                             }}
@@ -225,7 +224,7 @@ export default function SurveyResultPage({ params }: PageProps) {
 
                             {/* Detaylı Sonuçlar */}
                             <div className="space-y-4">
-                                <h3 className="text-xl font-semibold">Detailed Results</h3>
+                                <h3 className="text-xl font-semibold text-black">Detailed Results</h3>
                                 <div className="grid gap-4">
                                     {result?.professionMatches
                                         .sort((a, b) => b.matchPercentage - a.matchPercentage)
@@ -234,13 +233,13 @@ export default function SurveyResultPage({ params }: PageProps) {
                                                 <CardContent className="p-4">
                                                     <div className="flex justify-between items-center">
                                                         <div>
-                                                            <h4 className="font-semibold">{match.professionName}</h4>
+                                                            <h4 className="font-semibold text-black">{match.professionName}</h4>
                                                             <p className="text-sm text-gray-600">
                                                                 Match Score: {match.matchPercentage.toFixed(1)}%
                                                             </p>
                                                         </div>
                                                         <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                            <div 
+                                                            <div
                                                                 className="h-full bg-purple-600"
                                                                 style={{ width: `${match.matchPercentage}%` }}
                                                             />
