@@ -96,9 +96,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
 
             if (responseResult.status === 201 || responseResult.status === 200) {
                 // Yeni timestamp ile sonuç sayfasına yönlendir
-                router.push(
-                    `/applysurvey/apply/${resolvedParams.surveyId}/result?t=${Date.now()}`
-                );
+                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
             }
         } catch (error) {
             console.error('Error submitting survey:', error);
