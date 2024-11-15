@@ -12,7 +12,7 @@ const NavbarUser: React.FC = () => {
 
                 {/* Ortada My Previous Results Butonu */}
                 <div className="flex-grow text-center space-x-4">
-                    <Link href="/previousresult">
+                    <Link href="/previousresults">
                         <button className="px-4 py-2 rounded-lg bg-white text-purple-600 hover:bg-purple-100 transition">
                             My Previous Results
                         </button>

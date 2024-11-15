@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useState, use, useRef, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState, use } from 'react';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import NavbarUser from "@/app/components/navbars/NavbarUser";
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import {
     BarChart,
     Bar,
@@ -19,7 +17,6 @@ import {
     ResponsiveContainer
 } from 'recharts';
 
-// Interfaces
 interface ProfessionMatch {
     id: number;
     professionId: number;
@@ -37,128 +34,71 @@ interface SurveyResult {
 }
 
 interface PageProps {
-    params: Promise<{ surveyId: string }>;
+    params: Promise<{ resultId: string }>;
 }
 
-export default function SurveyResultPage({ params }: PageProps) {
-    const resolvedParams = use(params);
+export default function ResultDetails({ params }: PageProps) {
+    const resolvedParams = use(params); // params'ı çözümlüyoruz
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [result, setResult] = useState<SurveyResult | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const calculationInProgress = useRef(false);
-    const userId = 1;
-    const [allResults, setAllResults] = useState<SurveyResult[]>([]);
-
-    const fetchAllResults = useCallback(async () => {
-        try {
-            const API_BASE = 'http://localhost:8081/api/surveys';
-            const response = await axios.get(
-                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/all`
-            );
-
-            if (response.data) {
-                setAllResults(response.data);
-            }
-        } catch (err) {
-            console.error('Error fetching all results:', err);
-        }
-    }, [resolvedParams.surveyId, userId]);
 
     useEffect(() => {
-        fetchAllResults();
-    }, [fetchAllResults]);
+        const fetchResult = async () => {
+            try {
+                setLoading(true);
+                const API_BASE = 'http://localhost:8081/api/surveys';
+                const allResultsResponse = await axios.get(`${API_BASE}/results/user/1`);
 
-    const fetchResult = useCallback(async () => {
-        if (loading || calculationInProgress.current) return;
+                if (allResultsResponse.data) {
+                    const targetResult = allResultsResponse.data.find(
+                        (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId) // params.resultId yerine resolvedParams.resultId kullanıyoruz
+                    );
 
-        try {
-            calculationInProgress.current = true;
-            setLoading(true);
-            setError(null);
-
-            const API_BASE = 'http://localhost:8081/api/surveys';
-            const isNewCalculation = searchParams.get('new') === 'true';
-
-            let response;
-            if (isNewCalculation) {
-                response = await axios.post(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate?force=true`,
-                    {},
-                    {
-                        headers: { 'Cache-Control': 'no-cache' },
+                    if (targetResult) {
+                        setResult(targetResult);
+                    } else {
+                        setError('Result not found');
                     }
-                );
-
-                if (response.data) {
-                    await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
-                    // Yeni sonuç oluşturulduğunda tüm sonuçları tekrar çek
-                    await fetchAllResults();
                 }
-            } else {
-                response = await axios.get(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/latest`
-                );
+            } catch (err) {
+                console.error('Error fetching result:', err);
+                setError('Failed to fetch result details');
+            } finally {
+                setLoading(false);
             }
-
-            if (response.data) {
-                setResult(response.data);
-            } else {
-                throw new Error('No result found');
-            }
-        } catch (err: any) {
-            console.error('Error:', err);
-            setError('Failed to fetch survey result');
-
-            setTimeout(() => {
-                router.push('/applysurvey');
-            }, 3000);
-        } finally {
-            setLoading(false);
-            calculationInProgress.current = false;
-        }
-    }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults]);
-
-    useEffect(() => {
-        const isNewCalculation = searchParams.get('new') === 'true';
-
-        // Eğer yeni hesaplama değilse ve zaten sonuç varsa, tekrar fetch yapma
-        if (!isNewCalculation && result) {
-            return;
-        }
+        };
 
         fetchResult();
-    }, [fetchResult, searchParams, result]);
+    }, [resolvedParams.resultId]);
 
-    // Loading durumu
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
                 <NavbarUser />
                 <div className="container mx-auto p-6">
                     <div className="flex justify-center items-center h-64">
-                        <div className="text-lg">Loading results...</div>
+                        <div className="text-lg">Loading result details...</div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // Error durumu
-    if (error) {
+    if (error || !result) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
                 <NavbarUser />
                 <div className="container mx-auto p-6">
                     <Card className="bg-red-50">
                         <CardContent className="p-6">
-                            <div className="text-red-600">{error}</div>
+                            <div className="text-red-600">{error || 'Result not found'}</div>
                             <Button
-                                onClick={() => router.push('/applysurvey')}
+                                onClick={() => router.push('/previousresults')}
                                 className="mt-4"
                             >
-                                Return to Surveys
+                                Return to Previous Results
                             </Button>
                         </CardContent>
                     </Card>
@@ -167,30 +107,17 @@ export default function SurveyResultPage({ params }: PageProps) {
         );
     }
 
-    // Sonuç yoksa
-    if (!result) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
-                <div className="container mx-auto p-6">
-                    <div className="text-center">No results available</div>
-                </div>
-            </div>
-        );
-    }
-
-    // Ana render - sonuçları göster
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
             <NavbarUser />
             <div className="container mx-auto p-6 space-y-6">
                 <Button
                     variant="ghost"
-                    onClick={() => router.push('/applysurvey')}
+                    onClick={() => router.push('/previousresults')}
                     className="flex items-center gap-2"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to Surveys
+                    Back to Results
                 </Button>
 
                 <Card>
@@ -199,25 +126,26 @@ export default function SurveyResultPage({ params }: PageProps) {
                             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 Your Professional Match Results
                             </CardTitle>
-                            <ResultDropdownMenu
-                                currentResult={result}
-                                allResults={allResults}
-                                onResultSelect={setResult}
-                            />
                         </div>
                         <div className="text-sm text-gray-600 space-y-1">
-                            {/* <div>Result ID: #{result.id}</div> */}
-                            <div>Completed on: {new Date(result.createdAt).toLocaleDateString()}</div>
+                            <div>Result ID: #{result.id}</div>
+                            <div>Completed on: {new Date(result.createdAt).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: false
+                            })}</div>
                         </div>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-8">
                             {/* Grafik */}
-                            {result && result.professionMatches && result.professionMatches.length > 0 && (
+                            {result.professionMatches && result.professionMatches.length > 0 && (
                                 <div className="h-96 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
-                                            // Benzersiz professionId'lere göre gruplayıp göster
                                             data={Array.from(
                                                 new Map(
                                                     result.professionMatches
@@ -255,10 +183,11 @@ export default function SurveyResultPage({ params }: PageProps) {
 
                             {/* Detaylı sonuçlar */}
                             <div className="space-y-4">
-                                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Detailed Results</h3>
+                                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    Detailed Results
+                                </h3>
                                 <div className="grid gap-4">
-                                    {result && result.professionMatches &&
-                                        // Benzersiz professionId'lere göre gruplayıp göster
+                                    {result.professionMatches &&
                                         Array.from(
                                             new Map(
                                                 result.professionMatches

@@ -1,4 +1,4 @@
-// src/app/components/survey/ResultHeader.tsx
+// src/app/components/survey/ResultDropdownMenu.tsx
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -24,7 +24,7 @@ interface ResultHeaderProps {
     onResultSelect: (result: SurveyResult) => void;
 }
 
-const ResultHeader: React.FC<ResultHeaderProps> = ({
+const ResultDropdownMenu: React.FC<ResultHeaderProps> = ({
                                                        currentResult,
                                                        allResults,
                                                        onResultSelect
@@ -32,15 +32,23 @@ const ResultHeader: React.FC<ResultHeaderProps> = ({
     const [isOpen, setIsOpen] = useState(false);
 
     const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString();
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
     };
 
     const renderButtonContent = () => {
         return (
             <div className="w-full flex justify-between items-center">
                 <div className="flex flex-col">
-                    <span className="text-sm font-normal">Result #{currentResult.id}</span>
-                    <span className="text-xs font-light">{formatDate(currentResult.createdAt)}</span>
+                <span className="text-sm font-normal">
+                    {formatDate(currentResult.createdAt)}
+                </span>
                 </div>
                 {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </div>
@@ -70,9 +78,6 @@ const ResultHeader: React.FC<ResultHeaderProps> = ({
                                     result.id === currentResult.id ? 'bg-purple-100' : ''
                                 }`}
                             >
-                                <div className="font-medium text-black">
-                                    Result #{result.id}
-                                </div>
                                 <div className="text-sm text-gray-600">
                                     {formatDate(result.createdAt)}
                                 </div>
@@ -85,4 +90,4 @@ const ResultHeader: React.FC<ResultHeaderProps> = ({
     );
 };
 
-export default ResultHeader;
+export default ResultDropdownMenu;
