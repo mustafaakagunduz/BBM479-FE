@@ -23,6 +23,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const router = useRouter();
     const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+    const [submitting, setSubmitting] = useState(false); // Submit durumu için yeni state
 
     useEffect(() => {
         fetchSurveyDetails();
@@ -67,11 +68,10 @@ export default function ApplySurveyPage({ params }: PageProps) {
     };
 
     const handleSubmit = async () => {
-        if (!survey || !survey.questions) {
+        if (!survey || !survey.questions || submitting) {
             return;
         }
 
-        // Tüm sorular cevaplanmış mı kontrol et
         const allQuestionsAnswered = survey.questions.every(
             question => answers[question.id] !== undefined
         );
@@ -82,6 +82,8 @@ export default function ApplySurveyPage({ params }: PageProps) {
         }
 
         try {
+            setSubmitting(true);
+
             const surveyResponse = {
                 userId: 1,
                 surveyId: Number(resolvedParams.surveyId),
@@ -91,16 +93,20 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 }))
             };
 
-            // Önce cevapları kaydet
             const responseResult = await axios.post('http://localhost:8081/api/responses', surveyResponse);
 
             if (responseResult.status === 201 || responseResult.status === 200) {
-                // Yeni timestamp ile sonuç sayfasına yönlendir
-                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
+                // router.push yerine router.replace kullan
+                await router.replace(
+                    `/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`,
+                    { scroll: false }
+                );
             }
         } catch (error) {
             console.error('Error submitting survey:', error);
             alert('Failed to submit survey. Please try again.');
+        } finally {
+            setSubmitting(false);
         }
     };
     

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
@@ -45,60 +45,67 @@ export default function SurveyResultPage({ params }: PageProps) {
     const [result, setResult] = useState<SurveyResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const calculationInProgress = useRef(false);
     const userId = 1;
 
-    useEffect(() => {
-        const fetchResult = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+    const fetchResult = useCallback(async () => {
+        if (loading || calculationInProgress.current) return;
 
-                const API_BASE = 'http://localhost:8081/api/surveys';
-                const isNewCalculation = searchParams.get('new') === 'true';
+        try {
+            calculationInProgress.current = true;
+            setLoading(true);
+            setError(null);
 
-                if (isNewCalculation) {
-                    // Yeni sonuç hesapla
-                    const calcResponse = await axios.post(
-                        `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate?force=true`
-                    );
+            const API_BASE = 'http://localhost:8081/api/surveys';
+            const isNewCalculation = searchParams.get('new') === 'true';
 
-                    if (calcResponse.data) {
-                        setResult(calcResponse.data);
-                        // URL'yi temizle
-                        window.history.replaceState(
-                            {},
-                            '',
-                            `/applysurvey/apply/${resolvedParams.surveyId}/result`
-                        );
+            let response;
+            if (isNewCalculation) {
+                response = await axios.post(
+                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate?force=true`,
+                    {},
+                    {
+                        headers: { 'Cache-Control': 'no-cache' },
                     }
-                } else {
-                    // Son sonucu getir
-                    const latestResponse = await axios.get(
-                        `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/latest`
-                    );
+                );
 
-                    if (latestResponse.data) {
-                        setResult(latestResponse.data);
-                    } else {
-                        throw new Error('No result found');
-                    }
+                if (response.data) {
+                    await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
                 }
-
-            } catch (err: any) {
-                console.error('Error:', err);
-                setError('Failed to fetch survey result');
-
-                // 3 saniye sonra surveys sayfasına yönlendir
-                setTimeout(() => {
-                    router.push('/applysurvey');
-                }, 3000);
-            } finally {
-                setLoading(false);
+            } else {
+                response = await axios.get(
+                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/latest`
+                );
             }
-        };
+
+            if (response.data) {
+                setResult(response.data);
+            } else {
+                throw new Error('No result found');
+            }
+        } catch (err: any) {
+            console.error('Error:', err);
+            setError('Failed to fetch survey result');
+
+            setTimeout(() => {
+                router.push('/applysurvey');
+            }, 3000);
+        } finally {
+            setLoading(false);
+            calculationInProgress.current = false;
+        }
+    }, [resolvedParams.surveyId, searchParams, router, loading]);
+
+    useEffect(() => {
+        const isNewCalculation = searchParams.get('new') === 'true';
+
+        // Eğer yeni hesaplama değilse ve zaten sonuç varsa, tekrar fetch yapma
+        if (!isNewCalculation && result) {
+            return;
+        }
 
         fetchResult();
-    }, [resolvedParams.surveyId, userId, router, searchParams]);
+    }, [fetchResult, searchParams, result]);
 
     // Loading durumu
     if (loading) {
