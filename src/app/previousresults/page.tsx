@@ -90,7 +90,7 @@ const PreviousResults: React.FC = () => {
                         {results.map((result) => (
                             <Card
                                 key={result.id}
-                                className="hover:shadow-lg transition-shadow duration-200"
+                                className="h-full transition-all duration-300 hover:shadow-lg hover:scale-105 bg-white/90 backdrop-blur-sm border-purple-100"
                             >
                                 {/* CardContent'e aspect-ratio ve min-height ekliyoruz */}
                                 <CardContent className="p-6 aspect-square flex flex-col">
