@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import NavbarUser from "@/app/components/navbars/NavbarUser";
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import ResultHeader from '@/app/components/survey/ResultHeader';
 import {
     BarChart,
     Bar,
@@ -47,6 +49,26 @@ export default function SurveyResultPage({ params }: PageProps) {
     const [error, setError] = useState<string | null>(null);
     const calculationInProgress = useRef(false);
     const userId = 1;
+    const [allResults, setAllResults] = useState<SurveyResult[]>([]);
+
+    const fetchAllResults = useCallback(async () => {
+        try {
+            const API_BASE = 'http://localhost:8081/api/surveys';
+            const response = await axios.get(
+                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/all`
+            );
+
+            if (response.data) {
+                setAllResults(response.data);
+            }
+        } catch (err) {
+            console.error('Error fetching all results:', err);
+        }
+    }, [resolvedParams.surveyId, userId]);
+
+    useEffect(() => {
+        fetchAllResults();
+    }, [fetchAllResults]);
 
     const fetchResult = useCallback(async () => {
         if (loading || calculationInProgress.current) return;
@@ -71,6 +93,8 @@ export default function SurveyResultPage({ params }: PageProps) {
 
                 if (response.data) {
                     await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
+                    // Yeni sonuç oluşturulduğunda tüm sonuçları tekrar çek
+                    await fetchAllResults();
                 }
             } else {
                 response = await axios.get(
@@ -94,7 +118,7 @@ export default function SurveyResultPage({ params }: PageProps) {
             setLoading(false);
             calculationInProgress.current = false;
         }
-    }, [resolvedParams.surveyId, searchParams, router, loading]);
+    }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults]);
 
     useEffect(() => {
         const isNewCalculation = searchParams.get('new') === 'true';
@@ -175,21 +199,31 @@ export default function SurveyResultPage({ params }: PageProps) {
                             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 Your Professional Match Results
                             </CardTitle>
+                            <ResultHeader
+                                currentResult={result}
+                                allResults={allResults}
+                                onResultSelect={setResult}
+                            />
                         </div>
                         <div className="text-sm text-gray-600 space-y-1">
                             <div>Result ID: #{result.id}</div>
                             <div>Completed on: {new Date(result.createdAt).toLocaleDateString()}</div>
                         </div>
                     </CardHeader>
-
                     <CardContent>
                         <div className="space-y-8">
                             {/* Grafik */}
-                            {result.professionMatches.length > 0 && (
+                            {result && result.professionMatches && result.professionMatches.length > 0 && (
                                 <div className="h-96 w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
-                                            data={result.professionMatches.sort((a, b) => b.matchPercentage - a.matchPercentage)}
+                                            // Benzersiz professionId'lere göre gruplayıp göster
+                                            data={Array.from(
+                                                new Map(
+                                                    result.professionMatches
+                                                        .map(match => [match.professionId, match])
+                                                ).values()
+                                            ).sort((a, b) => b.matchPercentage - a.matchPercentage)}
                                             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" />
@@ -221,30 +255,37 @@ export default function SurveyResultPage({ params }: PageProps) {
 
                             {/* Detaylı sonuçlar */}
                             <div className="space-y-4">
-                                <h3 className="text-xl font-semibold text-black">Detailed Results</h3>
+                                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Detailed Results</h3>
                                 <div className="grid gap-4">
-                                    {result.professionMatches
-                                        .sort((a, b) => b.matchPercentage - a.matchPercentage)
-                                        .map((match) => (
-                                            <Card key={match.id}>
-                                                <CardContent className="p-4">
-                                                    <div className="flex justify-between items-center">
-                                                        <div>
-                                                            <h4 className="font-semibold text-black">{match.professionName}</h4>
-                                                            <p className="text-sm text-gray-600">
-                                                                Match Score: {match.matchPercentage.toFixed(1)}%
-                                                            </p>
+                                    {result && result.professionMatches &&
+                                        // Benzersiz professionId'lere göre gruplayıp göster
+                                        Array.from(
+                                            new Map(
+                                                result.professionMatches
+                                                    .map(match => [match.professionId, match])
+                                            ).values()
+                                        )
+                                            .sort((a, b) => b.matchPercentage - a.matchPercentage)
+                                            .map((match) => (
+                                                <Card key={match.professionId}>
+                                                    <CardContent className="p-4">
+                                                        <div className="flex justify-between items-center">
+                                                            <div>
+                                                                <h4 className="font-semibold text-black">{match.professionName}</h4>
+                                                                <p className="text-sm text-gray-600">
+                                                                    Match Score: {match.matchPercentage.toFixed(1)}%
+                                                                </p>
+                                                            </div>
+                                                            <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-purple-600"
+                                                                    style={{ width: `${match.matchPercentage}%` }}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                        <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-purple-600"
-                                                                style={{ width: `${match.matchPercentage}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
                                 </div>
                             </div>
                         </div>
