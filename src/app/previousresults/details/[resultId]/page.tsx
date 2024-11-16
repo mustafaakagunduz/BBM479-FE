@@ -128,7 +128,8 @@ export default function ResultDetails({ params }: PageProps) {
                             </CardTitle>
                         </div>
                         <div className="text-sm text-gray-600 space-y-1">
-                            <div>Result ID: #{result.id}</div>
+
+                            {/* <div>Result ID: #{result.id}</div> */}
                             <div>Completed on: {new Date(result.createdAt).toLocaleDateString('en-US', {
                                 year: 'numeric',
                                 month: 'long',
