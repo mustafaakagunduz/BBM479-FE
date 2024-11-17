@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import { Pencil, Trash2, Plus, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import {professionApi} from "@/app/services/ProfessionApi";
-import {toast} from "react-hot-toast";
+import { Toaster, toast } from 'react-hot-toast';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -60,6 +60,8 @@ const AddProfession = () => {
         requiredSkills: []
     });
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [professionToDelete, setProfessionToDelete] = useState<number | null>(null);
+
 
 
 
@@ -90,6 +92,40 @@ const AddProfession = () => {
 
         fetchProfessions();
     }, []);
+
+    const handleDeleteConfirm = async () => {
+        if (professionToDelete !== null) {
+            try {
+                await professionApi.deleteProfession(professionToDelete);
+                setProfessions(prevProfessions =>
+                    prevProfessions.filter(prof => prof.id !== professionToDelete)
+                );
+                setProfessionToDelete(null); // Modal'ı kapat
+                toast.success('Profession deleted successfully', {
+                    duration: 2000, // 2 saniye sonra kapanacak
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } catch (error: any) {
+                console.log('Component Error:', {
+                    error: error,
+                    type: error.type,
+                    response: error.response
+                });
+
+                if (error.type === 'REFERENCE_ERROR') {
+                    setDeleteError('This profession cannot be deleted because it is associated with a survey registered in the system.');
+                } else {
+                    setDeleteError('An error occurred while deleting the profession');
+                }
+                setProfessionToDelete(null); // Hata durumunda da modal'ı kapat
+            }
+        }
+    };
 
     const formatProfessions = (data: any[]) => {
         return data.map((prof: any) => ({
@@ -453,7 +489,7 @@ const AddProfession = () => {
                 <AlertDialog open={!!deleteError}>
                     <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                         <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
-                            Silme İşlemi Başarısız
+                            Delete Failed
                         </AlertDialogTitle>
                         <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
                             {deleteError}
@@ -462,7 +498,7 @@ const AddProfession = () => {
                             onClick={() => setDeleteError(null)}
                             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
                         >
-                            Kapat
+                            Close
                         </button>
                     </AlertDialogContent>
                 </AlertDialog>
@@ -516,7 +552,7 @@ const AddProfession = () => {
                                     <Pencil size={20} />
                                 </button>
                                 <button
-                                    onClick={() => handleDeleteProfession(prof.id)}
+                                    onClick={() => setProfessionToDelete(prof.id)}
                                     className="p-2 text-red-500 hover:text-red-600 transition"
                                 >
                                     <Trash2 size={20} />
@@ -566,6 +602,73 @@ const AddProfession = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+            {/* Toast bildirimleri için */}
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 2000,
+                    style: {
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #10B981',
+                        padding: '16px',
+                        fontSize: '1.1rem', // Yazı boyutunu artırdık
+                        minWidth: '300px', // Minimum genişlik
+                        maxWidth: '400px', // Maximum genişlik
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#059669',
+                            secondary: '#ECFDF5',
+                        },
+                    }
+                }}
+            />
+
+            {/* Silme onay modalı */}
+            <AlertDialog open={professionToDelete !== null}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Profession
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        Are you sure you want to delete this profession?
+                    </AlertDialogDescription>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => setProfessionToDelete(null)}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleDeleteConfirm}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Hata modalı */}
+            <AlertDialog open={!!deleteError}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Failed
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        {deleteError}
+                    </AlertDialogDescription>
+                    <button
+                        onClick={() => setDeleteError(null)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                    >
+                        Close
+                    </button>
+                </AlertDialogContent>
+            </AlertDialog>
+
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-white/90 backdrop-blur-sm">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -602,7 +705,7 @@ const AddProfession = () => {
                                     ))}
                                 </select>
 
-                                {renderNewProfessionSkills()} {/* Burada değişiklik yaptık */}
+                                {renderNewProfessionSkills()}
 
                                 <div className="space-y-4">
                                     <div className="flex justify-evenly">
@@ -631,7 +734,100 @@ const AddProfession = () => {
                                 </div>
                             </div>
                         )}
-                        {professions.map(prof => renderProfessionContent(prof))}
+                        {professions.map(prof => (
+                            <div key={prof.id} className="border border-gray-300 rounded-lg p-4 text-black">
+                                <div className="flex justify-between items-center">
+                                    <div className="flex flex-col">
+                                        {editingId === prof.id ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={editingProfession?.name || ''}
+                                                    onChange={(e) => setEditingProfession(prev => ({
+                                                        ...prev!,
+                                                        name: e.target.value
+                                                    }))}
+                                                    className="px-2 py-1 border rounded mb-2"
+                                                />
+                                                <select
+                                                    value={editingProfession?.industryId || ""}
+                                                    onChange={(e) => handleIndustryChange(Number(e.target.value), true)}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple"
+                                                >
+                                                    <option value="" disabled>Select Industry</option>
+                                                    {industries.map(industry => (
+                                                        <option key={industry.id} value={industry.id}>{industry.name}</option>
+                                                    ))}
+                                                </select>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="text-lg font-semibold">{prof.name}</span>
+                                                <span className="text-sm text-gray-600">{prof.industry}</span>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center">
+                                        {editingId === prof.id ? (
+                                            <button
+                                                onClick={handleCancelEdit}
+                                                className="p-2 text-red-500 hover:text-red-600 transition"
+                                            >
+                                                <X size={20} />
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button
+                                                    onClick={() => handleStartEdit(prof)}
+                                                    className="p-2 text-yellow-500 hover:text-yellow-600 transition"
+                                                >
+                                                    <Pencil size={20} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setProfessionToDelete(prof.id)}
+                                                    className="p-2 text-red-500 hover:text-red-600 transition"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setExpandedProfession(expandedProfession === prof.id ? null : prof.id)}
+                                    className="flex items-center text-gray-500 hover:text-gray-600 transition mt-2"
+                                >
+                                    {expandedProfession === prof.id ? <ChevronUp /> : <ChevronDown />}
+                                    <span className="ml-2">
+                                   {expandedProfession === prof.id ? "Hide Skills" : "Show Skills"}
+                               </span>
+                                </button>
+
+                                {expandedProfession === prof.id && (
+                                    <div className="mt-4 space-y-2">
+                                        {renderExistingProfessionSkills(prof, editingId === prof.id)}
+                                        {editingId === prof.id && (
+                                            <div className="space-y-2">
+                                                <button
+                                                    onClick={() => handleAddSkillToExistingProfession(prof)}
+                                                    className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                                >
+                                                    Add Skill
+                                                </button>
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                                >
+                                                    Save Changes
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </CardContent>
                 </Card>
             </div>
