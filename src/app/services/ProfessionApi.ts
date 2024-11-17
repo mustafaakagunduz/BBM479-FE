@@ -37,13 +37,22 @@ export const professionApi = {
 
     deleteProfession: async (id: number) => {
         try {
-            const response = await axios.delete(`${BASE_URL}/professions/${id}`);
-            return response;
+            const response = await axios.delete(`http://localhost:8081/api/professions/${id}`);
+            return response.data;
         } catch (error: any) {
-            if (error.response?.status === 500) {
-                throw new Error('Profession cannot be deleted. It might be referenced by other entities.');
+            console.log('API Error:', {
+                error: error,
+                response: error.response,
+                data: error.response?.data
+            });
+
+            // Eğer error constraint violation içeriyorsa
+            if (error.response?.status === 500 ||
+                error.response?.data?.toString().includes('foreign key constraint') ||
+                error.response?.data?.toString().includes('profession_match')) {
+                throw { type: 'REFERENCE_ERROR' };  // Özel bir hata objesi fırlatıyoruz
             }
-            throw new Error('An error occurred while deleting the profession.');
+            throw error;
         }
     }
 };

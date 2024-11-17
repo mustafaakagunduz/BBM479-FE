@@ -3,6 +3,12 @@ import { Pencil, Trash2, Plus, X, Check, ChevronDown, ChevronUp } from 'lucide-r
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import {professionApi} from "@/app/services/ProfessionApi";
 import {toast} from "react-hot-toast";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle
+} from "@/app/components/ui/alert-dialog";
 
 
 
@@ -53,22 +59,23 @@ const AddProfession = () => {
         industryId: undefined,
         requiredSkills: []
     });
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
 
-useEffect(() => {
-    const fetchIndustries = async () => {
-        try {
-            const response = await professionApi.getAllIndustries();
-            setIndustries(response.data);
-        } catch (error) {
-            console.error('Error fetching industries:', error);
-            // Hata yönetimi eklenebilir
-        }
-    };
+    useEffect(() => {
+        const fetchIndustries = async () => {
+            try {
+                const response = await professionApi.getAllIndustries();
+                setIndustries(response.data);
+            } catch (error) {
+                console.error('Error fetching industries:', error);
+                // Hata yönetimi eklenebilir
+            }
+        };
 
-    fetchIndustries();
-}, []);
+        fetchIndustries();
+    }, []);
 
     useEffect(() => {
         const fetchProfessions = async () => {
@@ -334,8 +341,18 @@ useEffect(() => {
             );
             toast.success('Profession deleted successfully');
         } catch (error: any) {
-            console.error('Error deleting profession:', error);
-            toast.error(error.message || 'Failed to delete profession');
+            console.log('Component Error:', {
+                error: error,
+                type: error.type,
+                response: error.response
+            });
+
+            // error.type kontrolü
+            if (error.type === 'REFERENCE_ERROR') {
+                setDeleteError('Bu meslek sistemde kayıtlı bir anket ile ilişkili olduğu için silinemez');
+            } else {
+                setDeleteError('Meslek silinirken bir hata oluştu');
+            }
         }
     };
 
@@ -432,6 +449,23 @@ useEffect(() => {
 
         return (
             <div key={prof.id} className="border border-gray-300 rounded-lg p-4 text-black">
+
+                <AlertDialog open={!!deleteError}>
+                    <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                        <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                            Silme İşlemi Başarısız
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                            {deleteError}
+                        </AlertDialogDescription>
+                        <button
+                            onClick={() => setDeleteError(null)}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                        >
+                            Kapat
+                        </button>
+                    </AlertDialogContent>
+                </AlertDialog>
                 {/* Header bölümü - değişiklik yok */}
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col">
