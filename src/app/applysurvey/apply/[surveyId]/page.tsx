@@ -1,4 +1,3 @@
-// app/applysurvey/apply/[surveyId]/page.tsx
 'use client';
 
 import { useEffect, useState, use } from 'react';
@@ -7,8 +6,14 @@ import { Survey } from '@/app/types/survey';
 import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import NavbarUser from "@/app/components/navbars/NavbarUser";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle
+} from "@/app/components/ui/alert-dialog";
 
 interface PageProps {
     params: Promise<{
@@ -17,18 +22,17 @@ interface PageProps {
 }
 
 export default function ApplySurveyPage({ params }: PageProps) {
-    const resolvedParams = use(params); // params'ı use ile çözümlüyoruz
+    const resolvedParams = use(params);
     const [survey, setSurvey] = useState<Survey | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const router = useRouter();
     const [answers, setAnswers] = useState<{ [key: number]: number }>({});
-    const [submitting, setSubmitting] = useState(false); // Submit durumu için yeni state
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         fetchSurveyDetails();
-    }, [resolvedParams.surveyId]); // params.surveyId yerine resolvedParams.surveyId kullanıyoruz
-
+    }, [resolvedParams.surveyId]);
 
     const handleOptionSelect = (questionId: number, optionLevel: number) => {
         setAnswers(prev => ({
@@ -52,7 +56,6 @@ export default function ApplySurveyPage({ params }: PageProps) {
         if (survey?.questions && currentQuestionIndex < survey.questions.length - 1) {
             const currentQuestionId = survey.questions[currentQuestionIndex].id;
 
-            // Mevcut soru cevaplanmış mı kontrol et
             if (answers[currentQuestionId] === undefined) {
                 alert('Please select an answer before proceeding to the next question.');
                 return;
@@ -61,6 +64,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
             setCurrentQuestionIndex(prev => prev + 1);
         }
     };
+
     const handleBack = () => {
         if (currentQuestionIndex > 0) {
             setCurrentQuestionIndex(prev => prev - 1);
@@ -93,10 +97,12 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 }))
             };
 
+            // Yapay gecikme ekliyoruz (3 saniye)
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
             const responseResult = await axios.post('http://localhost:8081/api/responses', surveyResponse);
 
             if (responseResult.status === 201 || responseResult.status === 200) {
-                // router.push yerine router.replace kullan
                 await router.replace(
                     `/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`,
                     { scroll: false }
@@ -109,7 +115,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
             setSubmitting(false);
         }
     };
-    
+
     if (loading) {
         return <div className="flex justify-center">Loading survey details...</div>;
     }
@@ -202,9 +208,17 @@ export default function ApplySurveyPage({ params }: PageProps) {
                                 {isLastQuestion ? (
                                     <Button
                                         onClick={handleSubmit}
+                                        disabled={submitting}
                                         className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
                                     >
-                                        Submit Survey
+                                        {submitting ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            'Submit Survey'
+                                        )}
                                     </Button>
                                 ) : (
                                     <Button
@@ -220,6 +234,26 @@ export default function ApplySurveyPage({ params }: PageProps) {
                     </CardContent>
                 </Card>
             </div>
+
+
+            {/* Loading Modal */}
+            <AlertDialog open={submitting}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="sr-only">
+                        Processing Survey Responses
+                    </AlertDialogTitle>
+                    <div className="mb-4">
+                        <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
+                    </div>
+                    <AlertDialogDescription className="text-center text-lg text-purple-600 font-medium">
+                        Processing your survey responses...
+                        <br />
+                        <span className="text-purple-500">
+                Please wait while we calculate your results.
+            </span>
+                    </AlertDialogDescription>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
