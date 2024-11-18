@@ -25,10 +25,16 @@ function AdminPanel() {
             description: "Create and update professional roles"
         },
         {
-            title: "Add Survey to the System",
+            title: "Survey Management System",
             icon: <FileSpreadsheet className="w-12 h-12 mb-4 text-purple-600" />,
-            href: "/addsurvey",
-            description: "Create customized surveys"
+            href: "/surveymanagement",
+            description: "Create/Edit surveys"
+        },
+        {
+            title: "Authorization System",
+            icon: <FileSpreadsheet className="w-12 h-12 mb-4 text-purple-600" />,
+            href: "/authorization-system",
+            description: "Manage user permissions"
         }
     ];
 
@@ -44,14 +50,19 @@ function AdminPanel() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-24 p-6">
                     {adminCards.map((card, index) => (
-                        <Link href={card.href} key={index}>
-                            <Card className="h-full transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
-                                <div className="p-6 flex flex-col items-center text-center">
-                                    {card.icon}
+                        <Link href={card.href} key={index}
+                              className="relative z-0 hover:z-10 transition-all duration-500"> {/* transition süresini artırdık */}
+                            <Card
+                                className="h-72 w-72 transform transition-all duration-500 ease-in-out hover:shadow-xl hover:scale-105 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
+                                {/* transform ve ease-in-out ekledik, duration artırıldı */}
+                                <div className="p-6 flex flex-col items-center text-center h-full">
+                                    <div className="w-12 h-12 mb-4">
+                                        {card.icon}
+                                    </div>
                                     <CardHeader className="p-0">
-                                        <CardTitle className="text-xl font-semibold text-gray-800">
+                                        <CardTitle className="text-xl font-semibold text-gray-800 text-purple-700">
                                             {card.title}
                                         </CardTitle>
                                     </CardHeader>
