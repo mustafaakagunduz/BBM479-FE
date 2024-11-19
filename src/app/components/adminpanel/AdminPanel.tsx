@@ -40,7 +40,7 @@ function AdminPanel() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto"> {/* max-w-6xl'den max-w-7xl'e değiştirildi */}
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                         Admin Control Panel
@@ -50,19 +50,19 @@ function AdminPanel() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-24 p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 justify-items-center"> {/* Grid ve gap değerleri güncellendi */}
                     {adminCards.map((card, index) => (
                         <Link href={card.href} key={index}
-                              className="relative z-0 hover:z-10 transition-all duration-500"> {/* transition süresini artırdık */}
+                              className="relative group hover:z-10 transition-all duration-300"> {/* z-0'ı kaldırdık */}
                             <Card
-                                className="h-72 w-72 transform transition-all duration-500 ease-in-out hover:shadow-xl hover:scale-105 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
-                                {/* transform ve ease-in-out ekledik, duration artırıldı */}
+                                className="h-72 w-64 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
+                                {/* Genişlik w-72'den w-64'e düşürüldü, hover efekti değiştirildi */}
                                 <div className="p-6 flex flex-col items-center text-center h-full">
                                     <div className="w-12 h-12 mb-4">
                                         {card.icon}
                                     </div>
                                     <CardHeader className="p-0">
-                                        <CardTitle className="text-xl font-semibold text-gray-800 text-purple-700">
+                                        <CardTitle className="text-xl font-semibold text-purple-700">
                                             {card.title}
                                         </CardTitle>
                                     </CardHeader>
