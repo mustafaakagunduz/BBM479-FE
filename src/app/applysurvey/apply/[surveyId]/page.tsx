@@ -98,7 +98,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
             };
 
             // Yapay gecikme ekliyoruz (3 saniye)
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const responseResult = await axios.post('http://localhost:8081/api/responses', surveyResponse);
 

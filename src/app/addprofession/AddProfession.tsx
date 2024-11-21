@@ -14,9 +14,7 @@ import {
 
 
 const AddProfession = () => {
-
-
-    // Type tanımlamaları
+    // Types
     type Skill = {
         id: number;
         name: string;
@@ -61,8 +59,27 @@ const AddProfession = () => {
     });
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [professionToDelete, setProfessionToDelete] = useState<number | null>(null);
+    const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
+    const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState<{[key: string]: boolean}>({});
+    const [industryDropdowns, setIndustryDropdowns] = useState<{[key: string]: boolean}>({});
 
+    useEffect(() => {
+        fetchInitialData();
+    }, []);
 
+    const fetchInitialData = async () => {
+        try {
+            const [industriesResponse, professionsResponse] = await Promise.all([
+                professionApi.getAllIndustries(),
+                professionApi.getAllProfessions()
+            ]);
+            setIndustries(industriesResponse.data);
+            setProfessions(formatProfessions(professionsResponse.data));
+        } catch (error) {
+            console.error('Error fetching initial data:', error);
+            toast.error('Failed to load data');
+        }
+    };
 
 
     useEffect(() => {
@@ -127,19 +144,101 @@ const AddProfession = () => {
         }
     };
 
-    const formatProfessions = (data: any[]) => {
-        return data.map((prof: any) => ({
-            id: prof.id,
-            name: prof.name,
-            industry: prof.industryName,
-            industryId: prof.industryId,
-            requiredSkills: prof.requiredSkills.map((skill: any) => ({
-                id: skill.skillId,
-                name: skill.skillName,
-                level: skill.requiredLevel,
-                tempId: Date.now() + Math.random() // Her skill için benzersiz tempId ekliyoruz
-            }))
-        }));
+    const formatProfessions = (data: any[]) => data.map(prof => ({
+        id: prof.id,
+        name: prof.name,
+        industry: prof.industryName,
+        industryId: prof.industryId,
+        requiredSkills: prof.requiredSkills.map((skill: any) => ({
+            id: skill.skillId,
+            name: skill.skillName,
+            level: skill.requiredLevel,
+            tempId: Date.now() + Math.random()
+        }))
+    }));
+
+    const renderIndustryDropdown = (id: string, selectedId: number | undefined, onChange: (id: number) => void) => (
+        <div className="relative">
+            <button
+                onClick={() => setIndustryDropdowns(prev => ({...prev, [id]: !prev[id]}))}
+                className="w-full flex justify-between items-center px-4 py-3 bg-gray-100 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800"
+            >
+                {industries.find(i => i.id === selectedId)?.name || "Select Industry"}
+                <ChevronDown size={20}/>
+            </button>
+            {industryDropdowns[id] && (
+                <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                    {industries.map(industry => (
+                        <div
+                            key={industry.id}
+                            onClick={() => {
+                                onChange(industry.id);
+                                setIndustryDropdowns(prev => ({...prev, [id]: false}));
+                            }}
+                            className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
+                                selectedId === industry.id ? "bg-purple-200 text-purple-800 font-medium" : "text-gray-700"
+                            }`}
+                        >
+                            {industry.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderSkillDropdown = (skill: Skill, index: number, isNewProfession: boolean) => {
+        const dropdownKey = `${isNewProfession ? 'new' : skill.id}-${index}`;
+
+        return (
+            <div className="relative flex-1">
+                <button
+                    onClick={() => setIsSkillDropdownOpen(prev => ({
+                        ...prev,
+                        [dropdownKey]: !prev[dropdownKey]
+                    }))}
+                    className="w-full flex justify-between items-center px-4 py-3 bg-gray-100 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800"
+                >
+                    {skill.name}
+                    <ChevronDown size={20}/>
+                </button>
+                {isSkillDropdownOpen[dropdownKey] && (
+                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                        {availableSkills.map(option => (
+                            <div
+                                key={option.id}
+                                onClick={() => handleSkillSelect(option, skill, index, isNewProfession, dropdownKey)}
+                                className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
+                                    skill.id === option.id ? "bg-purple-200 text-purple-800 font-medium" : "text-gray-700"
+                                }`}
+                            >
+                                {option.name}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const handleSkillSelect = (option: ApiSkill, currentSkill: Skill, index: number, isNewProfession: boolean, dropdownKey: string) => {
+        const updatedSkill = {
+            ...currentSkill,
+            id: option.id,
+            name: option.name
+        };
+
+        if (isNewProfession) {
+            const updatedSkills = [...newProfession.requiredSkills];
+            updatedSkills[index] = updatedSkill;
+            setNewProfession({...newProfession, requiredSkills: updatedSkills});
+        } else if (editingProfession) {
+            const updatedSkills = [...editingProfession.requiredSkills];
+            updatedSkills[index] = updatedSkill;
+            setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
+        }
+
+        setIsSkillDropdownOpen(prev => ({...prev, [dropdownKey]: false}));
     };
 
     const renderSkillSelect = (skill: Skill, index: number, isNewProfession: boolean) => (
@@ -190,7 +289,7 @@ const AddProfession = () => {
             {newProfession.requiredSkills.map((skill, index) => (
                 <div key={`new-skill-${skill.tempId || index}`}
                      className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
-                    {renderSkillSelect(skill, index, true)}
+                    {renderSkillDropdown(skill, index, true)}
                     <LevelSelector
                         level={skill.level}
                         onChange={(level) => {
@@ -219,7 +318,7 @@ const AddProfession = () => {
                 <div key={`existing-skill-${skill.tempId || skill.id}-${index}`}
                      className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
                     {isEditing ?
-                        renderSkillSelect(skill, index, false) :
+                        renderSkillDropdown(skill, index, false) :
                         <span className="flex-1">{skill.name}</span>
                     }
                     <LevelSelector
@@ -245,9 +344,6 @@ const AddProfession = () => {
             ))}
         </div>
     );
-
-
-
     const handleIndustryChange = async (industryId: number, isEditing: boolean = false) => {
         try {
             const response = await professionApi.getSkillsByIndustry(industryId);
@@ -308,7 +404,6 @@ const AddProfession = () => {
         }
     };
 
-
     const resetNewProfession = () => {
         setNewProfession({
             id: 0,
@@ -356,8 +451,6 @@ const AddProfession = () => {
         }
     };
 
-
-
     const handleSkillLevelChange = (professionId: number, skillId: number, level: number) => {
         if (editingProfession && editingProfession.id === professionId) {
             setEditingProfession({
@@ -391,8 +484,6 @@ const AddProfession = () => {
             }
         }
     };
-
-
 
     const handleStartEdit = (profession: Profession) => {
         setEditingId(profession.id);
@@ -599,10 +690,8 @@ const AddProfession = () => {
         );
     };
 
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-            {/* Toast bildirimleri için */}
             <Toaster
                 position="top-right"
                 toastOptions={{
@@ -612,9 +701,9 @@ const AddProfession = () => {
                         color: '#059669',
                         border: '1px solid #10B981',
                         padding: '16px',
-                        fontSize: '1.1rem', // Yazı boyutunu artırdık
-                        minWidth: '300px', // Minimum genişlik
-                        maxWidth: '400px', // Maximum genişlik
+                        fontSize: '1.1rem',
+                        minWidth: '300px',
+                        maxWidth: '400px',
                     },
                     success: {
                         iconTheme: {
@@ -625,7 +714,6 @@ const AddProfession = () => {
                 }}
             />
 
-            {/* Silme onay modalı */}
             <AlertDialog open={professionToDelete !== null}>
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
@@ -636,22 +724,22 @@ const AddProfession = () => {
                     </AlertDialogDescription>
                     <div className="flex gap-4">
                         <button
-                            onClick={() => setProfessionToDelete(null)}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                        >
-                            Cancel
-                        </button>
-                        <button
                             onClick={handleDeleteConfirm}
                             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
                         >
                             Delete
                         </button>
+                        <button
+                            onClick={() => setProfessionToDelete(null)}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
+
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Hata modalı */}
             <AlertDialog open={!!deleteError}>
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
@@ -694,43 +782,34 @@ const AddProfession = () => {
                                     placeholder="Enter profession name..."
                                     className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
                                 />
-                                <select
-                                    value={newProfession.industryId || ""}
-                                    onChange={(e) => handleIndustryChange(Number(e.target.value))}
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple"
-                                >
-                                    <option value="" disabled>Select Industry</option>
-                                    {industries.map(industry => (
-                                        <option key={industry.id} value={industry.id}>{industry.name}</option>
-                                    ))}
-                                </select>
-
+                                {renderIndustryDropdown(
+                                    'new-profession',
+                                    newProfession.industryId,
+                                    (id) => handleIndustryChange(id)
+                                )}
                                 {renderNewProfessionSkills()}
-
-                                <div className="space-y-4">
-                                    <div className="flex justify-evenly">
-                                        <button
-                                            onClick={handleAddSkillToNewProfession}
-                                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-                                        >
-                                            Add Skill
-                                        </button>
-                                        <button
-                                            onClick={handleSaveNewProfession}
-                                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-                                        >
-                                            Save Profession
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setIsAddingNew(false);
-                                                resetNewProfession();
-                                            }}
-                                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
+                                <div className="flex justify-evenly">
+                                    <button
+                                        onClick={handleAddSkillToNewProfession}
+                                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                    >
+                                        Add Skill
+                                    </button>
+                                    <button
+                                        onClick={handleSaveNewProfession}
+                                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                    >
+                                        Save Profession
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsAddingNew(false);
+                                            resetNewProfession();
+                                        }}
+                                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                    >
+                                        Cancel
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -749,16 +828,11 @@ const AddProfession = () => {
                                                     }))}
                                                     className="px-2 py-1 border rounded mb-2"
                                                 />
-                                                <select
-                                                    value={editingProfession?.industryId || ""}
-                                                    onChange={(e) => handleIndustryChange(Number(e.target.value), true)}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 shadow-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple"
-                                                >
-                                                    <option value="" disabled>Select Industry</option>
-                                                    {industries.map(industry => (
-                                                        <option key={industry.id} value={industry.id}>{industry.name}</option>
-                                                    ))}
-                                                </select>
+                                                {renderIndustryDropdown(
+                                                    `edit-profession-${prof.id}`,
+                                                    editingProfession?.industryId,
+                                                    (id) => handleIndustryChange(id, true)
+                                                )}
                                             </>
                                         ) : (
                                             <>
@@ -767,7 +841,6 @@ const AddProfession = () => {
                                             </>
                                         )}
                                     </div>
-
                                     <div className="flex items-center">
                                         {editingId === prof.id ? (
                                             <button
@@ -801,8 +874,8 @@ const AddProfession = () => {
                                 >
                                     {expandedProfession === prof.id ? <ChevronUp /> : <ChevronDown />}
                                     <span className="ml-2">
-                                   {expandedProfession === prof.id ? "Hide Skills" : "Show Skills"}
-                               </span>
+                                    {expandedProfession === prof.id ? "Hide Skills" : "Show Skills"}
+                                </span>
                                 </button>
 
                                 {expandedProfession === prof.id && (

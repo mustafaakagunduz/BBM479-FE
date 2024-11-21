@@ -11,7 +11,7 @@ function AddIndustryPage() {
         <>
 
             <NavbarAdmin></NavbarAdmin>
-          <AddIndustry></AddIndustry>
+            <AddIndustry></AddIndustry>
 
         </>
     );

@@ -147,11 +147,7 @@ const PreviousResults: React.FC = () => {
                         ))}
                     </div>
 
-                    {results.length === 0 && (
-                        <div className="text-center text-gray-600 mt-8">
-                            No results found. Try taking a survey first!
-                        </div>
-                    )}
+
                 </div>
 
                 {results.length === 0 && (
