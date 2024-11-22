@@ -10,7 +10,6 @@ function AddIndustryPage() {
     return (
         <>
 
-            <NavbarAdmin></NavbarAdmin>
             <AddIndustry></AddIndustry>
 
         </>

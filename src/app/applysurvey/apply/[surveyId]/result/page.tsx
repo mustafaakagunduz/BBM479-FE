@@ -6,8 +6,6 @@ import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import NavbarUser from "@/app/components/navbars/NavbarUser";
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import {
     BarChart,
@@ -135,7 +133,7 @@ export default function SurveyResultPage({ params }: PageProps) {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
+
                 <div className="container mx-auto p-6">
                     <div className="flex justify-center items-center h-64">
                         <div className="text-lg">Loading results...</div>
@@ -149,7 +147,7 @@ export default function SurveyResultPage({ params }: PageProps) {
     if (error) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
+
                 <div className="container mx-auto p-6">
                     <Card className="bg-red-50">
                         <CardContent className="p-6">
@@ -171,7 +169,7 @@ export default function SurveyResultPage({ params }: PageProps) {
     if (!result) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
+
                 <div className="container mx-auto p-6">
                     <div className="text-center">No results available</div>
                 </div>
@@ -182,7 +180,7 @@ export default function SurveyResultPage({ params }: PageProps) {
     // Ana render - sonuçları göster
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-            <NavbarUser />
+
             <div className="container mx-auto p-6 space-y-6">
                 <Button
                     variant="ghost"

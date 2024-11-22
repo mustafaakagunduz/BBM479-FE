@@ -7,7 +7,6 @@ import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
 function AddProfessionPage() {
     return (
         <>
-            <NavbarAdmin></NavbarAdmin>
           <AddProfession></AddProfession>
 
         </>

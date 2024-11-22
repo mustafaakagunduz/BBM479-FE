@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
-import NavbarUser from "@/app/components/navbars/NavbarUser";
 import {
     AlertDialog,
     AlertDialogContent,
@@ -130,7 +129,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-black">
-            <NavbarUser />
+
             <div className="container mx-auto p-6 space-y-6">
                 <div className="flex items-center justify-between mb-6">
                     <Button

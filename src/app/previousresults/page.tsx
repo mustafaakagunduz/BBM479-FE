@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from "react";
-import NavbarUser from "@/app/components/navbars/NavbarUser";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -68,7 +67,7 @@ const PreviousResults: React.FC = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
+
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center">Loading results...</div>
                 </div>
@@ -78,7 +77,7 @@ const PreviousResults: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-            <NavbarUser />
+
             <div className="container mx-auto px-4 py-8">
 
                 <div className="container mx-auto px-4 py-8">
