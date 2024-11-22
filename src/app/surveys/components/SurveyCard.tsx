@@ -6,18 +6,11 @@ import { Trash2, Edit, Eye, FileText } from 'lucide-react';
 
 interface SurveyCardProps {
     survey: Survey;
-    onDelete: () => void;
+    onDelete: (id: number) => void;
 }
 
 export function SurveyCard({ survey, onDelete }: SurveyCardProps) {
     const router = useRouter();
-
-    const handleDelete = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this survey?')) {
-            onDelete();
-        }
-    };
 
     return (
         <Card
@@ -64,7 +57,10 @@ export function SurveyCard({ survey, onDelete }: SurveyCardProps) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        onClick={handleDelete}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(survey.id);
+                        }}
                         className="text-gray-600 hover:text-red-600"
                         aria-label="Delete survey"
                     >

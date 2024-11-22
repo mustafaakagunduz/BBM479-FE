@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { industryService, Industry } from '../services/industryService';
-import { toast } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle
+} from "@/app/components/ui/alert-dialog";
 
 const AddIndustry = () => {
     const [industries, setIndustries] = useState<Industry[]>([]);
@@ -10,9 +16,34 @@ const AddIndustry = () => {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingIndustry, setEditingIndustry] = useState<Industry | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [industryToDelete, setIndustryToDelete] = useState<number | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+
 
     useEffect(() => {
-        fetchIndustries();
+        const loadInitialData = async () => {
+            try {
+                setIsInitialLoading(true);
+                const data = await industryService.getAllIndustries();
+                setIndustries(data);
+            } catch (error) {
+                toast.error('Failed to fetch industries', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #EF4444',
+                        padding: '12px',
+                        color: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                    },
+                });
+            } finally {
+                setIsInitialLoading(false);
+            }
+        };
+
+        loadInitialData();
     }, []);
 
     const fetchIndustries = async () => {
@@ -31,16 +62,35 @@ const AddIndustry = () => {
     const handleAddIndustry = async () => {
         if (newIndustry.name.trim()) {
             try {
-                setLoading(true);
-                await industryService.createIndustry(newIndustry);
-                await fetchIndustries();
+                setIsProcessing(true);
+                const createdIndustry = await industryService.createIndustry(newIndustry);
+
+                // Direkt state'e ekle
+                setIndustries(prev => [...prev, createdIndustry]);
                 setNewIndustry({ name: '' });
-                toast.success('Industry added successfully');
-            } catch (error) {
-                toast.error('Failed to add industry');
-                console.error('Error adding industry:', error);
+
+                toast.success('Industry added successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } catch (error: any) {
+                const errorMessage = error.response?.data?.message || 'Failed to add industry';
+                toast.error(errorMessage, {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #EF4444',
+                        padding: '12px',
+                        color: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                    },
+                });
             } finally {
-                setLoading(false);
+                setIsProcessing(false);
             }
         }
     };
@@ -49,69 +99,184 @@ const AddIndustry = () => {
         setEditingId(industry.id);
         setEditingIndustry({ ...industry });
     };
+
     const handleSaveEdit = async () => {
         if (editingIndustry && editingIndustry.name.trim()) {
             try {
-                setLoading(true);
-                
-                // Eğer mevcut endüstri ile yeni isim aynıysa, güncelleme işlemi yapılır
-                const existingIndustry = industries.find(ind => 
+                setIsProcessing(true);
+
+                const existingIndustry = industries.find(ind =>
                     ind.name === editingIndustry.name && ind.id !== editingIndustry.id
                 );
-    
+
                 if (existingIndustry) {
-                    // Eğer aynı isimde başka bir endüstri varsa, hata döndür
-                    toast.error('Bu endüstri zaten mevcut.');
+                    toast.error('This industry already exists', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
                     return;
                 }
-    
-                // Endüstriyi güncelle
-                await industryService.updateIndustry(editingIndustry.id, {
+
+                const updatedIndustry = await industryService.updateIndustry(editingIndustry.id, {
                     name: editingIndustry.name
                 });
-    
-                // Endüstrileri yeniden yükle
-                await fetchIndustries();
+
+                // Direkt state'i güncelle
+                setIndustries(prev => prev.map(industry =>
+                    industry.id === editingIndustry.id ? updatedIndustry : industry
+                ));
+
                 setEditingId(null);
                 setEditingIndustry(null);
-                toast.success('Endüstri başarıyla güncellendi');
-            } catch (error) {
-                toast.error('Endüstriyi güncellerken hata oluştu');
-                console.error('Error updating industry:', error);
+
+                toast.success('Industry updated successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } catch (error: any) {
+                const errorMessage = error.response?.data?.message || 'Failed to update industry';
+                toast.error(errorMessage, {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #EF4444',
+                        padding: '12px',
+                        color: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                    },
+                });
             } finally {
-                setLoading(false);
+                setIsProcessing(false);
             }
         }
     };
-    
+
     const handleCancelEdit = () => {
         setEditingId(null);
         setEditingIndustry(null);
     };
 
-    const handleDeleteIndustry = async (id: number) => {
-        try {
-            setLoading(true);
-            await industryService.deleteIndustry(id);
-            await fetchIndustries();
-            toast.success('Industry deleted successfully');
-        } catch (error) {
-            toast.error('Failed to delete industry');
-            console.error('Error deleting industry:', error);
-        } finally {
-            setLoading(false);
+    const handleDeleteConfirm = async () => {
+        if (industryToDelete !== null) {
+            try {
+                setIsProcessing(true);
+                const result = await industryService.deleteIndustry(industryToDelete);
+
+                if (result.success) {
+                    setIndustries(prev => prev.filter(industry => industry.id !== industryToDelete));
+                    setIndustryToDelete(null);
+
+                    toast.success('Industry deleted successfully', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #10B981',
+                            padding: '12px',
+                            color: '#059669',
+                            backgroundColor: '#ECFDF5'
+                        },
+                    });
+                } else if (result.error) {
+                    setDeleteError(result.error.message);
+                    setIndustryToDelete(null);
+                }
+            } finally {
+                setIsProcessing(false);
+            }
         }
     };
 
-    if (loading) {
-        return <div className="flex justify-center items-center min-h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-        </div>;
+    if (isInitialLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+        );
     }
 
     // Rest of the JSX remains the same as in your original component...
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 2000,
+                    style: {
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #10B981',
+                        padding: '16px',
+                        fontSize: '1.1rem',
+                        minWidth: '300px',
+                        maxWidth: '400px',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#059669',
+                            secondary: '#ECFDF5',
+                        },
+                    }
+                }}
+            />
+            <AlertDialog open={industryToDelete !== null}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Industry
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        Are you sure you want to delete this industry?
+                    </AlertDialogDescription>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={handleDeleteConfirm}
+                            disabled={isProcessing}
+                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                        >
+                            {isProcessing ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin mr-2 h-4 w-4 border-b-2 border-white"></div>
+                                    <span>Deleting...</span>
+                                </div>
+                            ) : (
+                                'Delete'
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setIndustryToDelete(null)}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            disabled={isProcessing}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Error Modal */}
+            <AlertDialog open={!!deleteError}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Failed
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        {deleteError}
+                    </AlertDialogDescription>
+                    <button
+                        onClick={() => setDeleteError(null)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                    >
+                        Close
+                    </button>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="max-w-4xl mx-auto">
                 <Card className="bg-white/90 backdrop-blur-sm">
                     <CardHeader>
@@ -131,11 +296,20 @@ const AddIndustry = () => {
                             />
                             <button
                                 onClick={handleAddIndustry}
-                                disabled={!newIndustry.name.trim()}
+                                disabled={!newIndustry.name.trim() || isProcessing}
                                 className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                <Plus size={20} />
-                                Add New Industry
+                                {isProcessing ? (
+                                    <div className="flex items-center">
+                                        <div className="animate-spin mr-2 h-4 w-4 border-b-2 border-white"></div>
+                                        <span>Adding...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Plus size={20} />
+                                        Add New Industry
+                                    </>
+                                )}
                             </button>
                         </div>
 
@@ -144,7 +318,6 @@ const AddIndustry = () => {
                             {industries.map(industry => (
                                 <div key={industry.id} className="p-4 border border-gray-200 rounded-lg">
                                     {editingId === industry.id ? (
-                                        // Editing Mode
                                         <div className="space-y-4">
                                             <input
                                                 type="text"
@@ -154,26 +327,37 @@ const AddIndustry = () => {
                                                     name: e.target.value
                                                 })}
                                                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
+                                                disabled={isProcessing}
                                             />
                                             <div className="flex gap-2 justify-end">
                                                 <button
                                                     onClick={handleCancelEdit}
-                                                    className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2 text-black"
+                                                    className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition flex items-center gap-2"
+                                                    disabled={isProcessing}
                                                 >
                                                     <X size={20} />
                                                     Cancel
                                                 </button>
                                                 <button
                                                     onClick={handleSaveEdit}
-                                                    className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition flex items-center gap-2 text-black"
+                                                    className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition flex items-center gap-2"
+                                                    disabled={isProcessing}
                                                 >
-                                                    <Check size={20} />
-                                                    Save Changes
+                                                    {isProcessing ? (
+                                                        <div className="flex items-center">
+                                                            <div className="animate-spin mr-2 h-4 w-4 border-b-2 border-white"></div>
+                                                            <span>Saving...</span>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <Check size={20} />
+                                                            Save Changes
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        // Display Mode
                                         <div className="flex items-start justify-between">
                                             <div>
                                                 <h3 className="text-lg font-semibold text-black">{industry.name}</h3>
@@ -182,14 +366,16 @@ const AddIndustry = () => {
                                                 <button
                                                     onClick={() => handleStartEdit(industry)}
                                                     className="p-2 text-yellow-600 hover:text-yellow-700 transition"
+                                                    disabled={isProcessing}
                                                 >
                                                     <Pencil size={20} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDeleteIndustry(industry.id)}
+                                                    onClick={() => setIndustryToDelete(industry.id)} // handleDeleteIndustry yerine modal'ı aç
                                                     className="p-2 text-red-600 hover:text-red-700 transition"
+                                                    disabled={isProcessing}
                                                 >
-                                                    <Trash2 size={20} />
+                                                    <Trash2 size={20}/>
                                                 </button>
                                             </div>
                                         </div>

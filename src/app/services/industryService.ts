@@ -1,11 +1,19 @@
-    // src/services/industryService.ts
+// services/industryService.ts
 import axiosInstance from "@/utils/axiosInstance";
-
 import API_URL from '../../config/apiConfig';
 
 export interface Industry {
     id: number;
     name: string;
+}
+
+
+interface DeleteResponse {
+    success: boolean;
+    error?: {
+        type: string;
+        message: string;
+    };
 }
 
 export const industryService = {
@@ -24,7 +32,38 @@ export const industryService = {
         return response.data;
     },
 
-    deleteIndustry: async (id: number): Promise<void> => {
-        await axiosInstance.delete(`${API_URL.industries}/${id}`);
+    deleteIndustry: async (id: number): Promise<DeleteResponse> => {
+        try {
+            await axiosInstance.delete(`${API_URL.industries}/${id}`);
+            return { success: true };
+        } catch (error: any) {
+            console.log('API Error:', {
+                error: error,
+                response: error.response,
+                data: error.response?.data
+            });
+
+            // Foreign key constraint veya diğer ilişkisel hatalar için
+            if (error.response?.status === 500 ||
+                error.response?.data?.toString().includes('foreign key constraint') ||
+                error.response?.data?.toString().includes('industry_match')) {
+                return {
+                    success: false,
+                    error: {
+                        type: 'REFERENCE_ERROR',
+                        message: 'This industry cannot be deleted because it is associated with a survey registered in the system.'
+                    }
+                };
+            }
+
+            // Diğer hatalar için
+            return {
+                success: false,
+                error: {
+                    type: 'GENERAL_ERROR',
+                    message: 'An error occurred while deleting the industry'
+                }
+            };
+        }
     }
 };

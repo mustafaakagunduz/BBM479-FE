@@ -6,7 +6,7 @@ import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { surveyService } from '../services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '../types/index';
-import {Alert, AlertDescription, AlertTitle} from "@/app/components/alert/Alert";
+import { toast, Toaster } from 'react-hot-toast';
 
 
 interface QuestionForm {
@@ -30,11 +30,7 @@ const SurveyBuilder: React.FC = () => {
     const [activeStep, setActiveStep] = useState<number>(0);
     const [selectedProfessions, setSelectedProfessions] = useState<number[]>([]);
 // SurveyBuilder component'inin başındaki state tanımlamalarına:
-    const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-    const [showErrorDialog, setShowErrorDialog] = useState(false);
-    const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-    const [showErrorAlert, setShowErrorAlert] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+
 
     useEffect(() => {
         const loadProfessions = async () => {
@@ -52,7 +48,7 @@ const SurveyBuilder: React.FC = () => {
         };
 
         loadProfessions();
-    }, [selectedIndustryId]);   
+    }, [selectedIndustryId]);
     // Load initial data
     useEffect(() => {
         const loadIndustries = async () => {
@@ -128,11 +124,33 @@ const SurveyBuilder: React.FC = () => {
 
             const response = await surveyService.createSurvey(surveyData);
             console.log('Survey created:', response.data);
-            setShowSuccessDialog(true);
+
+            toast.success('Survey created successfully', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #10B981',
+                    padding: '12px',
+                    color: '#059669',
+                    backgroundColor: '#ECFDF5'
+                },
+            });
+
+            // Başarılı olunca ana sayfaya yönlendir
+            setTimeout(() => {
+                window.location.href = '/homepageadmin';
+            }, 2000);
 
         } catch (error) {
             console.error('Failed to submit survey:', error);
-            setShowErrorDialog(true);
+            toast.error('Failed to create survey. Please try again.', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #EF4444',
+                    padding: '12px',
+                    color: '#DC2626',
+                    backgroundColor: '#FEE2E2'
+                },
+            });
         } finally {
             setLoading(false);
         }
@@ -159,10 +177,10 @@ const SurveyBuilder: React.FC = () => {
     };
 
 
-    
+
         // Initialize a new question
-       
-    
+
+
         const steps = [
             {
                 title: "Survey Details",
@@ -173,6 +191,7 @@ const SurveyBuilder: React.FC = () => {
                                 Survey Details
                             </CardTitle>
                         </CardHeader>
+                        {/* Survey Details Card içindeki CardContent'te değişiklik yapıyoruz */}
                         <CardContent className="space-y-6">
                             {/* Survey Title */}
                             <div className="space-y-2">
@@ -185,7 +204,7 @@ const SurveyBuilder: React.FC = () => {
                                     placeholder="Enter survey title..."
                                 />
                             </div>
-    
+
                             {/* Industry Selection */}
                             <div className="space-y-4">
                                 <label className="text-lg font-medium text-gray-700">Select Industry</label>
@@ -202,53 +221,69 @@ const SurveyBuilder: React.FC = () => {
                                     ))}
                                 </select>
                             </div>
-    
-                            {/* Skills Selection */}
-                            {selectedIndustryId && (
-                                <div className="space-y-4">
-                                    <label className="text-lg font-medium text-gray-700">Select Skills to Measure</label>
-                                    <select
-                                        value={""}
-                                        onChange={(e) => {
-                                            const skillId = Number(e.target.value);
-                                            if (!selectedSkills.includes(skillId)) {
-                                                setSelectedSkills([...selectedSkills, skillId]);
-                                            }
-                                        }}
-                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-black"
-                                    >
-                                        <option value="">Select a skill</option>
-                                        {skills
-                                            .filter(skill => !selectedSkills.includes(skill.id))
-                                            .map((skill) => (
-                                                <option key={skill.id} value={skill.id}>
-                                                    {skill.name}
-                                                </option>
-                                            ))}
-                                    </select>
-    
-                                    {/* Selected Skills Display */}
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        {selectedSkills.map((skillId) => {
-                                            const skill = skills.find(s => s.id === skillId);
-                                            return (
-                                                <div
-                                                    key={skillId}
-                                                    className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg"
+
+                            {/* Skills Selection - Artık her zaman görünür */}
+                            <div className="space-y-4">
+                                <label className="text-lg font-medium text-gray-700">Select Skills to Measure</label>
+                                <select
+                                    value=""
+                                    onChange={(e) => {
+                                        const skillId = Number(e.target.value);
+                                        if (!selectedSkills.includes(skillId)) {
+                                            setSelectedSkills([...selectedSkills, skillId]);
+                                        }
+                                    }}
+                                    className={`w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-black ${
+                                        !selectedIndustryId ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
+                                    disabled={!selectedIndustryId}
+                                >
+                                    <option value="">
+                                        {!selectedIndustryId
+                                            ? "Please select an industry first"
+                                            : "Select a skill"
+                                        }
+                                    </option>
+                                    {skills
+                                        .filter(skill => !selectedSkills.includes(skill.id))
+                                        .map((skill) => (
+                                            <option key={skill.id} value={skill.id}>
+                                                {skill.name}
+                                            </option>
+                                        ))}
+                                </select>
+
+                                {/* Selected Skills Display */}
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    {selectedSkills.map((skillId) => {
+                                        const skill = skills.find(s => s.id === skillId);
+                                        return (
+                                            <div
+                                                key={skillId}
+                                                className={`flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg ${
+                                                    !selectedIndustryId ? 'opacity-50' : ''
+                                                }`}
+                                            >
+                                                <span>{skill?.name}</span>
+                                                <button
+                                                    onClick={() => setSelectedSkills(selectedSkills.filter(id => id !== skillId))}
+                                                    className="p-1 hover:bg-purple-200 rounded-full"
+                                                    disabled={!selectedIndustryId}
                                                 >
-                                                    <span>{skill?.name}</span>
-                                                    <button
-                                                        onClick={() => setSelectedSkills(selectedSkills.filter(id => id !== skillId))}
-                                                        className="p-1 hover:bg-purple-200 rounded-full"
-                                                    >
-                                                        <X size={16}/>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                    <X size={16}/>
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            )}
+
+                                {/* Yönlendirme mesajı ekleyelim */}
+                                {!selectedIndustryId && (
+                                    <p className="text-sm text-gray-500 italic">
+                                        Please select an industry to enable skill selection
+                                    </p>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
                 ),
@@ -271,13 +306,13 @@ const SurveyBuilder: React.FC = () => {
                                     </p>
                                 </div>
                             )}
-    
+
                             {/* Professions Selection */}
                             <div className="space-y-4">
                                 <label className="text-lg font-medium text-gray-700">
                                     Available Professions
                                 </label>
-    
+
                                 {/* Professions Dropdown */}
                                 <select
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
@@ -294,7 +329,7 @@ const SurveyBuilder: React.FC = () => {
                                             </option>
                                         ))}
                                 </select>
-    
+
                                 {/* Selected Professions Display */}
                                 <div className="mt-4 space-y-2">
                                     <label className="text-lg font-medium text-gray-700">
@@ -320,7 +355,7 @@ const SurveyBuilder: React.FC = () => {
                                         })}
                                     </div>
                                 </div>
-    
+
                                 {/* Validation Message */}
                                 {selectedProfessions.length === 0 && (
                                     <p className="text-amber-600 text-sm">
@@ -369,7 +404,7 @@ const SurveyBuilder: React.FC = () => {
                                             rows={3}
                                         />
                                     </div>
-    
+
                                     {/* Skill Selection */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Related Skill</label>
@@ -384,7 +419,16 @@ const SurveyBuilder: React.FC = () => {
                                         >
                                             <option value="">Select a skill</option>
                                             {skills
-                                                .filter(skill => selectedSkills.includes(skill.id))
+                                                .filter(skill =>
+                                                    // Skill seçili skillerde olmalı VE
+                                                    selectedSkills.includes(skill.id) &&
+                                                    // Bu skill ya mevcut soru için seçili olmalı YA DA
+                                                    // başka hiçbir soruda seçili olmamalı
+                                                    (skill.id === question.selectedSkill ||
+                                                        !questions.some(
+                                                            (q, idx) => idx !== qIndex && q.selectedSkill === skill.id
+                                                        ))
+                                                )
                                                 .map((skill) => (
                                                     <option key={skill.id} value={skill.id}>
                                                         {skill.name}
@@ -392,7 +436,7 @@ const SurveyBuilder: React.FC = () => {
                                                 ))}
                                         </select>
                                     </div>
-    
+
                                     {/* Options */}
                                     <div className="space-y-4">
                                         <label className="text-sm font-medium text-gray-700">Options (1-5 Level)</label>
@@ -420,7 +464,7 @@ const SurveyBuilder: React.FC = () => {
                                 </CardContent>
                             </Card>
                         ))}
-    
+
                         {/* Add Question Button */}
                         <button
                             onClick={() => setQuestions([...questions, createNewQuestion()])}
@@ -433,48 +477,37 @@ const SurveyBuilder: React.FC = () => {
                 ),
             }
         ];
-    
+
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
-                    {showSuccessDialog && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                            <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
-                                <h2 className="text-2xl font-bold text-green-600 mb-4">Success!</h2>
-                                <p className="text-gray-600 mb-6">Survey has been successfully created!</p>
-                                <div className="flex justify-end">
-                                    <Link href="/homepageadmin">
-                                        <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                                            Return to Admin Panel
-                                        </button>
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {showErrorDialog && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                            <div className="bg-white rounded-lg p-8 max-w-md w-full m-4">
-                                <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-                                <p className="text-gray-600 mb-6">Failed to create survey. Please try again.</p>
-                                <div className="flex justify-end">
-                                    <button
-                                        onClick={() => setShowErrorDialog(false)}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                    >
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    <Toaster
+                        position="top-right"
+                        toastOptions={{
+                            duration: 2000,
+                            style: {
+                                background: '#ECFDF5',
+                                color: '#059669',
+                                border: '1px solid #10B981',
+                                padding: '16px',
+                                fontSize: '1.1rem',
+                                minWidth: '300px',
+                                maxWidth: '400px',
+                            },
+                            success: {
+                                iconTheme: {
+                                    primary: '#059669',
+                                    secondary: '#ECFDF5',
+                                },
+                            }
+                        }}
+                    />
 
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                             Survey Builder
                         </h1>
-                        
+
                         {/* Steps Navigation */}
                         <div className="mt-8 flex justify-center gap-4">
                             {steps.map((step, index) => (
@@ -493,12 +526,12 @@ const SurveyBuilder: React.FC = () => {
                             ))}
                         </div>
                     </div>
-    
+
                     {/* Active Step Content */}
                     <div className="transition-all duration-300 ease-in-out">
                         {steps[activeStep].content}
                     </div>
-    
+
                     {/* Navigation Buttons */}
                     <div className="mt-8 flex justify-between">
                         <button

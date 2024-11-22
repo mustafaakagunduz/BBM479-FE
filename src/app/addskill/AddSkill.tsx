@@ -2,15 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Plus, Check, X, ChevronDown } from 'lucide-react';
 import { skillService, Skill } from '../services/skillService';
 import { industryService } from '../services/industryService';
-import { toast } from 'react-hot-toast';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import {toast, Toaster} from 'react-hot-toast';
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogTitle
+} from "@/app/components/ui/alert-dialog";
 
 interface Industry {
     id: number;
     name: string;
 }
 
+
+
+interface CreateSkillDTO {
+    name: string;
+    industryId: number;  // Backend'de Long
+}
+
 const AddSkill: React.FC = () => {
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const [skills, setSkills] = useState<Skill[]>([]);
     const [industries, setIndustries] = useState<Industry[]>([]);
     const [newSkill, setNewSkill] = useState<string>('');
@@ -27,6 +40,30 @@ const AddSkill: React.FC = () => {
         industryId: number;
         isEditingIndustry: boolean;
     } | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false); // loading yerine isProcessing kullanalım
+    const [isInitialLoading, setIsInitialLoading] = useState(true); // sadece ilk yükleme için
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                setIsInitialLoading(true);
+                const [industriesData, skillsData] = await Promise.all([
+                    industryService.getAllIndustries(),
+                    skillService.getAllSkills()
+                ]);
+                setIndustries(industriesData);
+                setSkills(skillsData);
+            } catch (error) {
+                toast.error('Failed to load initial data');
+                console.error('Error loading initial data:', error);
+            } finally {
+                setIsInitialLoading(false);
+            }
+        };
+
+        loadInitialData();
+    }, []);
+
 
     const openDeleteModal = (skillId: number) => {
         setSkillToDelete(skillId);
@@ -73,26 +110,7 @@ const AddSkill: React.FC = () => {
         }
     };
 
-    const handleAddSkill = async () => {
-        if (newSkill.trim() && selectedIndustry) {
-            try {
-                setLoading(true);
-                await skillService.createSkill({
-                    name: newSkill.trim(),
-                    industryId: selectedIndustry.id
-                });
-                await fetchSkills();
-                setNewSkill('');
-                setSelectedIndustry(null);
-                toast.success('Skill added successfully');
-            } catch (error) {
-                toast.error('Failed to add skill');
-                console.error('Error adding skill:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
+
 
     const handleEditClick = (skill: Skill) => {
         setEditingSkill({
@@ -107,35 +125,107 @@ const AddSkill: React.FC = () => {
         setEditingSkill(null);
     };
 
-    const handleUpdateSkill = async (skillId: number, newName: string, newIndustryId: number) => {
-        try {
-            setLoading(true);
-            await skillService.updateSkill(skillId, {
-                name: newName.trim(),
-                industryId: newIndustryId
-            });
-            await fetchSkills();
-            setEditingSkill(null);
-            toast.success('Skill updated successfully');
-        } catch (error) {
-            toast.error('Failed to update skill');
-            console.error('Error updating skill:', error);
-        } finally {
-            setLoading(false);
+    const handleAddSkill = async () => {
+        if (newSkill.trim() && selectedIndustry) {
+            try {
+                setIsProcessing(true); // sadece butonu disable etmek için kullanacağız
+                const createDTO: CreateSkillDTO = {
+                    name: newSkill.trim(),
+                    industryId: selectedIndustry.id
+                };
+
+                const createdSkill = await skillService.createSkill(createDTO);
+                setSkills(prevSkills => [...prevSkills, createdSkill]);
+                setNewSkill('');
+                setSelectedIndustry(null);
+                toast.success('Skill added successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } catch (error: any) {
+                const errorMessage = error.response?.data?.message || 'Failed to add skill';
+                toast.error(errorMessage, {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #EF4444',
+                        padding: '12px',
+                        color: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                    },
+                });
+            } finally {
+                setIsProcessing(false);
+            }
         }
     };
 
+    // Benzer şekilde diğer işlem fonksiyonlarını da güncelleyin
+    const handleUpdateSkill = async (skillId: number, newName: string, newIndustryId: number) => {
+        try {
+            setIsProcessing(true);
+            const updateDTO: CreateSkillDTO = {
+                name: newName.trim(),
+                industryId: newIndustryId
+            };
+
+            const updatedSkill = await skillService.updateSkill(skillId, updateDTO);
+            setSkills(prevSkills => prevSkills.map(skill =>
+                skill.id === skillId ? updatedSkill : skill
+            ));
+            setEditingSkill(null);
+
+            toast.success('Skill updated successfully', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #10B981',
+                    padding: '12px',
+                    color: '#059669',
+                    backgroundColor: '#ECFDF5'
+                },
+            });
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to update skill';
+            toast.error(errorMessage, {
+                duration: 2000,
+                style: {
+                    border: '1px solid #EF4444',
+                    padding: '12px',
+                    color: '#DC2626',
+                    backgroundColor: '#FEE2E2'
+                },
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
     const handleDeleteSkill = async (skillId: number) => {
         try {
-            setLoading(true);
-            await skillService.deleteSkill(skillId);
-            await fetchSkills();
-            toast.success('Skill deleted successfully');
-        } catch (error) {
-            toast.error('Failed to delete skill');
-            console.error('Error deleting skill:', error);
+            setIsProcessing(true);
+            const result = await skillService.deleteSkill(skillId);
+
+            if (result.success) {
+                setSkills(prevSkills => prevSkills.filter(skill => skill.id !== skillId));
+                closeDeleteModal();
+                toast.success('Skill deleted successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } else if (result.error) {
+                setDeleteError(result.error.message);
+                closeDeleteModal();
+            }
         } finally {
-            setLoading(false);
+            setIsProcessing(false);
         }
     };
 
@@ -148,7 +238,7 @@ const AddSkill: React.FC = () => {
         ? skills.filter(skill => skill.industryId === filterIndustry.id)
         : skills;
 
-    if (loading) {
+    if (isInitialLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -158,6 +248,77 @@ const AddSkill: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 2000,
+                    style: {
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #10B981',
+                        padding: '16px',
+                        fontSize: '1.1rem',
+                        minWidth: '300px',
+                        maxWidth: '400px',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#059669',
+                            secondary: '#ECFDF5',
+                        },
+                    }
+                }}
+            />
+            <AlertDialog open={deleteModalOpen}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Skill
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        Are you sure you want to delete this skill?
+                    </AlertDialogDescription>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={confirmDelete}
+                            disabled={isProcessing}
+                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2"
+                        >
+                            {isProcessing ? (
+                                <div className="flex items-center">
+                                    <div className="animate-spin mr-2 h-4 w-4 border-b-2 border-white"></div>
+                                    <span>Deleting...</span>
+                                </div>
+                            ) : (
+                                'Delete'
+                            )}
+                        </button>
+                        <button
+                            onClick={closeDeleteModal}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            disabled={isProcessing}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+            {/* Error Modal - Bunu ekleyin */}
+            <AlertDialog open={!!deleteError}>
+                <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
+                    <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
+                        Delete Failed
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-center text-lg text-purple-500 mb-6">
+                        {deleteError}
+                    </AlertDialogDescription>
+                    <button
+                        onClick={() => setDeleteError(null)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                    >
+                        Close
+                    </button>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Add Skill Card */}
                 <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 space-y-4 relative z-30">
@@ -355,41 +516,7 @@ const AddSkill: React.FC = () => {
 
 
 
-            <Dialog
-                open={deleteModalOpen}
-                onClose={closeDeleteModal}
-                aria-labelledby="delete-dialog-title"
-            >
-                <DialogTitle id="delete-dialog-title">
-                    Delete Confirmation
-                </DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete this skill?
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        onClick={closeDeleteModal}
-                        sx={{
-                            backgroundColor: '#9333EA',
-                            color: 'white',
-                            '&:hover': {backgroundColor: '#7E22CE'}
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={confirmDelete}
-                        sx={{
-                            backgroundColor: '#9333EA',
-                            color: 'white',
-                            '&:hover': {backgroundColor: '#7E22CE'}
-                        }}
-                        autoFocus
-                    >
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+
         </div>
 )
     ;

@@ -398,8 +398,29 @@ const AddProfession = () => {
                 setProfessions(prevProfessions => [...prevProfessions, formattedProfession]);
                 setIsAddingNew(false);
                 resetNewProfession();
+
+                // Başarılı mesajı eklendi
+                toast.success('Profession added successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
             } catch (error) {
                 console.error('Error saving profession:', error);
+                // Hata durumunda hata mesajı
+                toast.error('Failed to add profession', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #EF4444',
+                        padding: '12px',
+                        color: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                    },
+                });
             }
         }
     };

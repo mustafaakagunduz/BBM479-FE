@@ -18,6 +18,7 @@ import {
     Card,
     CardContent
 } from '@mui/material';
+import { toast, Toaster } from 'react-hot-toast';
 
 interface User {
     id: number;
@@ -31,11 +32,7 @@ interface User {
 const AuthorizationSystem = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [snackbar, setSnackbar] = useState({
-        open: false,
-        message: '',
-        severity: 'success' as 'success' | 'error'
-    });
+
 
     useEffect(() => {
         fetchUsers();
@@ -44,17 +41,19 @@ const AuthorizationSystem = () => {
     const fetchUsers = async () => {
         try {
             const response = await fetch('http://localhost:8081/api/users');
-            console.log('Response status:', response.status); // HTTP status'u görelim
             if (!response.ok) throw new Error('Failed to fetch users');
             const data = await response.json();
-            console.log('Fetched data:', data); // Gelen datayı görelim
             setUsers(data);
         } catch (error) {
-            console.error('Error details:', error); // Detaylı hata görelim
-            setSnackbar({
-                open: true,
-                message: 'Failed to load users',
-                severity: 'error'
+            console.error('Error details:', error);
+            toast.error('Failed to load users', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #EF4444',
+                    padding: '12px',
+                    color: '#DC2626',
+                    backgroundColor: '#FEE2E2'
+                },
             });
         } finally {
             setLoading(false);
@@ -68,7 +67,6 @@ const AuthorizationSystem = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                // RoleUpdateRequest formatında gönderiyoruz
                 body: JSON.stringify({
                     roleName: newRole
                 })
@@ -76,25 +74,31 @@ const AuthorizationSystem = () => {
 
             if (!response.ok) throw new Error('Failed to update role');
 
-            await fetchUsers(); // Listeyi yenile
-            setSnackbar({
-                open: true,
-                message: 'User role updated successfully',
-                severity: 'success'
+            await fetchUsers();
+            toast.success('User role updated successfully', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #10B981',
+                    padding: '12px',
+                    color: '#059669',
+                    backgroundColor: '#ECFDF5'
+                },
             });
         } catch (error) {
             console.error('Error updating role:', error);
-            setSnackbar({
-                open: true,
-                message: 'Failed to update user role',
-                severity: 'error'
+            toast.error('Failed to update user role', {
+                duration: 2000,
+                style: {
+                    border: '1px solid #EF4444',
+                    padding: '12px',
+                    color: '#DC2626',
+                    backgroundColor: '#FEE2E2'
+                },
             });
         }
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbar({ ...snackbar, open: false });
-    };
+
 
     if (loading) {
         return (
@@ -106,6 +110,27 @@ const AuthorizationSystem = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 2000,
+                    style: {
+                        background: '#ECFDF5',
+                        color: '#059669',
+                        border: '1px solid #10B981',
+                        padding: '16px',
+                        fontSize: '1.1rem',
+                        minWidth: '300px',
+                        maxWidth: '400px',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#059669',
+                            secondary: '#ECFDF5',
+                        },
+                    }
+                }}
+            />
 
             <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
                 <Card elevation={3}>
@@ -156,21 +181,6 @@ const AuthorizationSystem = () => {
                         </TableContainer>
                     </CardContent>
                 </Card>
-
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
-                    <Alert
-                        onClose={handleCloseSnackbar}
-                        severity={snackbar.severity}
-                        variant="filled"
-                    >
-                        {snackbar.message}
-                    </Alert>
-                </Snackbar>
             </div>
         </div>
     );
