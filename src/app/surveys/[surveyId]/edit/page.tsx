@@ -1,4 +1,4 @@
-// surveys/[surveyId]/edit/page.tsx
+// surveys/[surveyId]/edit/SpiderChart.tsx
 'use client';
 
 import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";

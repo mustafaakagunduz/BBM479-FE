@@ -1,4 +1,4 @@
-// app/addindustry/page.tsx
+// app/addindustry/SpiderChart.tsx
 "use client";
 import AddIndustry from "@/app/addindustry/AddIndustry";
 import AdminGuard from "@/app/components/guards/AdminGuard";

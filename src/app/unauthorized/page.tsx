@@ -1,4 +1,4 @@
-// app/unauthorized/page.tsx
+// app/unauthorized/SpiderChart.tsx
 'use client';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/surveys/hooks/useAuth';

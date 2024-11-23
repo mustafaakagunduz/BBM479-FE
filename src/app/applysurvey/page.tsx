@@ -1,4 +1,4 @@
-// app/applysurvey/page.tsx
+// app/applysurvey/SpiderChart.tsx
 'use client';
 import React from "react";
 import {UserSurveyList} from "@/app/applysurvey/UserSurveyList";

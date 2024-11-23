@@ -1,4 +1,4 @@
-// app/admin/industries/page.tsx
+// app/admin/industries/SpiderChart.tsx
 "use client"
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";

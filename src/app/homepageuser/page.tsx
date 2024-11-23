@@ -1,4 +1,4 @@
-// app/homepageuser/page.tsx
+// app/homepageuser/SpiderChart.tsx
 'use client';
 import React from "react";
 import WelcomeCard from "@/app/homepageuser/WelcomeCard";

@@ -1,4 +1,4 @@
-// app/admin/page.tsx
+// app/admin/SpiderChart.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 
 export default function AdminPage() {

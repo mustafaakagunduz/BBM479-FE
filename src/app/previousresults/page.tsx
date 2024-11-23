@@ -1,4 +1,4 @@
-// app/previousresults/page.tsx
+// app/previousresults/SpiderChart.tsx
 'use client';
 
 import React, { useEffect, useState, useCallback } from "react";
