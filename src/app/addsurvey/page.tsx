@@ -8,7 +8,6 @@ function SurveyBuilderPage() {
     return (
         <>
 
-            <NavbarAdmin></NavbarAdmin>
             <SurveyBuilder></SurveyBuilder>
 
 

@@ -7,7 +7,7 @@ import { SurveyList } from "./components/SurveyList";  // Import yolunu düzeltt
 function SurveyPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-            <NavbarAdmin />
+
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-8">
                     Available Surveys
