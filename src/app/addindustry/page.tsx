@@ -1,18 +1,13 @@
-"use client"
-
-
-
-
+// app/addindustry/page.tsx
+"use client";
 import AddIndustry from "@/app/addindustry/AddIndustry";
-import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
+import AdminGuard from "@/app/components/guards/AdminGuard";
 
 function AddIndustryPage() {
     return (
-        <>
-
-            <AddIndustry></AddIndustry>
-
-        </>
+        <AdminGuard>
+            <AddIndustry />
+        </AdminGuard>
     );
 }
 

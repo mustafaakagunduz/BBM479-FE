@@ -1,8 +1,9 @@
 "use client"
 
-import { Card, CardHeader, CardTitle } from '../ui/card';
+import {Card, CardContent, CardHeader, CardTitle} from '../ui/card';
 import { PenTool, Briefcase, Building2, FileSpreadsheet } from 'lucide-react';
 import Link from 'next/link';
+import WelcomeCard from "@/app/homepageuser/WelcomeCard";
 
 function AdminPanel() {
     const adminCards = [
@@ -38,45 +39,64 @@ function AdminPanel() {
         }
     ];
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto"> {/* max-w-6xl'den max-w-7xl'e değiştirildi */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                        Admin Control Panel
-                    </h1>
-                    <p className="mt-4 text-gray-600">
-                        Manage your system components and configurations
-                    </p>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 justify-items-center"> {/* Grid ve gap değerleri güncellendi */}
-                    {adminCards.map((card, index) => (
-                        <Link href={card.href} key={index}
-                              className="relative group hover:z-10 transition-all duration-300"> {/* z-0'ı kaldırdık */}
-                            <Card
-                                className="h-72 w-64 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
-                                {/* Genişlik w-72'den w-64'e düşürüldü, hover efekti değiştirildi */}
-                                <div className="p-6 flex flex-col items-center text-center h-full">
-                                    <div className="w-12 h-12 mb-4">
-                                        {card.icon}
+
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-12">
+                        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            Admin Control Panel
+                        </h1>
+
+                    </div>
+
+                    <Card className="mb-8 w-full">
+
+                        <CardContent className="space-y-4 text-center">
+                            <p className="text-lg text-purple-600 font-bold">In this panel you can:</p> {/* font-bold eklendi */}
+                            <ul className="space-y-4 list-none p-0">
+                                {adminCards.map((card, index) => (
+                                    <li key={index}>
+                                        <Link
+                                            href={card.href}
+                                            className="text-purple-600 hover:text-purple-800 transition-colors underline decoration-purple-300 hover:decoration-purple-800"
+                                        >
+                                            <span className="font-medium cursor-pointer">{card.description}</span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="mt-4 text-purple-600 font-bold">Select a section from the menu below to get started.</p> {/* font-bold eklendi */}
+                        </CardContent>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8 justify-items-center">
+                        {adminCards.map((card, index) => (
+                            <Link href={card.href} key={index}
+                                  className="relative group hover:z-10 transition-all duration-300">
+                                <Card
+                                    className="h-72 w-64 transform transition-all duration-300 hover:shadow-xl hover:-translate-y-2 cursor-pointer bg-white/90 backdrop-blur-sm border-purple-100">
+                                    <div className="p-6 flex flex-col items-center text-center h-full">
+                                        <div className="w-12 h-12 mb-4">
+                                            {card.icon}
+                                        </div>
+                                        <CardHeader className="p-0">
+                                            <CardTitle className="text-xl font-semibold text-purple-700">
+                                                {card.title}
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <p className="mt-4 text-gray-600 text-sm">
+                                            {card.description}
+                                        </p>
                                     </div>
-                                    <CardHeader className="p-0">
-                                        <CardTitle className="text-xl font-semibold text-purple-700">
-                                            {card.title}
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <p className="mt-4 text-gray-600 text-sm">
-                                        {card.description}
-                                    </p>
-                                </div>
-                            </Card>
-                        </Link>
-                    ))}
+                                </Card>
+                            </Link>
+                        ))}
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-}
+        );
+    }
 
-export default AdminPanel;
+    export default AdminPanel;

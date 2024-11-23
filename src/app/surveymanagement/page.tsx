@@ -5,6 +5,7 @@ import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { FilePlus, FileEdit } from 'lucide-react';
 import Link from 'next/link';
+import AdminGuard from "@/app/components/guards/AdminGuard";
 
 const SurveyManagement = () => {
     const surveyCards = [
@@ -24,6 +25,7 @@ const SurveyManagement = () => {
 
     return (
         <div>
+            <AdminGuard>
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-12">
@@ -56,6 +58,7 @@ const SurveyManagement = () => {
                     </div>
                 </div>
             </div>
+            </AdminGuard>
         </div>
     );
 };

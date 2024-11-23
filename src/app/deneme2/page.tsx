@@ -7,7 +7,7 @@ export default function AdminPage() {
             <CardHeader>
                 <CardTitle className="text-2xl mb-4">Admin Paneline Hoş Geldiniz</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 mt-8" >
                 <p className="text-lg">Bu panelde yapabilecekleriniz:</p>
                 <ul className="space-y-2 list-disc pl-6">
                     <li><span className="font-medium">Endüstriler:</span> Sistem için yeni endüstriler ekleyebilir ve mevcut endüstrileri yönetebilirsiniz.</li>
