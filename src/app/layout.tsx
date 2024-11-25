@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Inter } from 'next/font/google';
-import RootLayoutClient from './RootLayoutClient';
+import RootLayoutClient from '@/app/RootLayoutClient';
 
 // Font tanımlamaları
 const geistSans = localFont({
