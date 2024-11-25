@@ -55,7 +55,8 @@ const SurveySpiderChart: React.FC<SurveyResultProps> = ({ professionMatches = []
             {
                 label: 'Match Percentage',
                 data: uniqueProfessions.map(match => match.matchPercentage),
-                backgroundColor: 'transparent',
+
+                backgroundColor: 'rgba(139, 92, 246, 0.2)',
                 borderColor: 'rgba(139, 92, 246, 1)',
                 borderWidth: 2,
                 pointBackgroundColor: 'rgba(139, 92, 246, 1)',
