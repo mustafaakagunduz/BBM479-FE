@@ -55,7 +55,7 @@ const ResultDetails = ({ params }: PageProps) => {
                 setLoading(true);
                 // Kullanıcı bilgilerini al
                 const userResponse = await axios.get(`http://localhost:8081/api/users/1`);
-                setUsername(userResponse.data.username);
+                setUsername(userResponse.data.name);
 
                 // Sonuçları al
                 const allResultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/1`);
