@@ -6,17 +6,8 @@ import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import NavbarUser from "@/app/components/navbars/NavbarUser";
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer
-} from 'recharts';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
+import Navbar from "@/app/components/navbar/Navbar";
 
 interface ProfessionMatch {
     id: number;
@@ -77,7 +68,9 @@ export default function ResultDetails({ params }: PageProps) {
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <NavbarUser />
+
+                <Navbar></Navbar>
+
                 <div className="container mx-auto p-6">
                     <div className="flex justify-center items-center h-64">
                         <div className="text-lg">Loading result details...</div>

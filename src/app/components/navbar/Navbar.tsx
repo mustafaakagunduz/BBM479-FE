@@ -11,7 +11,7 @@ import {
     Shield,
     ChevronRight,
     PlusCircle,
-    Edit, LayoutDashboard
+    Edit, LayoutDashboard,ClipboardCheck
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -24,6 +24,7 @@ const Navbar = () => {
     const navigationLinks = {
         ADMIN: [
             { href: '/homepageadmin', label: 'Admin Dashboard', icon: LayoutDashboard },
+            { href: '/user-results', label: 'Check Survey Results', icon: ClipboardCheck },
             { href: '/addindustry', label: 'Add & Edit Industry', icon: Building2 },
             { href: '/addskill', label: 'Add & Edit Skill', icon: Lightbulb },
             { href: '/addprofession', label: 'Add & Edit Profession', icon: UserCircle },
@@ -37,6 +38,7 @@ const Navbar = () => {
                 ]
             },
             { href: '/authorization-system', label: 'Authorization System', icon: Shield }
+
         ],
         USER: [
             { href: '/previousresults', label: 'My Previous Results' },
@@ -87,92 +89,102 @@ const Navbar = () => {
                             </span>
                         </Link>
 
-                        {/* Admin Panel Dropdown */}
+                        {/* Admin Panel ve User Results Butonları */}
                         {user?.role.name === 'ADMIN' && (
-                            <div className="relative" ref={dropdownRef}>
-                                <button
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className={`px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30 flex items-center ${
-                                        isDropdownOpen ? 'bg-purple-400' : ''
-                                    }`}
-                                >
-                                    <span className="mr-2">Admin Panel</span>
-                                    <span className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                                    <ChevronDown className="w-4 h-4" />
-                                </span>
-                                </button>
+                            <div className="flex items-center space-x-4">
+                                <div className="relative" ref={dropdownRef}>
+                                    <button
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className={`px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30 flex items-center ${
+                                            isDropdownOpen ? 'bg-purple-400' : ''
+                                        }`}
+                                    >
+                                        <span className="mr-2">Admin Panel</span>
+                                        <span className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}>
+                                            <ChevronDown className="w-4 h-4" />
+                                        </span>
+                                    </button>
 
-                                {/* Ana Dropdown Menü */}
-                                {isDropdownOpen && (
-                                    <div className="absolute z-50 mt-2 w-64 rounded-lg bg-white shadow-xl border border-purple-100 animate-in slide-in-from-top-2 duration-200">
-                                        {navigationLinks.ADMIN.map((link: any, index) => {
-                                            const Icon = link.icon;
+                                    {/* Ana Dropdown Menü */}
+                                    {isDropdownOpen && (
+                                        <div className="absolute z-50 mt-2 w-64 rounded-lg bg-white shadow-xl border border-purple-100 animate-in slide-in-from-top-2 duration-200">
+                                            {navigationLinks.ADMIN.map((link: any, index) => {
+                                                const Icon = link.icon;
 
-                                            if (link.hasSubmenu) {
-                                                return (
-                                                    <div
-                                                        key={link.label}
-                                                        className="relative group"
-                                                        onMouseEnter={() => setShowSurveySubmenu(true)}
-                                                        onMouseLeave={() => setShowSurveySubmenu(false)}
-                                                    >
-                                                        <div className="px-4 py-3 flex items-center justify-between hover:bg-purple-50 cursor-pointer">
-                                                            <div className="flex items-center space-x-3">
-                                                                <Icon className="w-5 h-5 text-purple-600" />
-                                                                <span>{link.label}</span>
+                                                if (link.hasSubmenu) {
+                                                    return (
+                                                        <div
+                                                            key={link.label}
+                                                            className="relative group"
+                                                            onMouseEnter={() => setShowSurveySubmenu(true)}
+                                                            onMouseLeave={() => setShowSurveySubmenu(false)}
+                                                        >
+
+                                                            <div className="px-4 py-3 flex items-center justify-between hover:bg-purple-50 cursor-pointer">
+                                                                <div className="flex items-center space-x-3">
+                                                                    <Icon className="w-5 h-5 text-purple-600" />
+                                                                    <span>{link.label}</span>
+                                                                </div>
+                                                                <ChevronRight className="w-4 h-4 text-purple-600" />
                                                             </div>
-                                                            <ChevronRight className="w-4 h-4 text-purple-600" />
+
+                                                            {/* Bitişik Alt Menü */}
+                                                            {showSurveySubmenu && (
+                                                                <div className="absolute left-[calc(100%-1px)] top-0 w-64 bg-white rounded-r-lg shadow-xl border border-purple-100 border-l-0 animate-in slide-in-from-left-2 duration-200">
+                                                                    {link.submenuItems.map((subItem: any) => {
+                                                                        const SubIcon = subItem.icon;
+                                                                        return (
+                                                                            <Link
+                                                                                key={subItem.href}
+                                                                                href={subItem.href}
+                                                                                onClick={() => {
+                                                                                    setIsDropdownOpen(false);
+                                                                                    setShowSurveySubmenu(false);
+                                                                                }}
+                                                                            >
+                                                                                <div className="px-4 py-3 flex items-center space-x-3 hover:bg-purple-50 group first:rounded-tr-lg">
+                                                                                    <SubIcon className="w-5 h-5 text-purple-600" />
+                                                                                    <span className="group-hover:translate-x-1 transition-transform duration-200">
+                                                                                        {subItem.label}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </Link>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
                                                         </div>
+                                                    );
+                                                }
 
-                                                        {/* Bitişik Alt Menü */}
-                                                        {showSurveySubmenu && (
-                                                            <div className="absolute left-[calc(100%-1px)] top-0 w-64 bg-white rounded-r-lg shadow-xl border border-purple-100 border-l-0 animate-in slide-in-from-left-2 duration-200">
-                                                                {link.submenuItems.map((subItem: any) => {
-                                                                    const SubIcon = subItem.icon;
-                                                                    return (
-                                                                        <Link
-                                                                            key={subItem.href}
-                                                                            href={subItem.href}
-                                                                            onClick={() => {
-                                                                                setIsDropdownOpen(false);
-                                                                                setShowSurveySubmenu(false);
-                                                                            }}
-                                                                        >
-                                                                            <div className="px-4 py-3 flex items-center space-x-3 hover:bg-purple-50 group first:rounded-tr-lg">
-                                                                                <SubIcon className="w-5 h-5 text-purple-600" />
-                                                                                <span className="group-hover:translate-x-1 transition-transform duration-200">
-                                                                                {subItem.label}
-                                                                            </span>
-                                                                            </div>
-                                                                        </Link>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                                return (
+                                                    <Link
+                                                        key={link.href}
+                                                        href={link.href}
+                                                        onClick={() => setIsDropdownOpen(false)}
+                                                        className={`block hover:bg-purple-50 group ${
+                                                            index === 0 ? 'rounded-t-lg border-b border-purple-100' : ''
+                                                        }`}
+                                                    >
+                                                        <div className="px-4 py-3 flex items-center space-x-3">
+                                                            <Icon className="w-5 h-5 text-purple-600" />
+                                                            <span className="group-hover:translate-x-1 transition-transform duration-200">
+                                                                {link.label}
+                                                            </span>
+                                                        </div>
+                                                    </Link>
                                                 );
-                                            }
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
 
-                                            return (
-                                                <Link
-                                                    key={link.href}
-                                                    href={link.href}
-                                                    onClick={() => setIsDropdownOpen(false)}
-                                                    className={`block hover:bg-purple-50 group ${
-                                                        index === 0 ? 'rounded-t-lg border-b border-purple-100' : ''
-                                                    }`}
-                                                >
-                                                    <div className="px-4 py-3 flex items-center space-x-3">
-                                                        <Icon className="w-5 h-5 text-purple-600" />
-                                                        <span className="group-hover:translate-x-1 transition-transform duration-200">
-                                                        {link.label}
-                                                    </span>
-                                                    </div>
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                {/* Yeni User Results butonu */}
+                                <Link href="/user-results">
+                                    <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
+                                        User Results
+                                    </button>
+                                </Link>
                             </div>
                         )}
 

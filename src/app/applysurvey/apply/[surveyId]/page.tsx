@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion'; // Yeni import
 import {
     AlertDialog,
     AlertDialogContent,
@@ -25,6 +26,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
     const [survey, setSurvey] = useState<Survey | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [direction, setDirection] = useState(0); // -1 geri, 1 ileri için
     const router = useRouter();
     const [answers, setAnswers] = useState<{ [key: number]: number }>({});
     const [submitting, setSubmitting] = useState(false);
@@ -60,14 +62,31 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 return;
             }
 
+            setDirection(1);
             setCurrentQuestionIndex(prev => prev + 1);
         }
     };
 
     const handleBack = () => {
         if (currentQuestionIndex > 0) {
+            setDirection(-1);
             setCurrentQuestionIndex(prev => prev - 1);
         }
+    };
+
+    const variants = {
+        enter: (direction: number) => ({
+            y: direction > 0 ? 50 : -50,
+            opacity: 0
+        }),
+        center: {
+            y: 0,
+            opacity: 1
+        },
+        exit: (direction: number) => ({
+            y: direction < 0 ? 50 : -50,
+            opacity: 0
+        })
     };
 
     const handleSubmit = async () => {
@@ -129,7 +148,6 @@ export default function ApplySurveyPage({ params }: PageProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-black">
-
             <div className="container mx-auto p-6 space-y-6">
                 <div className="flex items-center justify-between mb-6">
                     <Button
@@ -145,53 +163,73 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            {survey.title}
+                            {survey?.title}
                         </CardTitle>
                         <div className="text-sm text-gray-600 mt-2">
-                            Question {currentQuestionIndex + 1} of {survey.questions.length}
+                            Question {currentQuestionIndex + 1} of {survey?.questions.length}
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-6">
-                            <div key={currentQuestion.id} className="border rounded-lg p-6">
-                                <h3 className="text-lg font-semibold mb-4">
-                                    {currentQuestion.text}
-                                </h3>
-                                <div className="ml-4 space-y-3">
-                                    {currentQuestion.options.map((option) => (
-                                        <div
-                                            key={option.id}
-                                            onClick={() => handleOptionSelect(currentQuestion.id, option.level)}
-                                            className={`flex items-center p-3 bg-white rounded-lg border transition-all cursor-pointer
-                            ${answers[currentQuestion.id] === option.level
-                                                ? 'border-purple-500 bg-purple-50 shadow-sm'
-                                                : 'hover:border-purple-500'}`}
+                        <div className="space-y-6 overflow-hidden">
+                            <AnimatePresence mode="wait" initial={false}>
+                                <motion.div
+                                    key={currentQuestionIndex}
+                                    custom={direction}
+                                    variants={variants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{
+                                        y: { type: "tween", duration: 0.3 },
+                                        opacity: { duration: 0.3 }
+                                    }}
+                                >
+                                    <div className="border rounded-lg p-6">
+                                        <h3 className="text-lg font-semibold mb-4">
+                                            {currentQuestion?.text}
+                                        </h3>
+                                        <motion.div
+                                            className="ml-4 space-y-3"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.2 }}
                                         >
-                                            <div className="flex items-center w-full">
-                                                <div className="flex-shrink-0 mr-4">
-                                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
-                                    ${answers[currentQuestion.id] === option.level
-                                                        ? 'border-purple-500 bg-purple-500'
-                                                        : 'border-gray-300'}`}
-                                                    >
-                                                        {answers[currentQuestion.id] === option.level && (
-                                                            <div className="w-2 h-2 bg-white rounded-full" />
-                                                        )}
+                                            {currentQuestion?.options.map((option) => (
+                                                <div
+                                                    key={option.id}
+                                                    onClick={() => handleOptionSelect(currentQuestion.id, option.level)}
+                                                    className={`flex items-center p-3 bg-white rounded-lg border transition-all cursor-pointer
+                                                        ${answers[currentQuestion?.id] === option.level
+                                                        ? 'border-purple-500 bg-purple-50 shadow-sm'
+                                                        : 'hover:border-purple-500'}`}
+                                                >
+                                                    <div className="flex items-center w-full">
+                                                        <div className="flex-shrink-0 mr-4">
+                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
+                                                                ${answers[currentQuestion?.id] === option.level
+                                                                ? 'border-purple-500 bg-purple-500'
+                                                                : 'border-gray-300'}`}
+                                                            >
+                                                                {answers[currentQuestion?.id] === option.level && (
+                                                                    <div className="w-2 h-2 bg-white rounded-full" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="font-medium">
+                                                                Level {option.level}
+                                                            </div>
+                                                            <div className="text-gray-600">
+                                                                {option.description}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex-1">
-                                                    <div className="font-medium">
-                                                        Level {option.level}
-                                                    </div>
-                                                    <div className="text-gray-600">
-                                                        {option.description}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                                            ))}
+                                        </motion.div>
+                                    </div>
+                                </motion.div>
+                            </AnimatePresence>
 
                             <div className="flex justify-between mt-6">
                                 <Button
@@ -248,8 +286,8 @@ export default function ApplySurveyPage({ params }: PageProps) {
                         Processing your survey responses...
                         <br />
                         <span className="text-purple-500">
-                Please wait while we calculate your results.
-            </span>
+                            Please wait while we calculate your results.
+                        </span>
                     </AlertDialogDescription>
                 </AlertDialogContent>
             </AlertDialog>
