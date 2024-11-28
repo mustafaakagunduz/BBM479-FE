@@ -1,23 +1,63 @@
-// app/admin/SpiderChart.tsx
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+"use client"
+import React, { useState } from 'react';
 
-export default function AdminPage() {
+const LoginForm = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const response = await fetch('YOUR_API_ENDPOINT', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Giriş başarılı:', data);
+        } else {
+            console.error('Giriş başarısız');
+        }
+    };
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-2xl mb-4">Admin Paneline Hoş Geldiniz</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 mt-8" >
-                <p className="text-lg">Bu panelde yapabilecekleriniz:</p>
-                <ul className="space-y-2 list-disc pl-6">
-                    <li><span className="font-medium">Endüstriler:</span> Sistem için yeni endüstriler ekleyebilir ve mevcut endüstrileri yönetebilirsiniz.</li>
-                    <li><span className="font-medium">Yetenekler:</span> Kullanıcıların seçebileceği yetenekleri ekleyebilir ve düzenleyebilirsiniz.</li>
-                    <li><span className="font-medium">Meslekler:</span> Sistemdeki meslekleri tanımlayabilir ve yönetebilirsiniz.</li>
-                    <li><span className="font-medium">Anketler:</span> Yeni anketler oluşturabilir ve mevcut anketleri düzenleyebilirsiniz.</li>
-                    <li><span className="font-medium">Yetkiler:</span> Kullanıcı yetkilerini belirleyebilir ve yönetebilirsiniz.</li>
-                </ul>
-                <p className="mt-4 text-gray-600">Başlamak için soldaki menüden bir bölüm seçin.</p>
-            </CardContent>
-        </Card>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="max-w-md w-full bg-white p-8 rounded shadow-md">
+                <h2 className="text-2xl font-bold mb-6 text-center">Giriş Yap</h2>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-4">
+                        <label className="block text-gray-700 mb-2">Email:</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                            required
+                        />
+                    </div>
+                    <div className="mb-6">
+                        <label className="block text-gray-700 mb-2">Şifre:</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-500"
+                            required
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-200"
+                    >
+                        Giriş Yap
+                    </button>
+                </form>
+            </div>
+        </div>
     );
-}
+};
+
+export default LoginForm;

@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useLayoutEffect } from "react";
-import NavbarAdminDeneme from "@/app/components/navbars/NavbarAdminDeneme";
 import AdminPanelDeneme from "@/app/components/adminpanel/AdminPanelDeneme";
 import { PenTool, Briefcase, Building2, FileSpreadsheet } from 'lucide-react';
 
@@ -187,18 +186,7 @@ const Home: React.FC = () => {
 
     return (
         <div>
-            <NavbarAdminDeneme
-                colors={colors}
-                isSettingsOpen={isSettingsOpen}
-                setIsSettingsOpen={setIsSettingsOpen}
-                isColorPickerOpen={isColorPickerOpen}
-                setIsColorPickerOpen={setIsColorPickerOpen}
-                handleColorChange={handleColorChange}
-                resetColors={resetColors}
-                isEditMode={isEditMode}
-                setIsEditMode={setIsEditMode}
-                saveLayout={saveLayout}
-            />
+
             <AdminPanelDeneme
                 backgroundColors={colors.background}
                 themeColors={colors.theme}
