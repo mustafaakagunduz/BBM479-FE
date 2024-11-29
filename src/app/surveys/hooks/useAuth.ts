@@ -1,15 +1,12 @@
-// hooks/useAuth.ts
 import { useState, useEffect } from 'react';
 import { User } from '@/app/types/auth';
 
-// Mock kullanıcı verisi
-const MOCK_USER = {
+// Mock kullanıcı verisi (template object without accessing localStorage directly)
+const MOCK_USER_TEMPLATE = {
     id: 1,
     username: 'testuser',
     email: 'test@example.com',
-    role: {
-        name: localStorage.getItem('mockUserRole') || 'ADMIN' // Varsayılan olarak ADMIN
-    }
+    role: { name: 'ADMIN' }, // Default role, will be updated later
 };
 
 export const useAuth = () => {
@@ -18,12 +15,12 @@ export const useAuth = () => {
 
     // Development için rol değiştirme fonksiyonu
     const switchRole = () => {
-        if (process.env.NODE_ENV === 'development') {
-            const newRole = user?.role.name === 'ADMIN' ? 'USER' : 'ADMIN';
+        if (process.env.NODE_ENV === 'development' && user) {
+            const newRole = user.role.name === 'ADMIN' ? 'USER' : 'ADMIN';
             localStorage.setItem('mockUserRole', newRole);
             setUser({
-                ...MOCK_USER,
-                role: { name: newRole as 'ADMIN' | 'USER' }
+                ...user,
+                role: { name: newRole as 'ADMIN' | 'USER' },
             });
         }
     };
@@ -33,10 +30,10 @@ export const useAuth = () => {
             try {
                 // Development modunda mock data kullan
                 if (process.env.NODE_ENV === 'development') {
-                    const savedRole = localStorage.getItem('mockUserRole') || 'ADMIN';
+                    const savedRole = typeof window !== 'undefined' && localStorage.getItem('mockUserRole') || 'ADMIN';
                     setUser({
-                        ...MOCK_USER,
-                        role: { name: savedRole as 'ADMIN' | 'USER' }
+                        ...MOCK_USER_TEMPLATE,
+                        role: { name: savedRole as 'ADMIN' | 'USER' },
                     });
                     setLoading(false);
                     return;
