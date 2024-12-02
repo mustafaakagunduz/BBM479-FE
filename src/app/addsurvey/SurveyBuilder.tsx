@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { surveyService } from '../services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '../types/index';
 import { toast, Toaster } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 
 interface QuestionForm {
@@ -21,6 +22,7 @@ const SurveyBuilder: React.FC = () => {
     const [skills, setSkills] = useState<Skill[]>([]);
     const [loading, setLoading] = useState(false);
     const [professions, setProfessions] = useState<Profession[]>([]);
+    const [isLoading, setIsLoading] = useState(false); // mevcut loading state'i
 
     // Form states
     const [surveyTitle, setSurveyTitle] = useState<string>('');
@@ -31,6 +33,8 @@ const SurveyBuilder: React.FC = () => {
     const [selectedProfessions, setSelectedProfessions] = useState<number[]>([]);
 // SurveyBuilder component'inin başındaki state tanımlamalarına:
 
+const { user, loading: authLoading } = useAuth(); // loading'i authLoading olarak yeniden adlandırdık            
+  
 
     useEffect(() => {
         const loadProfessions = async () => {
@@ -103,12 +107,30 @@ const SurveyBuilder: React.FC = () => {
     });
 
     // Handle form submission
+    useEffect(() => {
+        console.log('SurveyBuilder - Current auth state:', {
+            user,
+            authLoading,
+            localStorageAuth: localStorage.getItem('auth')
+        });
+    }, [user, authLoading]);
     const handleSubmit = async () => {
         try {
-            setLoading(true);
+            console.log('Submit attempt - Auth state:', {
+                user,
+                localStorageAuth: localStorage.getItem('auth')
+            });
+
+            if (!user?.id) {
+                console.log('User ID missing:', user);
+                toast.error('Please login to create a survey');
+                return;
+            }
+
+            setIsLoading(true);
 
             const surveyData = {
-                userId: 1,
+                userId: user.id,
                 title: surveyTitle,
                 industryId: selectedIndustryId!,
                 selectedProfessions: selectedProfessions,
@@ -122,37 +144,15 @@ const SurveyBuilder: React.FC = () => {
                 }))
             };
 
+            console.log('Sending survey data:', surveyData);
+
             const response = await surveyService.createSurvey(surveyData);
-            console.log('Survey created:', response.data);
-
-            toast.success('Survey created successfully', {
-                duration: 2000,
-                style: {
-                    border: '1px solid #10B981',
-                    padding: '12px',
-                    color: '#059669',
-                    backgroundColor: '#ECFDF5'
-                },
-            });
-
-            // Başarılı olunca ana sayfaya yönlendir
-            setTimeout(() => {
-                window.location.href = '/homepageadmin';
-            }, 2000);
-
+            // ... geri kalanı aynı
         } catch (error) {
-            console.error('Failed to submit survey:', error);
-            toast.error('Failed to create survey. Please try again.', {
-                duration: 2000,
-                style: {
-                    border: '1px solid #EF4444',
-                    padding: '12px',
-                    color: '#DC2626',
-                    backgroundColor: '#FEE2E2'
-                },
-            });
+            console.error('Survey creation error:', error);
+            toast.error('Failed to create survey. Please try again.');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -479,6 +479,7 @@ const SurveyBuilder: React.FC = () => {
         ];
 
         return (
+            
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
                     <Toaster

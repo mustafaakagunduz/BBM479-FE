@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { Inter } from 'next/font/google';
 import RootLayoutClient from '@/app/RootLayoutClient';
+import { AuthProvider } from './context/AuthContext';
 
 // Font tanımlamaları
 const geistSans = localFont({
@@ -28,16 +29,17 @@ export const metadata: Metadata = {
 
 // Root Layout (Server Component)
 export default function RootLayout({
-                                     children,
-                                   }: Readonly<{
+  children,
+}: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-
-      <html lang="en">
+    <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      <RootLayoutClient>{children}</RootLayoutClient>
+        <AuthProvider>
+          <RootLayoutClient>{children}</RootLayoutClient>
+        </AuthProvider>
       </body>
-      </html>
+    </html>
   );
 }

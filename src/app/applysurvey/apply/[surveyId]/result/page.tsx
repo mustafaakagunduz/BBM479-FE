@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
+import { GeminiAnalysisSection } from './geminiAiTextCreate';
 
 interface ProfessionMatch {
     id: number;
@@ -37,7 +38,7 @@ export default function SurveyResultPage({ params }: PageProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const calculationInProgress = useRef(false);
-    const userId = 1;
+    const userId = 8;
     const [allResults, setAllResults] = useState<SurveyResult[]>([]);
 
     const fetchAllResults = useCallback(async () => {
@@ -193,6 +194,19 @@ export default function SurveyResultPage({ params }: PageProps) {
                             <div className="h-[500px] w-full flex items-center justify-center">
                                 <SurveySpiderChart professionMatches={result.professionMatches} />
                             </div>
+                        )}
+                    </CardContent>
+                    <CardContent className="p-6">
+                        {result.professionMatches && result.professionMatches.length > 0 && (
+                            <>
+                                <div className="h-[500px] w-full flex items-center justify-center">
+                                    <SurveySpiderChart professionMatches={result.professionMatches} />
+                                </div>
+                                <GeminiAnalysisSection 
+                                    surveyResultId={result.id} 
+                                    professionMatches={result.professionMatches} 
+                                />
+                            </>
                         )}
                     </CardContent>
                 </Card>

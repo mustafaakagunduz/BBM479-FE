@@ -2,7 +2,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/surveys/hooks/useAuth";
+import { useAuth } from "@/app/hooks/useAuth"; // Path güncellendi
 import { CircularProgress } from "@mui/material";
 
 interface AdminGuardProps {
@@ -12,8 +12,10 @@ interface AdminGuardProps {
 const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     const router = useRouter();
     const { user, loading } = useAuth();
-
+    
     useEffect(() => {
+        console.log('AdminGuard Auth State:', { user, loading }); // Debug için
+
         if (!loading) {
             if (!user) {
                 router.push('/login');

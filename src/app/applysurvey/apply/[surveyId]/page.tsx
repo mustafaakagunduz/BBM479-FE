@@ -105,9 +105,9 @@ export default function ApplySurveyPage({ params }: PageProps) {
 
         try {
             setSubmitting(true);
-
+          
             const surveyResponse = {
-                userId: 1,
+                userId: 8,
                 surveyId: Number(resolvedParams.surveyId),
                 answers: Object.entries(answers).map(([questionId, level]) => ({
                     questionId: Number(questionId),

@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { Alert, AlertDescription } from "../../components/ui/alert";
+import { useAuth } from '../context/AuthContext';
+
 interface Company {
   id: number;
   name: string;
 }
+
 
 const LoginSignUp = () => {
   const router = useRouter();
@@ -20,7 +23,8 @@ const LoginSignUp = () => {
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  
+  const { login } = useAuth();
+
   // Sign Up states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -34,7 +38,8 @@ const LoginSignUp = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
+  
+  React.useEffect(() => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get('http://localhost:8081/api/companies');
@@ -43,9 +48,9 @@ const LoginSignUp = () => {
         console.error('Error fetching companies:', error);
       }
     };
-  
     fetchCompanies();
   }, []);
+
   const searchCompanies = async (term: string) => {
     try {
       const response = await axios.get(`/api/companies/search?term=${term}`);
@@ -57,49 +62,33 @@ const LoginSignUp = () => {
     }
   };
   
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
- // handleLogin fonksiyonu güncellemesi
-const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
-  setSuccess('');
-
-  try {
-    const response = await axios.post('http://localhost:8081/api/auth/login', {
-      email: loginEmail,
-      password: loginPassword
-    });
-
-    const data = response.data;
-
-    if (data.success) {
-      // Role'e göre yönlendirme
-      if (data.role === 'ADMIN') {
-        router.push('/homepageadmin');
-      } else if (data.role === 'USER') {
-        router.push('/homepageuser');
-      }
-    }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || 'An error occurred during login';
+    try {
+      await login(loginEmail, loginPassword);
+      // Yönlendirme AuthContext içinde yapılıyor
       
-      // Email doğrulama hatası kontrolü
-      if (errorMessage.includes('verify your email')) {
-        setError('Please verify your email before logging in.');
-        setSuccess('If you haven\'t received the verification email, please check your spam folder or try to register again.');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || 'An error occurred during login';
+        
+        if (errorMessage.includes('verify your email')) {
+          setError('Please verify your email before logging in.');
+          setSuccess('If you haven\'t received the verification email, please check your spam folder or try to register again.');
+        } else {
+          setError(errorMessage);
+        }
       } else {
-        setError(errorMessage);
+        setError('An unexpected error occurred');
       }
-    } else {
-      setError('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 // handleSignUp fonksiyonu güncellemesi
 const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
   e.preventDefault();
