@@ -2,7 +2,6 @@
 
 
 import SurveyBuilder from "@/app/addsurvey/SurveyBuilder";
-import SurveyBuilder2 from "@/app/addsurvey/SurveyBuilder";
 import AdminGuard from "@/app/components/guards/AdminGuard";
 function SurveyBuilderPage() {
     return (

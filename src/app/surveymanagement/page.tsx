@@ -1,7 +1,5 @@
 'use client';
 import React from "react";
-import { useRouter } from "next/navigation";
-import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
 import { Card, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { FilePlus, FileEdit } from 'lucide-react';
 import Link from 'next/link';
