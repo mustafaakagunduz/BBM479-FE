@@ -1,7 +1,7 @@
 // app/unauthorized/SpiderChart.tsx
 'use client';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/surveys/hooks/useAuth';
+import { useAuth } from '@/app/context/AuthContext';
 import { Skull } from 'lucide-react'; // Next.js projelerinde lucide-react icons kullanılabilir
 import { XOctagon, AlertTriangle, Shield, ShieldOff } from 'lucide-react';
 

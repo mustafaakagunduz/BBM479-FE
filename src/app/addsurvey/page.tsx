@@ -8,7 +8,7 @@ function SurveyBuilderPage() {
         <>
             <AdminGuard>
             <SurveyBuilder></SurveyBuilder>
-        </AdminGuard>
+           </AdminGuard>
 
         </>
     );
