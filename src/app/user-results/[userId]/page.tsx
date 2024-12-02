@@ -64,7 +64,7 @@ const UserSurveyResults = ({ params }: PageProps) => {
             try {
                 setLoading(true);
                 const userResponse = await axios.get(`http://localhost:8081/api/users/${resolvedParams.userId}`);
-                setUsername(userResponse.data.username);
+                setUsername(userResponse.data.name);
 
                 const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${resolvedParams.userId}`);
                 setResults(resultsResponse.data);

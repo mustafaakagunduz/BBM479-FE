@@ -7,6 +7,7 @@ import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Trash2, ClipboardCheck } from 'lucide-react';
 import axios from 'axios';
+import {useAuth} from "@/app/context/AuthContext";
 
 interface ProfessionMatch {
     id: number;
@@ -28,14 +29,15 @@ const PreviousResults: React.FC = () => {
     const router = useRouter();
     const [results, setResults] = useState<SurveyResult[]>([]);
     const [loading, setLoading] = useState(true);
-    const userId = 1; // Şimdilik sabit
+    const { user } = useAuth();
 
     const fetchResults = useCallback(async () => {
+        if (!user) return;
+
         try {
             setLoading(true);
-            // Tüm anketlerin sonuçlarını getir
             const API_BASE = 'http://localhost:8081/api/surveys';
-            const response = await axios.get(`${API_BASE}/results/user/${userId}`);
+            const response = await axios.get(`${API_BASE}/results/user/${user.id}`);
 
             if (response.data) {
                 setResults(response.data);
@@ -45,7 +47,11 @@ const PreviousResults: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [userId]);
+    }, [user]);
+
+    useEffect(() => {
+        fetchResults();
+    }, [fetchResults]);
 
     useEffect(() => {
         fetchResults();

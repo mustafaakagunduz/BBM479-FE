@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
 import Navbar from "@/app/components/navbar/Navbar";
+import {useAuth} from "@/app/context/AuthContext";
 
 interface ProfessionMatch {
     id: number;
@@ -35,17 +36,19 @@ export default function ResultDetails({ params }: PageProps) {
     const [result, setResult] = useState<SurveyResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const { user } = useAuth();
     useEffect(() => {
         const fetchResult = async () => {
+            if (!user) return;
+
             try {
                 setLoading(true);
                 const API_BASE = 'http://localhost:8081/api/surveys';
-                const allResultsResponse = await axios.get(`${API_BASE}/results/user/1`);
+                const allResultsResponse = await axios.get(`${API_BASE}/results/user/${user.id}`);
 
                 if (allResultsResponse.data) {
                     const targetResult = allResultsResponse.data.find(
-                        (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId) // params.resultId yerine resolvedParams.resultId kullanıyoruz
+                        (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId)
                     );
 
                     if (targetResult) {
@@ -63,7 +66,7 @@ export default function ResultDetails({ params }: PageProps) {
         };
 
         fetchResult();
-    }, [resolvedParams.resultId]);
+    }, [resolvedParams.resultId, user]);
 
     if (loading) {
         return (
