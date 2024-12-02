@@ -11,8 +11,13 @@ interface AuthState {
   loading: boolean; // isLoading yerine loading kullanıyoruz
 }
 
+interface LoginResult {
+  success: boolean;
+  user: User;
+}
+
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult | undefined>;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -67,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const response = await fetch('http://localhost:8081/api/auth/login', {
@@ -77,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       const data = await response.json();
+      console.log('Login Response:', data); // Response'u kontrol edelim
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
@@ -92,16 +98,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         };
 
+        console.log('Created User Object:', user); // User objesini kontrol edelim
         localStorage.setItem('auth', JSON.stringify({ user }));
-        
         dispatch({ type: 'LOGIN_SUCCESS', payload: user });
 
-        if (user.role.name === 'ADMIN') {
-          router.push('/homepageadmin');
-        } else {
-          router.push('/homepageuser');
-        }
+        return { success: true, user };
       }
+      return undefined;
     } catch (error) {
       throw error;
     } finally {
@@ -112,7 +115,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     localStorage.removeItem('auth');
     dispatch({ type: 'LOGOUT' });
-    router.push('/login');
+    setTimeout(() => {
+      router.push('/login');
+    }, 0);
   };
 
   const setLoading = (loading: boolean) => {

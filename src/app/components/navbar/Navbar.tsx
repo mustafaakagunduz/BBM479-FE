@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useAuth } from '@/app/surveys/hooks/useAuth';
+import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -11,11 +11,13 @@ import {
     Shield,
     ChevronRight,
     PlusCircle,
-    Edit, LayoutDashboard,ClipboardCheck
+    Edit,
+    LayoutDashboard,
+    ClipboardCheck
 } from 'lucide-react';
 
 const Navbar = () => {
-    const { user, switchRole } = useAuth();
+    const { user, logout } = useAuth();
     const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showSurveySubmenu, setShowSurveySubmenu] = useState(false);
@@ -38,7 +40,6 @@ const Navbar = () => {
                 ]
             },
             { href: '/authorization-system', label: 'Authorization System', icon: Shield }
-
         ],
         USER: [
             { href: '/previousresults', label: 'My Previous Results' },
@@ -60,11 +61,9 @@ const Navbar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleRoleSwitch = () => {
-        switchRole();
-        const newRole = user?.role.name === 'ADMIN' ? 'USER' : 'ADMIN';
-        const newHomePage = newRole === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
-        router.push(newHomePage);
+    const handleLogout = () => {
+        logout();
+        router.push('/login');
     };
 
     return (
@@ -84,9 +83,9 @@ const Navbar = () => {
                             href={homeLink}
                             className="text-xl font-bold text-white hover:text-purple-200 transition-colors duration-200 flex items-center"
                         >
-                            <span className="bg-white text-purple-600 px-3 py-1 rounded-lg shadow-lg">
-                                DX-HRSAM
-                            </span>
+                           <span className="bg-white text-purple-600 px-3 py-1 rounded-lg shadow-lg">
+                               DX-HRSAM
+                           </span>
                         </Link>
 
                         {/* Admin Panel ve User Results Butonları */}
@@ -101,8 +100,8 @@ const Navbar = () => {
                                     >
                                         <span className="mr-2">Admin Panel</span>
                                         <span className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                                            <ChevronDown className="w-4 h-4" />
-                                        </span>
+                                           <ChevronDown className="w-4 h-4" />
+                                       </span>
                                     </button>
 
                                     {/* Ana Dropdown Menü */}
@@ -119,7 +118,6 @@ const Navbar = () => {
                                                             onMouseEnter={() => setShowSurveySubmenu(true)}
                                                             onMouseLeave={() => setShowSurveySubmenu(false)}
                                                         >
-
                                                             <div className="px-4 py-3 flex items-center justify-between hover:bg-purple-50 cursor-pointer">
                                                                 <div className="flex items-center space-x-3">
                                                                     <Icon className="w-5 h-5 text-purple-600" />
@@ -145,8 +143,8 @@ const Navbar = () => {
                                                                                 <div className="px-4 py-3 flex items-center space-x-3 hover:bg-purple-50 group first:rounded-tr-lg">
                                                                                     <SubIcon className="w-5 h-5 text-purple-600" />
                                                                                     <span className="group-hover:translate-x-1 transition-transform duration-200">
-                                                                                        {subItem.label}
-                                                                                    </span>
+                                                                                       {subItem.label}
+                                                                                   </span>
                                                                                 </div>
                                                                             </Link>
                                                                         );
@@ -169,8 +167,8 @@ const Navbar = () => {
                                                         <div className="px-4 py-3 flex items-center space-x-3">
                                                             <Icon className="w-5 h-5 text-purple-600" />
                                                             <span className="group-hover:translate-x-1 transition-transform duration-200">
-                                                                {link.label}
-                                                            </span>
+                                                               {link.label}
+                                                           </span>
                                                         </div>
                                                     </Link>
                                                 );
@@ -179,7 +177,7 @@ const Navbar = () => {
                                     )}
                                 </div>
 
-                                {/* Yeni User Results butonu */}
+                                {/* User Results butonu */}
                                 <Link href="/user-results">
                                     <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
                                         User Results
@@ -204,28 +202,17 @@ const Navbar = () => {
 
                     {/* Sağ Taraf - Kullanıcı Bilgileri */}
                     <div className="flex items-center space-x-4">
-                        {process.env.NODE_ENV === 'development' && (
-                            <button
-                                onClick={handleRoleSwitch}
-                                className="px-4 py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-all duration-200 shadow-md hover:shadow-lg border border-yellow-400/30 flex items-center"
-                            >
-                                <span className="mr-2">Switch to</span>
-                                <span className="font-semibold">
-                                    {user?.role.name === 'ADMIN' ? 'USER' : 'ADMIN'}
-                                </span>
-                            </button>
-                        )}
-
                         <div className="text-white px-4 py-2 bg-purple-500/40 backdrop-blur-sm rounded-lg border border-purple-400/30 shadow-md">
                             <span className="opacity-75 mr-2">Logged in as:</span>
                             <span className="font-semibold">{user?.role.name}</span>
                         </div>
 
-                        <Link href="/login">
-                            <button className="px-4 py-2 rounded-lg border-2 border-white/70 text-white hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-md hover:shadow-lg backdrop-blur-sm">
-                                Logout
-                            </button>
-                        </Link>
+                        <button
+                            onClick={handleLogout}
+                            className="px-4 py-2 rounded-lg border-2 border-white/70 text-white hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-md hover:shadow-lg backdrop-blur-sm"
+                        >
+                            Logout
+                        </button>
                     </div>
                 </div>
             </nav>

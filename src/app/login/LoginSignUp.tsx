@@ -5,21 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { Alert, AlertDescription } from "../../components/ui/alert";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface Company {
   id: number;
   name: string;
 }
 
+interface LoginResult {
+  success: boolean;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    role: {
+      name: string;
+    };
+  };
+}
 
 const LoginSignUp = () => {
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
-
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-  
+
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -31,37 +41,25 @@ const LoginSignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [companySearchTerm, setCompanySearchTerm] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [showCompanyDropdown, setShowCompanyDropdown] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get('http://localhost:8081/api/companies');
         setCompanies(response.data);
       } catch (error) {
         console.error('Error fetching companies:', error);
+        setError('Failed to fetch companies. Please try again later.');
       }
     };
     fetchCompanies();
   }, []);
 
-  const searchCompanies = async (term: string) => {
-    try {
-      const response = await axios.get(`/api/companies/search?term=${term}`);
-      setCompanies(response.data);
-      setShowCompanyDropdown(true);
-    } catch (error) {
-      console.error('Error searching companies:', error);
-      setCompanies([]);
-    }
-  };
-  
+  // LoginSignUp component'inde handleLogin fonksiyonunu güncelle
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -69,18 +67,30 @@ const LoginSignUp = () => {
     setSuccess('');
 
     try {
-      await login(loginEmail, loginPassword);
-      // Yönlendirme AuthContext içinde yapılıyor
-      
+      const result = await login(loginEmail, loginPassword);
+
+      if (result?.success && result.user) {
+        const destination = result.user.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
+        setTimeout(() => {
+          router.push(destination);
+        }, 0);
+      }
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || 'An error occurred during login';
-        
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+
         if (errorMessage.includes('verify your email')) {
-          setError('Please verify your email before logging in.');
-          setSuccess('If you haven\'t received the verification email, please check your spam folder or try to register again.');
+          setError('Your email address has not been verified.');
+          setSuccess(
+              'Please check your email for the verification link. ' +
+              'If you haven\'t received the email, you can request a new one.'
+          );
+        } else if (errorMessage.includes('User not found')) {
+          setError('No account found with this email address.');
+        } else if (errorMessage.includes('Invalid password')) {
+          setError('Incorrect password. Please try again.');
         } else {
-          setError(errorMessage);
+          setError('An error occurred during login. Please try again.');
         }
       } else {
         setError('An unexpected error occurred');
@@ -89,60 +99,59 @@ const LoginSignUp = () => {
       setIsLoading(false);
     }
   };
-// handleSignUp fonksiyonu güncellemesi
-const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
-  setSuccess('');
-  
-  if (password !== confirmPassword) {
-    setError("Passwords don't match!");
-    setIsLoading(false);
-    return;
-  }
 
-  if (!selectedCompany?.id) {
-    setError("Please select a company!");
-    setIsLoading(false);
-    return;
-  }
+  const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
-  try {
-    const response = await axios.post('http://localhost:8081/api/auth/register', {
-      firstName,
-      lastName,
-      email,
-      password,
-      companyId: selectedCompany.id
-    });
-
-    if (response.data.success) {
-      setSuccess('Registration successful! We have sent a verification link to your email. Please check your inbox and spam folder.');
-      // Form reset
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setSelectedCompany(null);
-      setCompanySearchTerm('');
-      
-      // 5 saniye sonra login formuna geç
-      setTimeout(() => {
-        setIsLogin(true);
-      }, 5000);
+    if (password !== confirmPassword) {
+      setError("Passwords don't match!");
+      setIsLoading(false);
+      return;
     }
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      setError(error.response?.data?.message || 'Registration failed');
-    } else {
-      setError('An unexpected error occurred');
+
+    if (!selectedCompany?.id) {
+      setError("Please select a company!");
+      setIsLoading(false);
+      return;
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    try {
+      const response = await axios.post('http://localhost:8081/api/auth/register', {
+        firstName,
+        lastName,
+        email,
+        password,
+        companyId: selectedCompany.id
+      });
+
+      if (response.data.success) {
+        setSuccess('Registration successful! We have sent a verification link to your email. Please check your inbox and spam folder.');
+        // Reset form
+        setFirstName('');
+        setLastName('');
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        setSelectedCompany(null);
+
+        // Switch to login form after delay
+        setTimeout(() => {
+          setIsLogin(true);
+        }, 5000);
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Registration failed');
+      } else {
+        setError('An unexpected error occurred');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">

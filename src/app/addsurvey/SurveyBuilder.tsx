@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-//import { Alert, AlertDescription, AlertTitle } from 'src'
-import { XCircle, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { surveyService } from '../services/surveyService';
@@ -18,6 +16,7 @@ interface QuestionForm {
 
 const SurveyBuilder: React.FC = () => {
     // API data states
+    const router = useRouter();
     const [industries, setIndustries] = useState<Industry[]>([]);
     const [skills, setSkills] = useState<Skill[]>([]);
     const [loading, setLoading] = useState(false);
@@ -114,15 +113,18 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
             localStorageAuth: localStorage.getItem('auth')
         });
     }, [user, authLoading]);
+
     const handleSubmit = async () => {
         try {
-            console.log('Submit attempt - Auth state:', {
-                user,
-                localStorageAuth: localStorage.getItem('auth')
+            const authData = localStorage.getItem('auth');
+            console.log('Auth State:', {
+                contextUser: user,
+                localStorageAuth: authData ? JSON.parse(authData) : null,
+                isAuthenticated: user?.id ? true : false
             });
 
             if (!user?.id) {
-                console.log('User ID missing:', user);
+                console.log('User object:', user);
                 toast.error('Please login to create a survey');
                 return;
             }
@@ -144,10 +146,12 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                 }))
             };
 
-            console.log('Sending survey data:', surveyData);
-
             const response = await surveyService.createSurvey(surveyData);
-            // ... geri kalanı aynı
+            toast.success('Survey created successfully!');
+
+            // Başarılı kayıt sonrası /surveys sayfasına yönlendir
+            router.push('/surveys');
+
         } catch (error) {
             console.error('Survey creation error:', error);
             toast.error('Failed to create survey. Please try again.');

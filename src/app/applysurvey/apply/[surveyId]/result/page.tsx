@@ -9,6 +9,8 @@ import { ArrowLeft } from 'lucide-react';
 import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
 import { GeminiAnalysisSection } from './geminiAiTextCreate';
+import { useAuth } from '@/app/context/AuthContext';
+
 
 interface ProfessionMatch {
     id: number;
@@ -38,14 +40,16 @@ export default function SurveyResultPage({ params }: PageProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const calculationInProgress = useRef(false);
-    const userId = 8;
+    const { user } = useAuth();
     const [allResults, setAllResults] = useState<SurveyResult[]>([]);
 
     const fetchAllResults = useCallback(async () => {
+        if (!user) return; // Kullanıcı yoksa API çağrısı yapma
+
         try {
             const API_BASE = 'http://localhost:8081/api/surveys';
             const response = await axios.get(
-                `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/all`
+                `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/all`
             );
 
             if (response.data) {
@@ -54,14 +58,13 @@ export default function SurveyResultPage({ params }: PageProps) {
         } catch (err) {
             console.error('Error fetching all results:', err);
         }
-    }, [resolvedParams.surveyId, userId]);
-
+    }, [resolvedParams.surveyId, user]);
     useEffect(() => {
         fetchAllResults();
     }, [fetchAllResults]);
 
     const fetchResult = useCallback(async () => {
-        if (loading || calculationInProgress.current) return;
+        if (loading || calculationInProgress.current || !user) return;
 
         try {
             calculationInProgress.current = true;
@@ -74,7 +77,7 @@ export default function SurveyResultPage({ params }: PageProps) {
             let response;
             if (isNewCalculation) {
                 response = await axios.post(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/calculate?force=true`,
+                    `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/calculate?force=true`,
                     {},
                     {
                         headers: { 'Cache-Control': 'no-cache' },
@@ -87,7 +90,7 @@ export default function SurveyResultPage({ params }: PageProps) {
                 }
             } else {
                 response = await axios.get(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${userId}/latest`
+                    `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
                 );
             }
 
@@ -107,7 +110,7 @@ export default function SurveyResultPage({ params }: PageProps) {
             setLoading(false);
             calculationInProgress.current = false;
         }
-    }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults]);
+    }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults, user]);
 
     useEffect(() => {
         const isNewCalculation = searchParams.get('new') === 'true';
@@ -198,15 +201,10 @@ export default function SurveyResultPage({ params }: PageProps) {
                     </CardContent>
                     <CardContent className="p-6">
                         {result.professionMatches && result.professionMatches.length > 0 && (
-                            <>
-                                <div className="h-[500px] w-full flex items-center justify-center">
-                                    <SurveySpiderChart professionMatches={result.professionMatches} />
-                                </div>
-                                <GeminiAnalysisSection 
-                                    surveyResultId={result.id} 
-                                    professionMatches={result.professionMatches} 
-                                />
-                            </>
+                            <GeminiAnalysisSection
+                                surveyResultId={result.id}
+                                professionMatches={result.professionMatches}
+                            />
                         )}
                     </CardContent>
                 </Card>

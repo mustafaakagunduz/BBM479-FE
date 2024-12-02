@@ -2,7 +2,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import Navbar from '@/app/components/navbar/Navbar'
 import { Toaster } from 'react-hot-toast'
-import { useAuth } from '@/app/surveys/hooks/useAuth'
+import { useAuth } from '@/app/context/AuthContext';
 import { CircularProgress } from '@mui/material'
 import { useEffect } from 'react'
 import PageTransition from '@/app/components/PageTransition'
@@ -22,28 +22,57 @@ export default function RootLayoutClient({
 
     useEffect(() => {
         if (!loading) {
+            console.log('Current User:', user); // User'ı kontrol edelim
+            console.log('Current Pathname:', pathname); // Path'i kontrol edelim
+
+            // Kullanıcı yoksa ve navbar gerektiren bir sayfadaysa
             if (!user && !noNavbarPages.includes(pathname)) {
-                router.push('/login')
-                return
+                router.push('/login');
+                return;
             }
 
+            // Kullanıcı varsa yetki kontrolü
             if (user) {
-                const isAdminPage = adminPages.some(page => pathname.startsWith(page))
-                const isUserPage = userPages.some(page => pathname.startsWith(page))
+                // Admin spesifik sayfalar
+                const isAdminOnlyPage = adminPages.some(page => pathname.startsWith(page)) ||
+                    pathname === '/homepageadmin';
+                console.log('Is Admin Page:', isAdminOnlyPage);
 
-                if (isAdminPage && user.role.name !== 'ADMIN') {
-                    router.push('/unauthorized')
-                    return
+                // User spesifik sayfalar
+                const isUserOnlyPage = userPages.some(page => pathname.startsWith(page)) ||
+                    pathname === '/homepageuser';
+                console.log('Is User Page:', isUserOnlyPage);
+
+                console.log('User Role:', user.role.name);
+
+                if (user.role.name === 'USER') {
+                    console.log('User is trying to access:', pathname);
                 }
 
-                if (isUserPage && user.role.name !== 'USER') {
-                    router.push('/unauthorized')
-                    return
+                // Admin, user sayfasına girmeye çalışırsa
+                if (user.role.name === 'ADMIN' && isUserOnlyPage) {
+                    router.push('/unauthorized');
+                    return;
+                }
+
+                // User, admin sayfasına girmeye çalışırsa
+                if (user.role.name === 'USER' && isAdminOnlyPage) {
+                    router.push('/unauthorized');
+                    return;
+                }
+
+                // Her kullanıcıyı kendi anasayfasına yönlendir
+                if (pathname === '/') {
+                    const destination = user.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
+                    console.log('Redirecting to:', destination);
+                    router.push(destination);
+                    return;
                 }
             }
         }
-    }, [user, loading, pathname, router])
+    }, [user, loading, pathname, router]);
 
+    // Loading durumu
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex justify-center items-center">
@@ -52,6 +81,7 @@ export default function RootLayoutClient({
         )
     }
 
+    // Navbar'sız sayfalar için render
     if (noNavbarPages.includes(pathname)) {
         return (
             <div className="relative">
@@ -60,9 +90,13 @@ export default function RootLayoutClient({
         )
     }
 
+    // Kullanıcı girişi kontrolü ve ana layout render
     if (!user) {
-        router.push('/login')
-        return null
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex justify-center items-center">
+                <CircularProgress />
+            </div>
+        )
     }
 
     return (

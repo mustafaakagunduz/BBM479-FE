@@ -53,7 +53,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const UserSurveyResults = ({ params }: PageProps) => {
-    const resolvedParams = use(params); // params'ı çözümlüyoruz
+    const resolvedParams = use(params);
     const [results, setResults] = useState<SurveyResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [username, setUsername] = useState<string>('');
@@ -63,16 +63,10 @@ const UserSurveyResults = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Kullanıcı bilgilerini al
-                const userResponse = await axios.get(`http://localhost:8081/api/users/1`);
-
-                //const userResponse = await axios.get(`http://localhost:8081/api/users/${resolvedParams.userId}`);
+                const userResponse = await axios.get(`http://localhost:8081/api/users/${resolvedParams.userId}`);
                 setUsername(userResponse.data.username);
 
-                // Kullanıcının tüm anket sonuçlarını al
-                const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/1`);
-
-                //const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${resolvedParams.userId}`);
+                const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${resolvedParams.userId}`);
                 setResults(resultsResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);

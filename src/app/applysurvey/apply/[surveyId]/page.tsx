@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion'; // Yeni import
+import { useAuth } from '@/app/context/AuthContext';
 import {
     AlertDialog,
     AlertDialogContent,
@@ -30,6 +31,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
     const router = useRouter();
     const [answers, setAnswers] = useState<{ [key: number]: number }>({});
     const [submitting, setSubmitting] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         fetchSurveyDetails();
@@ -90,7 +92,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
     };
 
     const handleSubmit = async () => {
-        if (!survey || !survey.questions || submitting) {
+        if (!survey || !survey.questions || submitting || !user) {
             return;
         }
 
@@ -105,9 +107,9 @@ export default function ApplySurveyPage({ params }: PageProps) {
 
         try {
             setSubmitting(true);
-          
+
             const surveyResponse = {
-                userId: 8,
+                userId: user.id, // Sabit değer yerine user.id kullanıyoruz
                 surveyId: Number(resolvedParams.surveyId),
                 answers: Object.entries(answers).map(([questionId, level]) => ({
                     questionId: Number(questionId),

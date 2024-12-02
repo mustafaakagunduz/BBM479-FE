@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -29,17 +28,17 @@ export const metadata: Metadata = {
 
 // Root Layout (Server Component)
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+      <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <RootLayoutClient>{children}</RootLayoutClient>
-        </AuthProvider>
+      <AuthProvider>
+        <RootLayoutClient>{children}</RootLayoutClient>
+      </AuthProvider>
       </body>
-    </html>
+      </html>
   );
 }

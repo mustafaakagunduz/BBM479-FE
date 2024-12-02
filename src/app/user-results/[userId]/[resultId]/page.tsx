@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
@@ -53,14 +54,12 @@ const ResultDetails = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Kullanıcı bilgilerini al
-                const userResponse = await axios.get(`http://localhost:8081/api/users/1`);
-                setUsername(userResponse.data.name);
+                const userResponse = await axios.get(`http://localhost:8081/api/users/${resolvedParams.userId}`);
+                setUsername(userResponse.data.username);
 
-                // Sonuçları al
-                const allResultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/1`);
-                if (allResultsResponse.data) {
-                    const targetResult = allResultsResponse.data.find(
+                const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${resolvedParams.userId}`);
+                if (resultsResponse.data) {
+                    const targetResult = resultsResponse.data.find(
                         (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId)
                     );
 
