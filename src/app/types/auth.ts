@@ -1,5 +1,5 @@
 // types/auth.ts
-export type UserRole = 'ADMIN' | 'USER';  // Mevcut sisteminizdeki rol isimleriyle eşleştirdim
+export type UserRole = 'ADMIN' | 'USER';
 
 export interface User {
     id: number;
@@ -8,4 +8,5 @@ export interface User {
     role: {
         name: UserRole;
     };
+    profileImage?: string; // Add this
 }

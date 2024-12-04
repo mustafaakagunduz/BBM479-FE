@@ -13,7 +13,8 @@ import {
     PlusCircle,
     Edit,
     LayoutDashboard,
-    ClipboardCheck
+    ClipboardCheck,
+    User
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -68,17 +69,13 @@ const Navbar = () => {
 
     return (
         <div className="relative">
-            {/* Üst gölge efekti */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-b from-black/20 to-transparent"></div>
 
             <nav className="bg-gradient-to-b from-purple-800 via-purple-600 to-purple-700 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.3)] border-b border-purple-500/30 p-4 w-full relative">
-                {/* İç parlama efekti */}
                 <div className="absolute inset-0 bg-gradient-to-t from-transparent via-purple-400/5 to-purple-200/10"></div>
 
                 <div className="flex items-center justify-between max-w-screen-xl mx-auto relative">
-                    {/* Sol Taraf - Logo ve Navigasyon */}
                     <div className="flex items-center space-x-4">
-                        {/* Logo */}
                         <Link
                             href={homeLink}
                             className="text-xl font-bold text-white hover:text-purple-200 transition-colors duration-200 flex items-center"
@@ -88,7 +85,6 @@ const Navbar = () => {
                            </span>
                         </Link>
 
-                        {/* Admin Panel ve User Results Butonları */}
                         {user?.role.name === 'ADMIN' && (
                             <div className="flex items-center space-x-4">
                                 <div className="relative" ref={dropdownRef}>
@@ -104,7 +100,6 @@ const Navbar = () => {
                                        </span>
                                     </button>
 
-                                    {/* Ana Dropdown Menü */}
                                     {isDropdownOpen && (
                                         <div className="absolute z-50 mt-2 w-64 rounded-lg bg-white shadow-xl border border-purple-100 animate-in slide-in-from-top-2 duration-200">
                                             {navigationLinks.ADMIN.map((link: any, index) => {
@@ -126,7 +121,6 @@ const Navbar = () => {
                                                                 <ChevronRight className="w-4 h-4 text-purple-600" />
                                                             </div>
 
-                                                            {/* Bitişik Alt Menü */}
                                                             {showSurveySubmenu && (
                                                                 <div className="absolute left-[calc(100%-1px)] top-0 w-64 bg-white rounded-r-lg shadow-xl border border-purple-100 border-l-0 animate-in slide-in-from-left-2 duration-200">
                                                                     {link.submenuItems.map((subItem: any) => {
@@ -177,7 +171,6 @@ const Navbar = () => {
                                     )}
                                 </div>
 
-                                {/* User Results butonu */}
                                 <Link href="/user-results">
                                     <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
                                         User Results
@@ -186,7 +179,6 @@ const Navbar = () => {
                             </div>
                         )}
 
-                        {/* User Navigation Links */}
                         {user?.role.name === 'USER' && (
                             <div className="flex items-center space-x-4">
                                 {navigationLinks.USER.map((link) => (
@@ -200,12 +192,20 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    {/* Sağ Taraf - Kullanıcı Bilgileri */}
                     <div className="flex items-center space-x-4">
-                        <div className="text-white px-4 py-2 bg-purple-500/40 backdrop-blur-sm rounded-lg border border-purple-400/30 shadow-md">
-                            <span className="opacity-75 mr-2">Logged in as:</span>
-                            <span className="font-semibold">{user?.role.name}</span>
-                        </div>
+                        <Link href="/profile">
+                            <div className="w-10 h-10 rounded-full bg-white/10 border-2 border-white/70 flex items-center justify-center hover:bg-white/20 transition-colors duration-200 cursor-pointer">
+                                {user?.profileImage ? (
+                                    <img
+                                        src={user.profileImage}
+                                        alt="Profile"
+                                        className="w-full h-full rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <User className="w-6 h-6 text-white" />
+                                )}
+                            </div>
+                        </Link>
 
                         <button
                             onClick={handleLogout}
