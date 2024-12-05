@@ -1,14 +1,13 @@
 'use client';
 import React from "react";
-import ProfileComponent from "@/app/profile/ProfileComponent";
+import ProfilePageComponent from "@/app/profile/ProfileComponent";
 
-const Home: React.FC = () => {
+const ProfilePage: React.FC = () => {
     return (
         <div>
-            profile page
-            <ProfileComponent></ProfileComponent>
+            <ProfilePageComponent></ProfilePageComponent>
         </div>
     );
 };
 
-export default Home;
+export default ProfilePage;

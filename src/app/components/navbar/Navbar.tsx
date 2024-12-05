@@ -16,6 +16,7 @@ import {
     ClipboardCheck,
     User
 } from 'lucide-react';
+import axios from 'axios';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
@@ -197,7 +198,7 @@ const Navbar = () => {
                             <div className="w-10 h-10 rounded-full bg-white/10 border-2 border-white/70 flex items-center justify-center hover:bg-white/20 transition-colors duration-200 cursor-pointer">
                                 {user?.profileImage ? (
                                     <img
-                                        src={user.profileImage}
+                                        src={`data:image/png;base64,${user.profileImage}`}
                                         alt="Profile"
                                         className="w-full h-full rounded-full object-cover"
                                     />
@@ -206,6 +207,7 @@ const Navbar = () => {
                                 )}
                             </div>
                         </Link>
+
 
                         <button
                             onClick={handleLogout}

@@ -1,4 +1,3 @@
-// context/AuthContext.tsx
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
@@ -8,7 +7,7 @@ import { User, UserRole } from '../types/auth';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  loading: boolean; // isLoading yerine loading kullanıyoruz
+  loading: boolean;
 }
 
 interface LoginResult {
@@ -20,14 +19,14 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<LoginResult | undefined>;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  updateUserData: (userId: number) => Promise<void>;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 type AuthAction =
-  | { type: 'LOGIN_SUCCESS'; payload: User }
-  | { type: 'LOGOUT' }
-  | { type: 'SET_LOADING'; payload: boolean };
+    | { type: 'LOGIN_SUCCESS'; payload: User }
+    | { type: 'LOGOUT' }
+    | { type: 'SET_LOADING'; payload: boolean }
+    | { type: 'UPDATE_USER'; payload: User };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
@@ -50,17 +49,24 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         loading: action.payload,
       };
+    case 'UPDATE_USER':
+      return {
+        ...state,
+        user: action.payload,
+      };
     default:
       return state;
   }
 };
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
     isAuthenticated: false,
-    loading: true, // initial state'te loading kullanıyoruz
+    loading: true,
   });
 
   useEffect(() => {
@@ -72,6 +78,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
 
+  const updateUserData = async (userId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8081/api/users/${userId}`);
+      const userData = await response.json();
+
+      if (state.user) {
+        const updatedUser = {
+          ...state.user,
+          profileImage: userData.profileImage
+        };
+
+        localStorage.setItem('auth', JSON.stringify({ user: updatedUser }));
+        dispatch({ type: 'UPDATE_USER', payload: updatedUser });
+      }
+    } catch (error) {
+      console.error('Error updating user data:', error);
+    }
+  };
+
   const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -82,8 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       const data = await response.json();
-      console.log('Login Response:', data); // Response'u kontrol edelim
-
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
@@ -98,10 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         };
 
-        console.log('Created User Object:', user); // User objesini kontrol edelim
         localStorage.setItem('auth', JSON.stringify({ user }));
         dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-
         return { success: true, user };
       }
       return undefined;
@@ -125,9 +146,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setLoading }}>
-      {children}
-    </AuthContext.Provider>
+      <AuthContext.Provider value={{ ...state, login, logout, setLoading, updateUserData }}>
+        {children}
+      </AuthContext.Provider>
   );
 };
 
