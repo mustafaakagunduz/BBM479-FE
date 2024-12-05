@@ -86,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (state.user) {
         const updatedUser = {
           ...state.user,
+          name: userData.name,
           profileImage: userData.profileImage
         };
 
@@ -112,10 +113,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.success) {
+        // İlk kullanıcı verilerini alın
+        const userDetailsResponse = await fetch(`http://localhost:8081/api/users/${data.userId}`);
+        const userDetails = await userDetailsResponse.json();
+
         const user: User = {
           id: data.userId,
-          username: email.split('@')[0],
+          username: userDetails.username || email.split('@')[0],
           email: email,
+          name: userDetails.name,
+          profileImage: userDetails.profileImage,
           role: {
             name: data.role as UserRole
           }

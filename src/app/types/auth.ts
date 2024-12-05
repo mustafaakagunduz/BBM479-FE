@@ -5,8 +5,9 @@ export interface User {
     id: number;
     username: string;
     email: string;
+    name: string; // Eklendi
     role: {
         name: UserRole;
     };
-    profileImage?: string; // Add this
+    profileImage?: string;
 }
