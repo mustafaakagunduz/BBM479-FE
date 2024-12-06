@@ -87,6 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const updatedUser = {
           ...state.user,
           name: userData.name,
+          email: userData.email,
+          username: userData.username,
           profileImage: userData.profileImage
         };
 

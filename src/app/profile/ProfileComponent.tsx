@@ -1,9 +1,24 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import axios from 'axios';
-import { AlertCircle, Check } from 'lucide-react';
+import { AlertCircle, Check, Pencil } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button, Typography, Box, Slider } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import Cropper from 'react-easy-crop';
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+interface Area {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
 
 interface UserUpdateData {
     name: string;
@@ -21,11 +36,17 @@ const ProfilePageComponent: React.FC = () => {
     const { user, updateUserData } = useAuth();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [userData, setUserData] = useState<UserUpdateData>({
-        name: user?.name || '',
-        email: user?.email || '',
-        username: user?.username || ''
+    const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1.5);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+    const [showCropper, setShowCropper] = useState(false);
+    const [formData, setFormData] = useState<UserUpdateData>({
+        name: '',
+        email: '',
+        username: ''
     });
+    const [originalImage, setOriginalImage] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
     const [passwordData, setPasswordData] = useState<PasswordUpdate>({
         currentPassword: '',
         newPassword: '',
@@ -35,7 +56,7 @@ const ProfilePageComponent: React.FC = () => {
 
     useEffect(() => {
         if (user) {
-            setUserData({
+            setFormData({
                 name: user.name || '',
                 email: user.email || '',
                 username: user.username || ''
@@ -43,7 +64,77 @@ const ProfilePageComponent: React.FC = () => {
         }
     }, [user]);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUserDataChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        e.preventDefault();
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    }, []);
+    const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setPasswordData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    }, []);
+
+    const handleEditPicture = useCallback(() => {
+        if (user?.profileImage) {
+            const imageUrl = `data:image/jpeg;base64,${user.profileImage}`;
+            setOriginalImage(imageUrl);
+            setPreviewImage(imageUrl);
+            setShowCropper(true);
+            setCrop({ x: 0, y: 0 });
+            setZoom(1.5);
+        }
+    }, [user?.profileImage]);
+
+    const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    }, []);
+
+    const createImage = (url: string): Promise<HTMLImageElement> =>
+        new Promise((resolve, reject) => {
+            const image = new Image();
+            image.addEventListener('load', () => resolve(image));
+            image.addEventListener('error', error => reject(error));
+            image.src = url;
+        });
+
+    const getCroppedImg = async (imageSrc: string, pixelCrop: Area): Promise<Blob> => {
+        const image = await createImage(imageSrc);
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            throw new Error('No 2d context');
+        }
+
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+
+        ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            pixelCrop.width,
+            pixelCrop.height
+        );
+
+        return new Promise((resolve) => {
+            canvas.toBlob((blob) => {
+                resolve(blob as Blob);
+            }, 'image/jpeg');
+        });
+    };
+
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
@@ -52,12 +143,38 @@ const ProfilePageComponent: React.FC = () => {
             }
             setSelectedFile(file);
             const reader = new FileReader();
-            reader.onloadend = () => setPreviewImage(reader.result as string);
+            reader.onloadend = () => {
+                const imageUrl = reader.result as string;
+                setOriginalImage(imageUrl);
+                setPreviewImage(imageUrl);
+                setShowCropper(true);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1.5);
+            };
             reader.readAsDataURL(file);
+        }
+    }, []);
+
+    const handleCropSave = async () => {
+        if (originalImage && croppedAreaPixels) {
+            try {
+                const croppedImg = await getCroppedImg(originalImage, croppedAreaPixels);
+                await uploadProfilePicture(croppedImg);
+            } catch (error) {
+                setMessage({ type: 'error', text: 'Failed to crop image' });
+            }
         }
     };
 
-    const uploadProfilePicture = async (file: File) => {
+    const handleCropCancel = useCallback(() => {
+        setShowCropper(false);
+        setPreviewImage(null);
+        setOriginalImage(null);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1.5);
+    }, []);
+
+    const uploadProfilePicture = async (file: Blob) => {
         if (!user?.id) return;
         const formData = new FormData();
         formData.append("profileImage", file);
@@ -76,6 +193,10 @@ const ProfilePageComponent: React.FC = () => {
                 await updateUserData(user.id);
                 setSelectedFile(null);
                 setPreviewImage(null);
+                setOriginalImage(null);
+                setShowCropper(false);
+                setCrop({ x: 0, y: 0 });
+                setZoom(1.5);
                 setMessage({ type: 'success', text: 'Profile picture updated successfully' });
             }
         } catch (error) {
@@ -83,22 +204,15 @@ const ProfilePageComponent: React.FC = () => {
         }
     };
 
-    const handleUserDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setUserData({ ...userData, [e.target.name]: e.target.value });
-    };
-
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
-    };
-
     const updateUserInfo = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.id) return;
 
         try {
-            const response = await axios.put(`http://localhost:8081/api/users/${user.id}`, userData);
+            const response = await axios.put(`http://localhost:8081/api/users/${user.id}`, formData);
             if (response.status === 200) {
                 await updateUserData(user.id);
+                setIsEditing(false);
                 setMessage({ type: 'success', text: 'Profile updated successfully' });
             }
         } catch (error) {
@@ -134,8 +248,32 @@ const ProfilePageComponent: React.FC = () => {
         }
     };
 
+    const ProfileInput = useCallback(({ label, name, value, onChange }: {
+        label: string;
+        name: string;
+        value: string;
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    }) => (
+        <Box className="space-y-4">
+            <Typography variant="subtitle1" className="font-medium">{label}</Typography>
+            {isEditing ? (
+                <input
+                    key={`${name}-input`}
+                    type={name === 'email' ? 'email' : 'text'}
+                    name={name}
+                    value={value}
+                    onChange={onChange}
+                    className="w-full p-2 border rounded"
+                    autoComplete="off"
+                />
+            ) : (
+                <Typography className="p-2">{value}</Typography>
+            )}
+        </Box>
+    ), [isEditing]);
+
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <Box className="max-w-4xl mx-auto p-6">
             {message && (
                 <Alert className={`mb-4 ${message.type === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
                     {message.type === 'success' ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -143,86 +281,178 @@ const ProfilePageComponent: React.FC = () => {
                 </Alert>
             )}
 
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h2 className="text-2xl font-bold mb-6">Profile Picture</h2>
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="w-32 h-32 relative">
-                        {(previewImage || user?.profileImage) ? (
-                            <img
-                                src={previewImage || (user?.profileImage ? `data:image/jpeg;base64,${user.profileImage}` : '')}
-                                alt="Profile"
-                                className="w-full h-full rounded-full object-cover"
-                            />
-                        ) : (
-                            <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                                No Image
-                            </div>
-                        )}
-                    </div>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="w-full max-w-xs"
-                    />
-                    {selectedFile && (
-                        <button
-                            onClick={() => selectedFile && uploadProfilePicture(selectedFile)}
-                            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+            <Box className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <Box className="flex justify-between items-center mb-6">
+                    <Typography variant="h4">Profile Picture</Typography>
+                    {!showCropper && user?.profileImage && (
+                        <Button
+                            onClick={handleEditPicture}
+                            sx={{ minWidth: 'auto', padding: '8px' }}
                         >
-                            Upload
-                        </button>
+                            <Pencil className="h-5 w-5" />
+                        </Button>
                     )}
-                </div>
-            </div>
+                </Box>
 
-            <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                <h2 className="text-2xl font-bold mb-6">Profile Information</h2>
+                <Box className="flex flex-col items-center space-y-4">
+                    {showCropper ? (
+                        <Box className="w-full relative mb-8">
+                            <Box className="relative h-[400px] mb-4">
+                                <Cropper
+                                    image={originalImage || ''}
+                                    crop={crop}
+                                    zoom={zoom}
+                                    aspect={1}
+                                    onCropChange={setCrop}
+                                    onZoomChange={setZoom}
+                                    onCropComplete={onCropComplete}
+                                    cropShape="round"
+                                    showGrid={false}
+                                    objectFit="contain"
+                                    cropSize={{ width: 250, height: 250 }}
+                                    style={{
+                                        containerStyle: {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                            height: '100%',
+                                            width: '100%'
+                                        },
+                                        cropAreaStyle: {
+                                            border: '2px solid #fff',
+                                            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                                        },
+                                        mediaStyle: {
+                                            height: '100%'
+                                        }
+                                    }}
+                                />
+                            </Box>
+                            <Box className="flex flex-col gap-4">
+                                <Box className="w-full px-4">
+                                    <Typography variant="subtitle1" className="mb-2">Zoom</Typography>
+                                    <Slider
+                                        value={zoom}
+                                        min={-10}
+                                        max={10}
+                                        step={0.01}
+                                        onChange={(e, value) => setZoom(value as number)}
+                                        sx={{
+                                            '& .MuiSlider-track': { backgroundColor: '#9333ea' },
+                                            '& .MuiSlider-thumb': { backgroundColor: '#9333ea' }
+                                        }}
+                                    />
+                                </Box>
+                                <Box className="flex justify-center gap-2">
+                                    <Button
+                                        variant="contained"
+                                        onClick={handleCropSave}
+                                        sx={{ backgroundColor: '#9333ea', '&:hover': { backgroundColor: '#7e22ce' } }}
+                                    >
+                                        Save
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleCropCancel}
+                                        sx={{ borderColor: '#9333ea', color: '#9333ea' }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Box>
+                    ) : (
+                        <>
+                            <Box className="w-32 h-32 relative">
+                                {user?.profileImage ? (
+                                    <img
+                                        src={`data:image/jpeg;base64,${user.profileImage}`}
+                                        alt="Profile"
+                                        className="w-full h-full rounded-full object-cover"
+                                    />
+                                ) : (
+                                    <Box className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                                        <Typography>No Image</Typography>
+                                    </Box>
+                                )}
+                            </Box>
+                            <Button
+                                component="label"
+                                variant="contained"
+                                startIcon={<CloudUploadIcon />}
+                                sx={{ backgroundColor: '#9333ea', '&:hover': { backgroundColor: '#7e22ce' } }}
+                            >
+                                Choose Photo
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                />
+                            </Button>
+                        </>
+                    )}
+                </Box>
+            </Box>
+
+            <Box className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <Box className="flex justify-between items-center mb-6">
+                    <Typography variant="h4">My Profile</Typography>
+                    {!isEditing && (
+                        <Button
+                            onClick={() => setIsEditing(true)}
+                            sx={{ minWidth: 'auto', padding: '8px' }}
+                        >
+                            <Pencil className="h-5 w-5" />
+                        </Button>
+                    )}
+                </Box>
                 <form onSubmit={updateUserInfo} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Name</label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={userData.name}
-                            onChange={handleUserDataChange}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Email</label>
-                        <input
-                            type="email"
-                            name="email"
-                            value={userData.email}
-                            onChange={handleUserDataChange}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Username</label>
-                        <input
-                            type="text"
-                            name="username"
-                            value={userData.username}
-                            onChange={handleUserDataChange}
-                            className="w-full p-2 border rounded"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-                    >
-                        Update Profile
-                    </button>
-                </form>
-            </div>
+                    <ProfileInput
+                        label="Name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleUserDataChange}
+                    />
+                    <ProfileInput
+                        label="E-Mail"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleUserDataChange}
+                    />
+                    <ProfileInput
+                        label="Username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleUserDataChange}
+                    />
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-6">Change Password</h2>
+                    {isEditing && (
+                        <Box className="flex gap-2">
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                fullWidth
+                                sx={{ backgroundColor: '#9333ea', '&:hover': { backgroundColor: '#7e22ce' } }}
+                            >
+                                Update Profile
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                fullWidth
+                                onClick={() => setIsEditing(false)}
+                                sx={{ borderColor: '#9333ea', color: '#9333ea' }}
+                            >
+                                Cancel
+                            </Button>
+                        </Box>
+                    )}
+                </form>
+            </Box>
+
+            <Box className="bg-white rounded-lg shadow-lg p-6">
+                <Typography variant="h4" className="mb-6">Change Password</Typography>
                 <form onSubmit={updatePassword} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Current Password</label>
+                    <Box className="space-y-4">
+                        <Typography variant="subtitle1" className="font-medium">Current Password</Typography>
                         <input
                             type="password"
                             name="currentPassword"
@@ -230,9 +460,9 @@ const ProfilePageComponent: React.FC = () => {
                             onChange={handlePasswordChange}
                             className="w-full p-2 border rounded"
                         />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">New Password</label>
+                    </Box>
+                    <Box className="space-y-4">
+                        <Typography variant="subtitle1" className="font-medium">New Password</Typography>
                         <input
                             type="password"
                             name="newPassword"
@@ -240,9 +470,9 @@ const ProfilePageComponent: React.FC = () => {
                             onChange={handlePasswordChange}
                             className="w-full p-2 border rounded"
                         />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Confirm New Password</label>
+                    </Box>
+                    <Box className="space-y-4">
+                        <Typography variant="subtitle1" className="font-medium">Confirm New Password</Typography>
                         <input
                             type="password"
                             name="confirmPassword"
@@ -250,16 +480,18 @@ const ProfilePageComponent: React.FC = () => {
                             onChange={handlePasswordChange}
                             className="w-full p-2 border rounded"
                         />
-                    </div>
-                    <button
+                    </Box>
+                    <Button
                         type="submit"
-                        className="w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                        variant="contained"
+                        fullWidth
+                        sx={{ backgroundColor: '#9333ea', '&:hover': { backgroundColor: '#7e22ce' } }}
                     >
                         Update Password
-                    </button>
+                    </Button>
                 </form>
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 };
 
