@@ -46,19 +46,6 @@ const AddIndustry = () => {
         loadInitialData();
     }, []);
 
-    const fetchIndustries = async () => {
-        try {
-            setLoading(true);
-            const data = await industryService.getAllIndustries();
-            setIndustries(data);
-        } catch (error) {
-            toast.error('Failed to fetch industries');
-            console.error('Error fetching industries:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleAddIndustry = async () => {
         if (newIndustry.name.trim()) {
             try {
@@ -205,27 +192,7 @@ const AddIndustry = () => {
     // Rest of the JSX remains the same as in your original component...
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 2000,
-                    style: {
-                        background: '#ECFDF5',
-                        color: '#059669',
-                        border: '1px solid #10B981',
-                        padding: '16px',
-                        fontSize: '1.1rem',
-                        minWidth: '300px',
-                        maxWidth: '400px',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#059669',
-                            secondary: '#ECFDF5',
-                        },
-                    }
-                }}
-            />
+
             <AlertDialog open={industryToDelete !== null}>
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
