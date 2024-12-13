@@ -38,7 +38,7 @@ export const professionApi = {
     deleteProfession: async (id: number) => {
         try {
             const response = await axios.delete(`http://localhost:8081/api/professions/${id}`);
-            return response.data;
+            return { success: true };
         } catch (error: any) {
             console.log('API Error:', {
                 error: error,
@@ -46,13 +46,27 @@ export const professionApi = {
                 data: error.response?.data
             });
 
-            // Eğer error constraint violation içeriyorsa
-            if (error.response?.status === 500 ||
-                error.response?.data?.toString().includes('foreign key constraint') ||
-                error.response?.data?.toString().includes('profession_match')) {
-                throw { type: 'REFERENCE_ERROR' };  // Özel bir hata objesi fırlatıyoruz
+            // Anket ile ilişkili profession silinmeye çalışıldığında
+            const errorMessage = error.response?.data?.toString() || '';
+            if (errorMessage.includes('bir anket ile ilişkili')) {
+                return {
+                    success: false,
+                    error: {
+                        type: 'SURVEY_REFERENCE_ERROR',
+                        message: 'This profession cannot be deleted because it is associated with a survey registered in the system.'
+                    }
+                };
             }
-            throw error;
+
+            // Diğer hatalar için
+            return {
+                success: false,
+                error: {
+                    type: 'GENERAL_ERROR',
+                    message: 'An error occurred while deleting the profession'
+                }
+            };
         }
     }
+
 };

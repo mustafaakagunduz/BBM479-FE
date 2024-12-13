@@ -43,10 +43,23 @@ export const industryService = {
                 data: error.response?.data
             });
 
-            // Foreign key constraint veya diğer ilişkisel hatalar için
-            if (error.response?.status === 500 ||
-                error.response?.data?.toString().includes('foreign key constraint') ||
-                error.response?.data?.toString().includes('industry_match')) {
+            const errorMessage = error.response?.data?.toString() || '';
+
+            // Meslek ile ilişkili industry silinmeye çalışıldığında
+            if (errorMessage.includes('bir meslek ile ilişkili')) {
+                return {
+                    success: false,
+                    error: {
+                        type: 'PROFESSION_REFERENCE_ERROR',
+                        message: 'This industry cannot be deleted because it is associated with a profession registered in the system.'
+                    }
+                };
+            }
+
+            // Survey ile ilişkili veya diğer kısıtlama hataları için
+            if (error.response?.status === 500 &&
+                (errorMessage.includes('foreign key constraint') ||
+                    errorMessage.includes('industry_match'))) {
                 return {
                     success: false,
                     error: {

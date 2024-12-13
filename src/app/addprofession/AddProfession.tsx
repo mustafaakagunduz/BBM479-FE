@@ -113,33 +113,23 @@ const AddProfession = () => {
     const handleDeleteConfirm = async () => {
         if (professionToDelete !== null) {
             try {
-                await professionApi.deleteProfession(professionToDelete);
-                setProfessions(prevProfessions =>
-                    prevProfessions.filter(prof => prof.id !== professionToDelete)
-                );
-                setProfessionToDelete(null); // Modal'ı kapat
-                toast.success('Profession deleted successfully', {
-                    duration: 2000, // 2 saniye sonra kapanacak
-                    style: {
-                        border: '1px solid #10B981',
-                        padding: '12px',
-                        color: '#059669',
-                        backgroundColor: '#ECFDF5'
-                    },
-                });
-            } catch (error: any) {
-                console.log('Component Error:', {
-                    error: error,
-                    type: error.type,
-                    response: error.response
-                });
+                const result = await professionApi.deleteProfession(professionToDelete);
 
-                if (error.type === 'REFERENCE_ERROR') {
-                    setDeleteError('This profession cannot be deleted because it is associated with a survey registered in the system.');
+                if (result.success) {
+                    setProfessions(prevProfessions =>
+                        prevProfessions.filter(prof => prof.id !== professionToDelete)
+                    );
+                    setProfessionToDelete(null);
+                    toast.success('Profession deleted successfully');
                 } else {
-                    setDeleteError('An error occurred while deleting the profession');
+                    // Hata durumunda deleteError state'ini güncelle
+                    setDeleteError(result.error?.message || 'An error occurred while deleting the profession');
+                    setProfessionToDelete(null);
                 }
-                setProfessionToDelete(null); // Hata durumunda da modal'ı kapat
+            } catch (error: any) {
+                console.error('Error deleting profession:', error);
+                setDeleteError('An error occurred while deleting the profession');
+                setProfessionToDelete(null);
             }
         }
     };

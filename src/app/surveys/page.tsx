@@ -1,9 +1,7 @@
 // app/surveys/SpiderChart.tsx
 "use client"
 
-import NavbarAdmin from "@/app/components/navbars/NavbarAdmin";
 import { SurveyList } from "./components/SurveyList";
-import AddProfession from "@/app/addprofession/AddProfession";
 import AdminGuard from "@/app/components/guards/AdminGuard";  // Import yolunu düzelttik
 
 function SurveyPage() {
