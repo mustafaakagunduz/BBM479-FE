@@ -108,27 +108,7 @@ const AuthorizationSystem = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 2000,
-                    style: {
-                        background: '#ECFDF5',
-                        color: '#059669',
-                        border: '1px solid #10B981',
-                        padding: '16px',
-                        fontSize: '1.1rem',
-                        minWidth: '300px',
-                        maxWidth: '400px',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#059669',
-                            secondary: '#ECFDF5',
-                        },
-                    }
-                }}
-            />
+
 
             <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
                 <Card elevation={3}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { industryService, Industry } from '../services/industryService';
-import { toast, Toaster } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import {
     AlertDialog,
     AlertDialogContent,

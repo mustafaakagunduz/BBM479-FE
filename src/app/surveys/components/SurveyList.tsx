@@ -84,27 +84,7 @@ export function SurveyList() {
 
     return (
         <>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 2000,
-                    style: {
-                        background: '#ECFDF5',
-                        color: '#059669',
-                        border: '1px solid #10B981',
-                        padding: '16px',
-                        fontSize: '1.1rem',
-                        minWidth: '300px',
-                        maxWidth: '400px',
-                    },
-                    success: {
-                        iconTheme: {
-                            primary: '#059669',
-                            secondary: '#ECFDF5',
-                        },
-                    }
-                }}
-            />
+
 
             {/* Delete Confirmation Modal */}
             <AlertDialog open={surveyToDelete !== null}>

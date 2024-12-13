@@ -486,27 +486,7 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
             
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-5xl mx-auto">
-                    <Toaster
-                        position="top-right"
-                        toastOptions={{
-                            duration: 2000,
-                            style: {
-                                background: '#ECFDF5',
-                                color: '#059669',
-                                border: '1px solid #10B981',
-                                padding: '16px',
-                                fontSize: '1.1rem',
-                                minWidth: '300px',
-                                maxWidth: '400px',
-                            },
-                            success: {
-                                iconTheme: {
-                                    primary: '#059669',
-                                    secondary: '#ECFDF5',
-                                },
-                            }
-                        }}
-                    />
+
 
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
