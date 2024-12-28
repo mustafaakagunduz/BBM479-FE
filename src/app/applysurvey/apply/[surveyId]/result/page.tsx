@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -39,12 +39,12 @@ export default function SurveyResultPage({ params }: PageProps) {
     const [result, setResult] = useState<SurveyResult | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const calculationInProgress = useRef(false);
     const { user } = useAuth();
     const [allResults, setAllResults] = useState<SurveyResult[]>([]);
+    const [isInitialized, setIsInitialized] = useState(false);  // Yeni state ekledik
 
     const fetchAllResults = useCallback(async () => {
-        if (!user) return; // Kullanıcı yoksa API çağrısı yapma
+        if (!user) return;
 
         try {
             const API_BASE = 'http://localhost:8081/api/surveys';
@@ -59,68 +59,78 @@ export default function SurveyResultPage({ params }: PageProps) {
             console.error('Error fetching all results:', err);
         }
     }, [resolvedParams.surveyId, user]);
-    useEffect(() => {
-        fetchAllResults();
-    }, [fetchAllResults]);
 
     const fetchResult = useCallback(async () => {
-        if (loading || calculationInProgress.current || !user) return;
-
+        if (loading || !user) return;
+    
+        const isNewCalculation = searchParams.get('new') === 'true'; // Buraya taşıdık
+    
         try {
-            calculationInProgress.current = true;
             setLoading(true);
             setError(null);
-
+    
             const API_BASE = 'http://localhost:8081/api/surveys';
-            const isNewCalculation = searchParams.get('new') === 'true';
-
-            let response;
-            if (isNewCalculation) {
-                response = await axios.post(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/calculate?force=true`,
-                    {},
-                    {
-                        headers: { 'Cache-Control': 'no-cache' },
+    
+            const makeRequest = async (retryCount = 0): Promise<AxiosResponse<SurveyResult>> => {
+                try {
+                    let response: AxiosResponse<SurveyResult>;
+                    if (isNewCalculation) { // Artık burada kullanılabilir
+                        response = await axios.post<SurveyResult>(
+                            `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/calculate?force=true`
+                        );
+    
+                        if (response.data) {
+                            await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
+                            await fetchAllResults();
+                        }
+                    } else {
+                        response = await axios.get<SurveyResult>(
+                            `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
+                        );
                     }
-                );
-
-                if (response.data) {
-                    await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
-                    await fetchAllResults();
+    
+                    if (response.data) {
+                        setResult(response.data);
+                    }
+                    return response;
+                } catch (err) {
+                    if (axios.isAxiosError(err) && err.response?.status === 429 && retryCount < 3) {
+                        const delay = Math.pow(2, retryCount) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return makeRequest(retryCount + 1);
+                    }
+                    throw err;
                 }
-            } else {
-                response = await axios.get(
-                    `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
-                );
-            }
-
-            if (response.data) {
-                setResult(response.data);
-            } else {
-                throw new Error('No result found');
-            }
-        } catch (err: any) {
+            };
+    
+            await makeRequest();
+    
+        } catch (err) {
             console.error('Error:', err);
             setError('Failed to fetch survey result');
-
-            setTimeout(() => {
-                router.push('/applysurvey');
-            }, 3000);
+    
+            if (!isNewCalculation) { // Ve burada
+                setTimeout(() => {
+                    router.push('/applysurvey');
+                }, 3000);
+            }
         } finally {
             setLoading(false);
-            calculationInProgress.current = false;
         }
     }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults, user]);
-
     useEffect(() => {
-        const isNewCalculation = searchParams.get('new') === 'true';
+        if (!isInitialized && user) {
+            const isNewCalculation = searchParams.get('new') === 'true';
+            
+            if (!isNewCalculation && result) {
+                return;
+            }
 
-        if (!isNewCalculation && result) {
-            return;
+            setIsInitialized(true);
+            fetchResult();
+            fetchAllResults();
         }
-
-        fetchResult();
-    }, [fetchResult, searchParams, result]);
+    }, [fetchResult, searchParams, result, user, isInitialized, fetchAllResults]);
 
     if (loading) {
         return (
