@@ -29,7 +29,8 @@ const LoginSignUp = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
-
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   // Login states
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -152,6 +153,36 @@ const LoginSignUp = () => {
       setIsLoading(false);
     }
   };
+
+  const handleForgotPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+  
+    try {
+      const response = await axios.post('http://localhost:8081/api/auth/forgot-password', {
+        email: resetEmail
+      });
+  
+      if (response.data.success) {
+        setResetEmailSent(true);
+        setSuccess('Password reset link has been sent to your email. Please check your inbox.');
+        setTimeout(() => {
+          setIsForgotPassword(false);
+          setResetEmailSent(false);
+        }, 5000);
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || 'Failed to send reset email');
+      } else {
+        setError('An unexpected error occurred');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
@@ -174,30 +205,41 @@ const LoginSignUp = () => {
           
           {isForgotPassword ? (
             // Forgot Password Form
-            <div className="space-y-4">
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-              <button
-                disabled={isLoading}
-                className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center"
-              >
-                {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-                Send Reset Link
-              </button>
-              <button
-                onClick={() => setIsForgotPassword(false)}
-                className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 w-full"
-              >
-                <ArrowLeft size={20} />
-                Back to Login
-              </button>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
             </div>
+            <button
+              type="submit"
+              disabled={isLoading || resetEmailSent}
+              className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center"
+            >
+              {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+              {resetEmailSent ? 'Email Sent' : 'Send Reset Link'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotPassword(false);
+                setResetEmail('');
+                setResetEmailSent(false);
+                setError('');
+                setSuccess('');
+              }}
+              className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 w-full"
+            >
+              <ArrowLeft size={20} />
+              Back to Login
+            </button>
+          </form>
           ) : (
             <>
               {isLogin ? (
