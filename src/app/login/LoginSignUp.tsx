@@ -60,7 +60,6 @@ const LoginSignUp = () => {
     fetchCompanies();
   }, []);
 
-  // LoginSignUp component'inde handleLogin fonksiyonunu güncelle
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -70,26 +69,25 @@ const LoginSignUp = () => {
     try {
       const result = await login(loginEmail, loginPassword);
 
-      if (result?.success && result.user) {
+      if (result && result.success && result.user) {
         const destination = result.user.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
-        setTimeout(() => {
-          router.push(destination);
-        }, 0);
+        router.push(destination);
+      } else {
+        setError('Login failed');
       }
     } catch (error) {
       if (error instanceof Error) {
-        const errorMessage = error.message;
+        const errorMessage = error.message.toLowerCase();
 
         if (errorMessage.includes('verify your email')) {
-          setError('Your email address has not been verified.');
-          setSuccess(
-              'Please check your email for the verification link. ' +
-              'If you haven\'t received the email, you can request a new one.'
-          );
-        } else if (errorMessage.includes('User not found')) {
-          setError('No account found with this email address.');
-        } else if (errorMessage.includes('Invalid password')) {
-          setError('Incorrect password. Please try again.');
+          setError('Please verify your email address before logging in.');
+          setSuccess('Check your email for the verification link.');
+        } else if (
+            errorMessage.includes('user not found') ||
+            errorMessage.includes('invalid credentials') ||
+            errorMessage.includes('invalid password')
+        ) {
+          setError('Invalid email or password');
         } else {
           setError('An error occurred during login. Please try again.');
         }
