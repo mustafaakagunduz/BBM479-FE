@@ -1,6 +1,4 @@
-// app/companycharts/page.tsx
-'use client';
-
+"use client"
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -33,8 +31,10 @@ export default function CompanyCharts() {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
+                console.log("Fetching companies...");
                 const response = await fetch('http://localhost:8081/api/companies');
                 const data = await response.json();
+                console.log("Companies data:", data);
                 setCompanies(data);
             } catch (err) {
                 console.error('Error fetching companies:', err);
@@ -43,16 +43,18 @@ export default function CompanyCharts() {
         };
         fetchCompanies();
     }, []);
+
     const handleCompanySelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const companyId = e.target.value;
-        if (!companyId) return; // Boş seçim yapıldıysa işlemi durdur
+        if (!companyId) return;
         
         setLoading(true);
         setError('');
         try {
+            console.log("Fetching stats for company:", companyId);
             const response = await fetch(`http://localhost:8081/api/company-charts/${companyId}/skills/stats`);
             const data = await response.json();
-            console.log("Backend response:", data); // Debug için
+            console.log("Stats data:", data);
             setSkillStats(data);
         } catch (err) {
             console.error('Error fetching stats:', err);
@@ -61,28 +63,29 @@ export default function CompanyCharts() {
             setLoading(false);
         }
     };
- // Top Performers card'ını güncelleyelim
- const renderTopPerformers = () => {
-    if (!skillStats?.aboveAverageUsers?.length) {
-        return <div className="text-gray-500">No top performers data available</div>;
-    }
 
-    return (
-        <div className="space-y-4">
-            {skillStats.aboveAverageUsers.map((user) => (
-                <div 
-                    key={user.userId}
-                    className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
-                >
-                    <span>{user.userName}</span>
-                    <span className="font-semibold">
-                        {user.skillScore.toFixed(1)}%
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
-};
+    const renderTopPerformers = () => {
+        console.log("Rendering top performers with data:", skillStats?.aboveAverageUsers);
+        if (!skillStats?.aboveAverageUsers?.length) {
+            return <div className="text-gray-500">No top performers data available</div>;
+        }
+
+        return (
+            <div className="space-y-4">
+                {skillStats.aboveAverageUsers.map((user) => (
+                    <div 
+                        key={user.userId}
+                        className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                    >
+                        <span>{user.userName}</span>
+                        <span className="font-semibold">
+                            {user.skillScore.toFixed(1)}%
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
+    };
 
     const chartData = skillStats ? [
         {

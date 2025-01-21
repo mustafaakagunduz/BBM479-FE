@@ -26,7 +26,7 @@ interface LoginResult {
 
 const LoginSignUp = () => {
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]); // Boş dizi ile başlat
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -51,16 +51,21 @@ const LoginSignUp = () => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get('http://localhost:8081/api/companies');
-        setCompanies(response.data);
+        // Response data'yı parse edip sadece ihtiyacımız olan alanları alalım
+        const companiesData = response.data.map((company: any) => ({
+          id: company.id,
+          name: company.name
+        }));
+        setCompanies(companiesData);
       } catch (error) {
         console.error('Error fetching companies:', error);
         setError('Failed to fetch companies. Please try again later.');
+        setCompanies([]);
       }
     };
     fetchCompanies();
-  }, []);
+  }, []); 
 
-  // LoginSignUp component'inde handleLogin fonksiyonunu güncelle
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -70,26 +75,25 @@ const LoginSignUp = () => {
     try {
       const result = await login(loginEmail, loginPassword);
 
-      if (result?.success && result.user) {
+      if (result && result.success && result.user) {
         const destination = result.user.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
-        setTimeout(() => {
-          router.push(destination);
-        }, 0);
+        router.push(destination);
+      } else {
+        setError('Login failed');
       }
     } catch (error) {
       if (error instanceof Error) {
-        const errorMessage = error.message;
+        const errorMessage = error.message.toLowerCase();
 
         if (errorMessage.includes('verify your email')) {
-          setError('Your email address has not been verified.');
-          setSuccess(
-              'Please check your email for the verification link. ' +
-              'If you haven\'t received the email, you can request a new one.'
-          );
-        } else if (errorMessage.includes('User not found')) {
-          setError('No account found with this email address.');
-        } else if (errorMessage.includes('Invalid password')) {
-          setError('Incorrect password. Please try again.');
+          setError('Please verify your email address before logging in.');
+          setSuccess('Check your email for the verification link.');
+        } else if (
+            errorMessage.includes('user not found') ||
+            errorMessage.includes('invalid credentials') ||
+            errorMessage.includes('invalid password')
+        ) {
+          setError('Invalid email or password');
         } else {
           setError('An error occurred during login. Please try again.');
         }
@@ -206,17 +210,30 @@ const LoginSignUp = () => {
           {isForgotPassword ? (
             // Forgot Password Form
             <form onSubmit={handleForgotPassword} className="space-y-4">
+              {companies && companies.length > 0 ? (
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+              <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <select
+                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
+                value={selectedCompany?.id || ''}
+                onChange={(e) => {
+                  const company = companies.find(c => c.id === Number(e.target.value));
+                  setSelectedCompany(company || null);
+                }}
+              >
+                <option value="">Select a Company</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
             </div>
+          ) : (
+            <div className="text-center text-gray-500">
+              Loading companies...
+            </div>
+          )}
             <button
               type="submit"
               disabled={isLoading || resetEmailSent}

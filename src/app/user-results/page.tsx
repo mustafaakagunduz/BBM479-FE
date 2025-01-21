@@ -21,7 +21,10 @@ interface User {
     id: number;
     username: string;
     email: string;
-    role: {
+    name: string;
+    role: string;
+    company?: {
+        id: number;
         name: string;
     };
 }
@@ -51,7 +54,7 @@ const UserResults = () => {
             try {
                 setLoading(true);
                 const response = await axios.get('http://localhost:8081/api/users');
-                const filteredUsers = response.data.filter((user: User) => user.role.name === 'USER');
+                const filteredUsers = response.data.filter((user: User) => user.role === 'USER');
                 setUsers(filteredUsers);
             } catch (error) {
                 console.error('Error fetching users:', error);
