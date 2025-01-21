@@ -3,11 +3,29 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserRole } from '../types/auth';
+import axios from "axios";
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+}
+
+interface AuthResponse {
+  success: boolean;
+  message: string;
+  role?: string;
+  userId?: number;
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+    name: string;
+    role: {
+      name: UserRole;
+    };
+    profileImage?: string;
+  };
 }
 
 interface LoginResult {
@@ -73,7 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedAuth = localStorage.getItem('auth');
     if (savedAuth) {
       const authData = JSON.parse(savedAuth);
-      dispatch({ type: 'LOGIN_SUCCESS', payload: authData.user });
+      if (authData.user) {
+        dispatch({ type: 'LOGIN_SUCCESS', payload: authData.user });
+      }
     }
     dispatch({ type: 'SET_LOADING', payload: false });
   }, []);
@@ -84,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userData = await response.json();
 
       if (state.user) {
-        const updatedUser = {
+        const updatedUser: User = {
           ...state.user,
           name: userData.name,
           email: userData.email,
@@ -102,43 +122,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await fetch('http://localhost:8081/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+      const response = await axios.post<AuthResponse>('http://localhost:8081/api/auth/login', {
+        email,
+        password
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      const authResponse = response.data;
 
-      if (data.success) {
-        // İlk kullanıcı verilerini alın
-        const userDetailsResponse = await fetch(`http://localhost:8081/api/users/${data.userId}`);
-        const userDetails = await userDetailsResponse.json();
-
+      if (authResponse.success && authResponse.user) {
         const user: User = {
-          id: data.userId,
-          username: userDetails.username || email.split('@')[0],
-          email: email,
-          name: userDetails.name,
-          profileImage: userDetails.profileImage,
+          id: authResponse.user.id,
+          username: authResponse.user.username,
+          email: authResponse.user.email,
+          name: authResponse.user.name,
           role: {
-            name: data.role as UserRole
-          }
+            name: authResponse.user.role.name as UserRole // Type assertion to ensure it matches UserRole
+          },
+          profileImage: authResponse.user.profileImage
         };
 
         localStorage.setItem('auth', JSON.stringify({ user }));
         dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-        return { success: true, user };
+
+        return {
+          success: true,
+          user
+        };
       }
+
       return undefined;
     } catch (error) {
-      throw error;
-    } finally {
-      dispatch({ type: 'SET_LOADING', payload: false });
+      if (axios.isAxiosError(error)) {
+        throw new Error(error.response?.data?.message || 'Invalid username and/or password');
+      }
+      throw new Error('An unexpected error occurred');
     }
   };
 
