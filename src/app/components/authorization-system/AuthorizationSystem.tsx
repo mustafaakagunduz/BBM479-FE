@@ -22,9 +22,7 @@ interface User {
     id: number;
     username: string;
     email: string;
-    role: {
-        name: string;
-    };
+    role: string;
 }
 
 const AuthorizationSystem = () => {
@@ -131,11 +129,11 @@ const AuthorizationSystem = () => {
                                         <TableRow key={user.id}>
                                             <TableCell>{user.username}</TableCell>
                                             <TableCell>{user.email}</TableCell>
-                                            <TableCell>{user.role.name}</TableCell>
+                                            <TableCell>{user.role}</TableCell>
                                             <TableCell>
                                                 <RadioGroup
                                                     row
-                                                    value={user.role.name}
+                                                    value={user.role}  // DÜZELTILDI
                                                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                                                 >
                                                     <FormControlLabel

@@ -54,7 +54,7 @@ function AdminPanel() {
                     <Card className="mb-8 w-full">
 
                         <CardContent className="space-y-4 text-center">
-                            <p className="text-lg text-purple-600 font-bold">In this panel you can:</p> {/* font-bold eklendi */}
+                            <p className="text-lg text-purple-600 font-bold">In this page you can:</p> {/* font-bold eklendi */}
                             <ul className="space-y-4 list-none p-0">
                                 {adminCards.map((card, index) => (
                                     <li key={index}>
