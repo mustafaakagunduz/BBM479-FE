@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import AdminGuard from "@/app/components/guards/AdminGuard";
 interface Company {
     id: number;
     name: string;
@@ -103,6 +103,7 @@ export default function CompanyCharts() {
     ] : [];
 
     return (
+        <AdminGuard>
         <div className="container mx-auto p-4">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Company Performance Analytics</h2>
@@ -159,5 +160,6 @@ export default function CompanyCharts() {
                 </div>
             )}
         </div>
+        </AdminGuard>
     );
 }
