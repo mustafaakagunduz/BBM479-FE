@@ -92,24 +92,25 @@ export default function ApplySurveyPage({ params }: PageProps) {
     };
 
     const handleSubmit = async () => {
-        if (!survey || !survey.questions || submitting || !user) {
-            return;
-        }
-
-        const allQuestionsAnswered = survey.questions.every(
-            question => answers[question.id] !== undefined
-        );
-
-        if (!allQuestionsAnswered) {
-            alert('Please answer all questions before submitting.');
+        if (!survey?.questions || submitting || !user) {
             return;
         }
 
         try {
-            setSubmitting(true);
+            setSubmitting(true);  // İlk iş olarak submitting'i true yap
+
+            // Tüm soruların cevaplanıp cevaplanmadığını kontrol et
+            const allQuestionsAnswered = survey.questions.every(
+                question => answers[question.id] !== undefined
+            );
+
+            if (!allQuestionsAnswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
 
             const surveyResponse = {
-                userId: user.id, // Sabit değer yerine user.id kullanıyoruz
+                userId: user.id,
                 surveyId: Number(resolvedParams.surveyId),
                 answers: Object.entries(answers).map(([questionId, level]) => ({
                     questionId: Number(questionId),
@@ -117,21 +118,38 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 }))
             };
 
-            // Yapay gecikme ekliyoruz (3 saniye)
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            const responseResult = await axios.post('http://localhost:8081/api/responses', surveyResponse);
+            const responseResult = await axios.post('http://localhost:8081/api/responses',
+                surveyResponse,
+                {
+                    // Request'in tekrarlanmasını engelle
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                }
+            );
 
             if (responseResult.status === 201 || responseResult.status === 200) {
-                await router.replace(
-                    `/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`,
-                    { scroll: false }
-                );
+                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error submitting survey:', error);
-            alert('Failed to submit survey. Please try again.');
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+
+            // Kullanıcıya daha detaylı hata göster
+            if (error.response?.data?.message) {
+                alert(`Error: ${error.response.data.message}`);
+            } else if (error.message) {
+                alert(`Error: ${error.message}`);
+            } else {
+                alert('Failed to submit survey. Please try again.');
+            }
         } finally {
+            // Yönlendirmeden sonra submitting'i false yap
             setSubmitting(false);
         }
     };
