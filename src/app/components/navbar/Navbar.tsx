@@ -49,7 +49,8 @@ const Navbar = () => {
         ]
     };
 
-    const homeLink = user?.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
+    // Navbar.tsx içinde
+    const homeLink = user?.role?.name === 'ADMIN' ? '/homepageadmin' : user ? '/homepageuser' : '/homepageuser';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

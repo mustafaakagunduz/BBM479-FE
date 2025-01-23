@@ -20,6 +20,7 @@ export default function RootLayoutClient({
     const adminPages = ['/admin', '/authorization']
     const userPages = ['/dashboard', '/previousresults', '/applysurvey']
 
+
     useEffect(() => {
         if (!loading) {
             console.log('Current User:', user); // User'ı kontrol edelim

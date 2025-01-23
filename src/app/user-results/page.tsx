@@ -33,11 +33,10 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     '&:hover': {
         backgroundColor: '#9333ea',
         cursor: 'pointer',
-        '& .MuiTableCell-root': {  // Satırdaki tüm hücrelerin stilini değiştir
+        '& .MuiTableCell-root': {
             color: 'white',
-
         },
-        '& .action-badge': {  // Action badge'in hover durumundaki stili
+        '& .action-badge': {
             backgroundColor: 'white',
             color: '#9333ea'
         }
@@ -97,7 +96,7 @@ const UserResults = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Username</TableCell>
+                                        <TableCell>Name</TableCell>
                                         <TableCell>Email</TableCell>
                                         <TableCell align="right">Actions</TableCell>
                                     </TableRow>
@@ -109,7 +108,7 @@ const UserResults = () => {
                                             onClick={() => router.push(`/user-results/${user.id}`)}
                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                         >
-                                            <TableCell>{user.username}</TableCell>
+                                            <TableCell>{user.name}</TableCell>
                                             <TableCell>{user.email}</TableCell>
                                             <TableCell align="right">
                                                 <span
