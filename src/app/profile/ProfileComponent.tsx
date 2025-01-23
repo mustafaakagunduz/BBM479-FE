@@ -56,9 +56,23 @@ const ProfilePageComponent: React.FC = () => {
 
     useEffect(() => {
         if (user?.id) {
-            updateUserData(user.id); // Component mount olduğunda kullanıcı verisini güncelle
+            // Sadece component mount olduğunda çalışsın
+            const fetchData = async () => {
+                await updateUserData(user.id);
+            };
+            fetchData();
         }
-    }, [user?.id, updateUserData]);
+    }, [user?.id]); // updateUserData'yı bağımlılıklardan çıkardık
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                email: user.email || '',
+                username: user.username || ''
+            });
+        }
+    }, [user]);
 
     const handleUserDataChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
