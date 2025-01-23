@@ -428,12 +428,7 @@ const ProfilePageComponent: React.FC = () => {
                         value={formData.email}
                         onChange={handleUserDataChange}
                     />
-                    <ProfileInput
-                        label="Username"
-                        name="username"
-                        value={formData.username}
-                        onChange={handleUserDataChange}
-                    />
+
 
                     {isEditing && (
                         <Box className="flex gap-2">
