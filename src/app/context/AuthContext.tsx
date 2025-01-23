@@ -101,15 +101,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUserData = async (userId: number) => {
     try {
       const response = await fetch(`http://localhost:8081/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
       const userData = await response.json();
+      console.log('Received user data:', userData); // Debug için
 
       if (state.user) {
         const updatedUser: User = {
           ...state.user,
-          name: userData.name,
-          email: userData.email,
-          username: userData.username,
-          profileImage: userData.profileImage
+          ...userData, // Direkt olarak gelen datayı kullan
         };
 
         localStorage.setItem('auth', JSON.stringify({ user: updatedUser }));
@@ -127,33 +128,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
 
-      const authResponse = response.data;
+      if (response.data.success && response.data.user) {
+        // Kullanıcı verilerini al
+        const userResponse = await axios.get(`http://localhost:8081/api/users/${response.data.user.id}`);
+        const userData = userResponse.data;
 
-      if (authResponse.success && authResponse.user) {
         const user: User = {
-          id: authResponse.user.id,
-          username: authResponse.user.username,
-          email: authResponse.user.email,
-          name: authResponse.user.name,
-          role: {
-            name: authResponse.user.role.name as UserRole // Type assertion to ensure it matches UserRole
-          },
-          profileImage: authResponse.user.profileImage
+          ...response.data.user,
+          profileImage: userData.profileImage
         };
 
         localStorage.setItem('auth', JSON.stringify({ user }));
         dispatch({ type: 'LOGIN_SUCCESS', payload: user });
 
-        return {
-          success: true,
-          user
-        };
+        return { success: true, user };
       }
-
       return undefined;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Invalid username and/or password');
+        throw new Error(error.response?.data?.message || 'Invalid credentials');
       }
       throw new Error('An unexpected error occurred');
     }

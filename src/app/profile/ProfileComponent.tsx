@@ -55,14 +55,10 @@ const ProfilePageComponent: React.FC = () => {
     const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
     useEffect(() => {
-        if (user) {
-            setFormData({
-                name: user.name || '',
-                email: user.email || '',
-                username: user.username || ''
-            });
+        if (user?.id) {
+            updateUserData(user.id); // Component mount olduğunda kullanıcı verisini güncelle
         }
-    }, [user]);
+    }, [user?.id, updateUserData]);
 
     const handleUserDataChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -173,7 +169,6 @@ const ProfilePageComponent: React.FC = () => {
         setCrop({ x: 0, y: 0 });
         setZoom(1.5);
     }, []);
-
     const uploadProfilePicture = async (file: Blob) => {
         if (!user?.id) return;
         const formData = new FormData();
@@ -191,16 +186,17 @@ const ProfilePageComponent: React.FC = () => {
 
             if (response.status === 200) {
                 await updateUserData(user.id);
-                setSelectedFile(null);
-                setPreviewImage(null);
-                setOriginalImage(null);
-                setShowCropper(false);
-                setCrop({ x: 0, y: 0 });
-                setZoom(1.5);
                 setMessage({ type: 'success', text: 'Profile picture updated successfully' });
             }
         } catch (error) {
             setMessage({ type: 'error', text: 'Failed to upload profile picture' });
+        } finally {
+            setSelectedFile(null);
+            setPreviewImage(null);
+            setOriginalImage(null);
+            setShowCropper(false);
+            setCrop({ x: 0, y: 0 });
+            setZoom(1.5);
         }
     };
 
