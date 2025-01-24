@@ -153,7 +153,7 @@ const AddProfession = () => {
                 id: firstSkill.id,
                 name: firstSkill.name,
                 level: 1,
-                tempId: Date.now()
+                tempId: Date.now() + Math.random()
             };
             setNewProfession({
                 ...newProfession,
@@ -241,7 +241,7 @@ const AddProfession = () => {
     );
 
     const renderSkillDropdown = (skill: Skill, index: number, isNewProfession: boolean) => {
-        const dropdownKey = `${isNewProfession ? 'new' : skill.id}-${index}`;
+        const dropdownKey = `${isNewProfession ? 'new' : skill.tempId || skill.id}-${index}`;
 
         return (
             <div className="relative flex-1">
@@ -265,7 +265,8 @@ const AddProfession = () => {
                                     const updatedSkill = {
                                         ...skill,
                                         id: option.id,
-                                        name: option.name
+                                        name: option.name,
+                                        tempId: skill.tempId || Date.now() + Math.random()
                                     };
 
                                     if (isNewProfession) {
@@ -292,20 +293,26 @@ const AddProfession = () => {
             </div>
         );
     };
-
     const renderExistingProfessionSkills = (profession: Profession, isEditing: boolean) => (
         <div className="space-y-2">
             {profession.requiredSkills.map((skill, index) => (
                 <div key={`existing-skill-${skill.tempId || skill.id}-${index}`}
                      className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
                     {isEditing ?
-                        renderSkillDropdown(skill, index, false) :
+                        renderSkillDropdown(skill, index, isAddingNew) :
                         <span className="flex-1">{skill.name}</span>
                     }
                     <LevelSelector
                         level={skill.level}
                         onChange={(newLevel) => {
-                            if (isEditing && editingProfession) {
+                            if (isAddingNew) {
+                                const updatedSkills = [...newProfession.requiredSkills];
+                                updatedSkills[index] = { ...skill, level: newLevel };
+                                setNewProfession({
+                                    ...newProfession,
+                                    requiredSkills: updatedSkills
+                                });
+                            } else if (isEditing && editingProfession) {
                                 const updatedSkills = [...editingProfession.requiredSkills];
                                 updatedSkills[index] = { ...skill, level: newLevel };
                                 setEditingProfession({
@@ -318,7 +325,18 @@ const AddProfession = () => {
                     />
                     {isEditing && (
                         <button
-                            onClick={() => handleDeleteSkill(index)}
+                            onClick={() => {
+                                if (isAddingNew) {
+                                    const updatedSkills = [...newProfession.requiredSkills];
+                                    updatedSkills.splice(index, 1);
+                                    setNewProfession({
+                                        ...newProfession,
+                                        requiredSkills: updatedSkills
+                                    });
+                                } else {
+                                    handleDeleteSkill(index);
+                                }
+                            }}
                             className="text-red-600 hover:text-red-800 transition"
                         >
                             <Trash2 size={20} />
@@ -328,7 +346,6 @@ const AddProfession = () => {
             ))}
         </div>
     );
-
     const renderIndustryDropdown = (id: string, selectedId: number | undefined, onChange: (id: number) => void) => (
         <div className="relative">
             <button
@@ -404,6 +421,11 @@ const AddProfession = () => {
     };
 
     const handleSaveNewProfession = async () => {
+        if (!newProfession.requiredSkills.length) {
+            toast.error('Please add at least one skill');
+            return;
+        }
+
         if (newProfession.name.trim() && newProfession.industryId && newProfession.requiredSkills.length > 0) {
             try {
                 const professionData = {
