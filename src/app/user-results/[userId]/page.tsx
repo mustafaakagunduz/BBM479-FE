@@ -13,10 +13,11 @@ import {
     Typography,
     CircularProgress,
     Card,
-    CardContent
+    CardContent,
+    IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
 
 interface ProfessionMatch {
     id: number;
@@ -48,9 +49,13 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
         '& .action-badge': {
             backgroundColor: 'white',
             color: '#9333ea'
+        },
+        '& .delete-icon': {
+            color: 'white'
         }
     },
 }));
+
 
 const UserSurveyResults = ({ params }: PageProps) => {
     const resolvedParams = use(params);
@@ -78,6 +83,18 @@ const UserSurveyResults = ({ params }: PageProps) => {
         fetchData();
     }, [resolvedParams.userId]);
 
+    const handleDelete = async (resultId: number, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click event
+        if (window.confirm('Are you sure you want to delete this result?')) {
+            try {
+                await axios.delete(`http://localhost:8081/api/surveys/results/${resultId}`);
+                setResults(prevResults => prevResults.filter(result => result.id !== resultId));
+            } catch (error) {
+                console.error('Error deleting result:', error);
+            }
+        }
+    };
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleString('en-US', {
             year: 'numeric',
@@ -100,7 +117,6 @@ const UserSurveyResults = ({ params }: PageProps) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
             <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-                {/* Back Button */}
                 <div
                     onClick={() => router.push('/user-results')}
                     style={{
@@ -137,6 +153,7 @@ const UserSurveyResults = ({ params }: PageProps) => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Survey Date</TableCell>
+                                        <TableCell align="right">Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -148,22 +165,36 @@ const UserSurveyResults = ({ params }: PageProps) => {
                                         >
                                             <TableCell>{formatDate(result.createdAt)}</TableCell>
                                             <TableCell align="right">
-                                                <span
-                                                    className="action-badge"
-                                                    style={{
-                                                        padding: '6px 12px',
-                                                        borderRadius: '16px',
-                                                        backgroundColor: '#f3e8ff',
-                                                        color: '#9333ea',
-                                                        fontSize: '0.875rem',
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.5rem'
-                                                    }}
-                                                >
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                                    <IconButton
+                                                        onClick={(e) => handleDelete(result.id, e)}
+                                                        className="delete-icon"
+                                                        sx={{
+                                                            color: '#dc2626',
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(220, 38, 38, 0.1)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Trash2 size={20} />
+                                                    </IconButton>
+                                                    <span
+                                                        className="action-badge"
+                                                        style={{
+                                                            padding: '6px 12px',
+                                                            borderRadius: '16px',
+                                                            backgroundColor: '#f3e8ff',
+                                                            color: '#9333ea',
+                                                            fontSize: '0.875rem',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.5rem'
+                                                        }}
+                                                    >
                                                     Details
                                                     <ArrowRight size={16} />
                                                 </span>
+                                                </div>
                                             </TableCell>
                                         </StyledTableRow>
                                     ))}
