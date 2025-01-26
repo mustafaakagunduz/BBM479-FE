@@ -82,7 +82,7 @@ function CompanyBasedEvaluationsComponent() {
         <Card className="max-w-4xl mx-auto mt-16">
             <CardHeader className="py-8">
                 <CardTitle className="text-center text-3xl lg:text-4xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Company Skill Analysis
+                    Company Based Skill Analysis
                 </CardTitle>
             </CardHeader>
             <CardContent className="p-8">
@@ -156,10 +156,14 @@ function CompanyBasedEvaluationsComponent() {
                     <div className="h-[400px]">
                         <Bar
                             data={{
-                                labels: analysisData.skillScores.map(score => score.skillName),
+                                labels: [...analysisData.skillScores]
+                                    .sort((a, b) => b.averageScore - a.averageScore)
+                                    .map(score => score.skillName),
                                 datasets: [{
                                     label: 'Skill Scores',
-                                    data: analysisData.skillScores.map(score => score.averageScore),
+                                    data: [...analysisData.skillScores]
+                                        .sort((a, b) => b.averageScore - a.averageScore)
+                                        .map(score => score.averageScore * 20), // 5'lik sistemden 100'lük sisteme çevirme
                                     backgroundColor: 'rgba(147, 51, 234, 0.5)',
                                     borderColor: 'rgb(147, 51, 234)',
                                     borderWidth: 1
@@ -176,7 +180,10 @@ function CompanyBasedEvaluationsComponent() {
                                 scales: {
                                     y: {
                                         beginAtZero: true,
-                                        max: 5
+                                        max: 100,
+                                        ticks: {
+                                            stepSize: 10
+                                        }
                                     }
                                 }
                             }}
