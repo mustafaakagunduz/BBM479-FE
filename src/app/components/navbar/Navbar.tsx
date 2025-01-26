@@ -178,7 +178,7 @@ const Navbar = () => {
                                         User Results
                                     </button>
                                 </Link>
-                                <Link href="/companycharts">
+                                <Link href="/company-based-evaluations">
                                     <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
                                         Company Based Evaluations
                                     </button>
