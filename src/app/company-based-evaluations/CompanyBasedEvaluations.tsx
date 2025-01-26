@@ -100,7 +100,7 @@ function CompanyBasedEvaluationsComponent() {
                                 className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
                                 <input
                                     type="text"
-                                    placeholder="Search company..."
+                                    placeholder="Type company name..."
                                     onChange={(e) => setCompanySearchTerm(e.target.value)}
                                     className="w-full p-2 border-b"
                                 />
