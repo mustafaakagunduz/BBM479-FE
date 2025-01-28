@@ -1,13 +1,12 @@
-'use client';
-
+'use client'
 import { useEffect, useState, use } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { Survey } from '@/app/types/survey';
 import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion'; // Yeni import
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
 import {
     AlertDialog,
@@ -22,59 +21,16 @@ interface PageProps {
     }>;
 }
 
-export default function ApplySurveyPage({ params }: PageProps) {
+const ApplySurveyPage = ({ params }: PageProps) => {
     const resolvedParams = use(params);
     const [survey, setSurvey] = useState<Survey | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [direction, setDirection] = useState(0); // -1 geri, 1 ileri için
-    const router = useRouter();
+    const [direction, setDirection] = useState(0);
     const [answers, setAnswers] = useState<{ [key: number]: number }>({});
     const [submitting, setSubmitting] = useState(false);
+    const router = useRouter();
     const { user } = useAuth();
-
-    useEffect(() => {
-        fetchSurveyDetails();
-    }, [resolvedParams.surveyId]);
-
-    const handleOptionSelect = (questionId: number, optionLevel: number) => {
-        setAnswers(prev => ({
-            ...prev,
-            [questionId]: optionLevel
-        }));
-    };
-
-    const fetchSurveyDetails = async () => {
-        try {
-            const response = await axios.get(`http://localhost:8081/api/surveys/${resolvedParams.surveyId}`);
-            setSurvey(response.data);
-        } catch (error) {
-            console.error('Error fetching survey details:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleNext = () => {
-        if (survey?.questions && currentQuestionIndex < survey.questions.length - 1) {
-            const currentQuestionId = survey.questions[currentQuestionIndex].id;
-
-            if (answers[currentQuestionId] === undefined) {
-                alert('Please select an answer before proceeding to the next question.');
-                return;
-            }
-
-            setDirection(1);
-            setCurrentQuestionIndex(prev => prev + 1);
-        }
-    };
-
-    const handleBack = () => {
-        if (currentQuestionIndex > 0) {
-            setDirection(-1);
-            setCurrentQuestionIndex(prev => prev - 1);
-        }
-    };
 
     const variants = {
         enter: (direction: number) => ({
@@ -91,15 +47,65 @@ export default function ApplySurveyPage({ params }: PageProps) {
         })
     };
 
-    const handleSubmit = async () => {
-        if (!survey?.questions || submitting || !user) {
-            return;
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const fetchSurveyDetails = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(
+                    `http://localhost:8081/api/surveys/${resolvedParams.surveyId}`,
+                    { signal: controller.signal }
+                );
+                setSurvey(response.data);
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.name === 'CanceledError') {
+                    return;
+                }
+                console.error('Error fetching survey details:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSurveyDetails();
+        return () => controller.abort();
+    }, [resolvedParams.surveyId]);
+
+    const handleOptionSelect = (questionId: number, optionLevel: number) => {
+        setAnswers(prev => ({
+            ...prev,
+            [questionId]: optionLevel
+        }));
+    };
+
+    const handleNext = () => {
+        if (survey?.questions && currentQuestionIndex < survey.questions.length - 1) {
+            const currentQuestionId = survey.questions[currentQuestionIndex].id;
+
+            if (answers[currentQuestionId] === undefined) {
+                alert('Please select an answer before proceeding.');
+                return;
+            }
+
+            setDirection(1);
+            setCurrentQuestionIndex(prev => prev + 1);
         }
+    };
+
+    const handleBack = () => {
+        if (currentQuestionIndex > 0) {
+            setDirection(-1);
+            setCurrentQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!survey?.questions || submitting || !user) return;
 
         try {
-            setSubmitting(true);  // İlk iş olarak submitting'i true yap
+            setSubmitting(true);
 
-            // Tüm soruların cevaplanıp cevaplanmadığını kontrol et
             const allQuestionsAnswered = survey.questions.every(
                 question => answers[question.id] !== undefined
             );
@@ -118,10 +124,10 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 }))
             };
 
-            const responseResult = await axios.post('http://localhost:8081/api/responses',
+            const responseResult = await axios.post(
+                'http://localhost:8081/api/responses',
                 surveyResponse,
                 {
-                    // Request'in tekrarlanmasını engelle
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache'
@@ -132,34 +138,33 @@ export default function ApplySurveyPage({ params }: PageProps) {
             if (responseResult.status === 201 || responseResult.status === 200) {
                 router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
             }
-        } catch (error: any) {
-            console.error('Error submitting survey:', error);
-            console.error('Error details:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status
-            });
-
-            // Kullanıcıya daha detaylı hata göster
-            if (error.response?.data?.message) {
-                alert(`Error: ${error.response.data.message}`);
-            } else if (error.message) {
-                alert(`Error: ${error.message}`);
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const errorMessage = error.response?.data?.message || error.message;
+                alert(`Error: ${errorMessage}`);
             } else {
                 alert('Failed to submit survey. Please try again.');
             }
         } finally {
-            // Yönlendirmeden sonra submitting'i false yap
             setSubmitting(false);
         }
     };
 
     if (loading) {
-        return <div className="flex justify-center">Loading survey details...</div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                <span className="ml-2">Loading survey details...</span>
+            </div>
+        );
     }
 
     if (!survey || !survey.questions) {
-        return <div className="flex justify-center">Survey not found</div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen text-gray-600">
+                Survey not found
+            </div>
+        );
     }
 
     const currentQuestion = survey.questions[currentQuestionIndex];
@@ -167,7 +172,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
     const isFirstQuestion = currentQuestionIndex === 0;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 text-black">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
             <div className="container mx-auto p-6 space-y-6">
                 <div className="flex items-center justify-between mb-6">
                     <Button
@@ -183,10 +188,10 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                            {survey?.title}
+                            {survey.title}
                         </CardTitle>
                         <div className="text-sm text-gray-600 mt-2">
-                            Question {currentQuestionIndex + 1} of {survey?.questions.length}
+                            Question {currentQuestionIndex + 1} of {survey.questions.length}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -206,7 +211,7 @@ export default function ApplySurveyPage({ params }: PageProps) {
                                 >
                                     <div className="border rounded-lg p-6">
                                         <h3 className="text-lg font-semibold mb-4">
-                                            {currentQuestion?.text}
+                                            {currentQuestion.text}
                                         </h3>
                                         <motion.div
                                             className="ml-4 space-y-3"
@@ -214,23 +219,23 @@ export default function ApplySurveyPage({ params }: PageProps) {
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.2 }}
                                         >
-                                            {currentQuestion?.options.map((option) => (
+                                            {currentQuestion.options.map((option) => (
                                                 <div
                                                     key={option.id}
                                                     onClick={() => handleOptionSelect(currentQuestion.id, option.level)}
                                                     className={`flex items-center p-3 bg-white rounded-lg border transition-all cursor-pointer
-                                                        ${answers[currentQuestion?.id] === option.level
+                                                        ${answers[currentQuestion.id] === option.level
                                                         ? 'border-purple-500 bg-purple-50 shadow-sm'
                                                         : 'hover:border-purple-500'}`}
                                                 >
                                                     <div className="flex items-center w-full">
                                                         <div className="flex-shrink-0 mr-4">
                                                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
-                                                                ${answers[currentQuestion?.id] === option.level
+                                                                ${answers[currentQuestion.id] === option.level
                                                                 ? 'border-purple-500 bg-purple-500'
                                                                 : 'border-gray-300'}`}
                                                             >
-                                                                {answers[currentQuestion?.id] === option.level && (
+                                                                {answers[currentQuestion.id] === option.level && (
                                                                     <div className="w-2 h-2 bg-white rounded-full" />
                                                                 )}
                                                             </div>
@@ -292,8 +297,6 @@ export default function ApplySurveyPage({ params }: PageProps) {
                 </Card>
             </div>
 
-
-            {/* Loading Modal */}
             <AlertDialog open={submitting}>
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="sr-only">
@@ -313,4 +316,6 @@ export default function ApplySurveyPage({ params }: PageProps) {
             </AlertDialog>
         </div>
     );
-}
+};
+
+export default ApplySurveyPage;
