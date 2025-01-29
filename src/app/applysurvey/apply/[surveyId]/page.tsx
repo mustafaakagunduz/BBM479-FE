@@ -209,90 +209,20 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                                         opacity: { duration: 0.3 }
                                     }}
                                 >
-                                    <div className="border rounded-lg p-6">
-                                        <h3 className="text-lg font-semibold mb-4">
-                                            {currentQuestion.text}
-                                        </h3>
-                                        <motion.div
-                                            className="ml-4 space-y-3"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ duration: 0.2 }}
-                                        >
-                                            {currentQuestion.options.map((option) => (
-                                                <div
-                                                    key={option.id}
-                                                    onClick={() => handleOptionSelect(currentQuestion.id, option.level)}
-                                                    className={`flex items-center p-3 bg-white rounded-lg border transition-all cursor-pointer
-                                                        ${answers[currentQuestion.id] === option.level
-                                                        ? 'border-purple-500 bg-purple-50 shadow-sm'
-                                                        : 'hover:border-purple-500'}`}
-                                                >
-                                                    <div className="flex items-center w-full">
-                                                        <div className="flex-shrink-0 mr-4">
-                                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center
-                                                                ${answers[currentQuestion.id] === option.level
-                                                                ? 'border-purple-500 bg-purple-500'
-                                                                : 'border-gray-300'}`}
-                                                            >
-                                                                {answers[currentQuestion.id] === option.level && (
-                                                                    <div className="w-2 h-2 bg-white rounded-full" />
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="font-medium">
-                                                                Level {option.level}
-                                                            </div>
-                                                            <div className="text-gray-600">
-                                                                {option.description}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </motion.div>
-                                    </div>
+                                    <FormattedQuestionDisplay
+                                        question={{
+                                            content: currentQuestion.text,
+                                            options: currentQuestion.options.map(option => ({
+                                                level: option.level,
+                                                description: option.description
+                                            }))
+                                        }}
+                                        selectedLevel={answers[currentQuestion.id]}
+                                        onAnswerSelect={(level) => handleOptionSelect(currentQuestion.id, level)}
+                                    />
                                 </motion.div>
                             </AnimatePresence>
-
-                    <div className="flex justify-between mt-6">
-                        <Button
-                            onClick={handleBack}
-                            disabled={isFirstQuestion}
-                            className="flex items-center gap-2"
-                            variant="ghost"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                            Previous
-                        </Button>
-
-                        {isLastQuestion ? (
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={submitting}
-                                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                            >
-                                {submitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Submitting...
-                                    </>
-                                ) : (
-                                    'Submit Survey'
-                                )}
-                            </Button>
-                        ) : (
-                            <Button
-                                onClick={handleNext}
-                                className="flex items-center gap-2"
-                            >
-                                Next
-                                <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        )}
-                    </div>
-                </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
