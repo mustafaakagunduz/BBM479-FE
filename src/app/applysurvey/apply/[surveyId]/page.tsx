@@ -53,24 +53,123 @@ const ApplySurveyPage = ({ params }: PageProps) => {
         const fetchSurveyDetails = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(
+
+                // Önce survey detaylarını al
+                const surveyResponse = await axios.get(
                     `http://localhost:8081/api/surveys/${resolvedParams.surveyId}`,
                     { signal: controller.signal }
                 );
-                setSurvey(response.data);
-            } catch (error) {
-                if (axios.isAxiosError(error) && error.name === 'CanceledError') {
-                    return;
+
+                // Survey datası varsa, completion kontrolü yap
+                if (surveyResponse.data && user) {
+                    try {
+                        const completionResponse = await axios.get(
+                            `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
+                        );
+
+                        if (completionResponse.data) {
+                            alert('You have already completed this survey.');
+                            router.push('/applysurvey');
+                            return;
+                        }
+                    } catch (completionError) {
+                        // 404 hatası beklenen bir durum, diğer hataları logla
+                        if (axios.isAxiosError(completionError) &&
+                            completionError.response?.status !== 404) {
+                            console.error('Error checking completion:', completionError);
+                        }
+                    }
                 }
-                console.error('Error fetching survey details:', error);
+
+                // Her durumda survey datasını set et
+                setSurvey(surveyResponse.data);
+
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    if (error.name !== 'CanceledError') {
+                        console.error('Error fetching survey details:', error);
+                    }
+                }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSurveyDetails();
+        if (user) {
+            fetchSurveyDetails();
+        }
+
         return () => controller.abort();
-    }, [resolvedParams.surveyId]);
+    }, [resolvedParams.surveyId, user, router]);
+
+    const handleSubmit = async () => {
+        if (!survey?.questions || submitting || !user) {
+            console.log('Submit engellendi:', {
+                hasQuestions: !!survey?.questions,
+                isSubmitting: submitting,
+                hasUser: !!user
+            });
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+
+            // Tüm soruların cevaplanıp cevaplanmadığını kontrol et
+            const allQuestionsAnswered = survey.questions.every(
+                question => answers[question.id] !== undefined
+            );
+
+            if (!allQuestionsAnswered) {
+                alert('Please answer all questions before submitting.');
+                setSubmitting(false);
+                return;
+            }
+
+            console.log('Submit data:', {
+                userId: user.id,
+                surveyId: Number(resolvedParams.surveyId),
+                answers: Object.entries(answers)
+            });
+
+            const surveyResponse = {
+                userId: user.id,
+                surveyId: Number(resolvedParams.surveyId),
+                answers: Object.entries(answers).map(([questionId, level]) => ({
+                    questionId: Number(questionId),
+                    selectedLevel: level
+                }))
+            };
+
+            const responseResult = await axios.post(
+                'http://localhost:8081/api/responses',
+                surveyResponse,
+                {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                }
+            );
+
+            console.log('Response:', responseResult);
+
+            if (responseResult.status === 201 || responseResult.status === 200) {
+                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
+                return;
+            }
+        } catch (error) {
+            console.error('Submit error:', error);
+            if (axios.isAxiosError(error)) {
+                const errorMessage = error.response?.data?.message || error.message;
+                alert(`Error: ${errorMessage}`);
+            } else {
+                alert('Failed to submit survey. Please try again.');
+            }
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const handleOptionSelect = (questionId: number, optionLevel: number) => {
         setAnswers(prev => ({
@@ -100,53 +199,7 @@ const ApplySurveyPage = ({ params }: PageProps) => {
         }
     };
 
-    const handleSubmit = async () => {
-        if (!survey?.questions || submitting || !user) return;
 
-        try {
-            setSubmitting(true);
-
-            // Submit butonunu disable et
-            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
-            if (submitButton) {
-                submitButton.disabled = true;
-            }
-
-            const surveyResponse = {
-                userId: user.id,
-                surveyId: Number(resolvedParams.surveyId),
-                answers: Object.entries(answers).map(([questionId, level]) => ({
-                    questionId: Number(questionId),
-                    selectedLevel: level
-                }))
-            };
-
-            const responseResult = await axios.post(
-                'http://localhost:8081/api/responses',
-                surveyResponse,
-                {
-                    headers: {
-                        'Cache-Control': 'no-cache',
-                        'Pragma': 'no-cache'
-                    }
-                }
-            );
-
-            if (responseResult.status === 201 || responseResult.status === 200) {
-                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
-                return;
-            }
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || error.message;
-                alert(`Error: ${errorMessage}`);
-            } else {
-                alert('Failed to submit survey. Please try again.');
-            }
-        } finally {
-            setSubmitting(false);
-        }
-    };
 
     if (loading) {
         return (
