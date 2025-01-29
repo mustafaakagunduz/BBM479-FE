@@ -106,13 +106,10 @@ const ApplySurveyPage = ({ params }: PageProps) => {
         try {
             setSubmitting(true);
 
-            const allQuestionsAnswered = survey.questions.every(
-                question => answers[question.id] !== undefined
-            );
-
-            if (!allQuestionsAnswered) {
-                alert('Please answer all questions before submitting.');
-                return;
+            // Submit butonunu disable et
+            const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+            if (submitButton) {
+                submitButton.disabled = true;
             }
 
             const surveyResponse = {
@@ -137,6 +134,7 @@ const ApplySurveyPage = ({ params }: PageProps) => {
 
             if (responseResult.status === 201 || responseResult.status === 200) {
                 router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
+                return;
             }
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -195,35 +193,73 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                         </div>
                     </CardHeader>
                     <CardContent>
-    <div className="space-y-6 overflow-hidden">
-        <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-                key={currentQuestionIndex}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{
-                    y: { type: "tween", duration: 0.3 },
-                    opacity: { duration: 0.3 }
-                }}
-            >
-                <FormattedQuestionDisplay
-                    question={{
-                        content: currentQuestion.text,
-                        options: currentQuestion.options.map(option => ({
-                            level: option.level,
-                            description: option.description
-                        }))
-                    }}
-                    selectedLevel={answers[currentQuestion.id]}
-                    onAnswerSelect={(level) => handleOptionSelect(currentQuestion.id, level)}
-                />
-            </motion.div>
-        </AnimatePresence>
-    </div>
-</CardContent>
+                        <div className="space-y-6 overflow-hidden">
+                            <AnimatePresence mode="wait" initial={false}>
+                                <motion.div
+                                    key={currentQuestionIndex}
+                                    custom={direction}
+                                    variants={variants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{
+                                        y: { type: "tween", duration: 0.3 },
+                                        opacity: { duration: 0.3 }
+                                    }}
+                                >
+                                    <FormattedQuestionDisplay
+                                        question={{
+                                            content: currentQuestion.text,
+                                            options: currentQuestion.options.map(option => ({
+                                                level: option.level,
+                                                description: option.description
+                                            }))
+                                        }}
+                                        selectedLevel={answers[currentQuestion.id]}
+                                        onAnswerSelect={(level) => handleOptionSelect(currentQuestion.id, level)}
+                                    />
+                                </motion.div>
+                            </AnimatePresence>
+
+                            {/* Navigasyon butonlarını CardContent içinde ama AnimatePresence dışında tutuyoruz */}
+                            <div className="flex justify-between mt-6">
+                                <Button
+                                    onClick={handleBack}
+                                    disabled={isFirstQuestion}
+                                    className="flex items-center gap-2"
+                                    variant="ghost"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    Previous
+                                </Button>
+
+                                {isLastQuestion ? (
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={submitting}
+                                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            'Submit Survey'
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2"
+                                    >
+                                        Next
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
 

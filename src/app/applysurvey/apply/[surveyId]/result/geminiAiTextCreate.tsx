@@ -205,16 +205,16 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
             return (
                 <div className="flex flex-col items-center justify-center space-y-4 py-8">
                     <BookOpen className="h-12 w-12 text-gray-400" />
-                    <h3 className="text-lg font-semibold text-gray-700">Yapay Zeka Analizi Hazır Değil</h3>
+                    <h3 className="text-lg font-semibold text-gray-700">AI Analysis Not Ready</h3>
                     <p className="text-gray-500 text-center max-w-md">
-                        Yetenek testi sonuçlarınızın detaylı analizini görmek için analiz başlatın.
+                        Start an analysis to see a detailed analysis of your skill test results.
                     </p>
                     <Button 
                         onClick={handleAnalysisRequest}
                         className="mt-4"
                     >
                         <Target className="mr-2 h-4 w-4" />
-                        Yapay Zeka Analizi İste
+                        Request AI Analysis
                     </Button>
                 </div>
             );
@@ -224,7 +224,7 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
             return (
                 <div className="flex flex-col items-center justify-center py-8 space-y-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                    <p className="text-gray-600">Yapay zeka analiziniz hazırlanıyor...</p>
+                    <p className="text-gray-600">Your AI analysis is being prepared...</p>
                 </div>
             );
         }
@@ -247,9 +247,9 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                 {/* Tab Buttons */}
                 <div className="flex space-x-2 border-b border-gray-200">
                     {[
-                        { id: 'overview' as TabType, label: 'Genel Bakış' },
-                        { id: 'recommendations' as TabType, label: 'Öneriler' },
-                        { id: 'details' as TabType, label: 'Detaylı Analiz' }
+                        { id: 'overview' as TabType, label: 'Overview' },
+                        { id: 'recommendations' as TabType, label: 'Suggestions' },
+                        { id: 'details' as TabType, label: 'Detailed Analysis' }
                     ].map((tab) => (
                         <button
                             key={tab.id}
@@ -271,14 +271,14 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                                 <div className="flex items-center">
                                     <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                                    <p className="text-green-800">Analiz Tamamlandı</p>
+                                    <p className="text-green-800">Analysis Completed</p>
                                 </div>
                             </div>
 
                             <div className="bg-white rounded-lg shadow p-6">
                                 <div className="flex items-center mb-4">
                                     <Target className="h-5 w-5 text-blue-600 mr-2" />
-                                    <h3 className="text-lg font-semibold">En Uyumlu Meslekler</h3>
+                                    <h3 className="text-lg font-semibold">Most Compatible Professions</h3>
                                 </div>
                                 <div className="space-y-3">
                                     {professionMatches
@@ -294,7 +294,7 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                                                     ${index === 0 
                                                         ? 'bg-blue-100 text-blue-800' 
                                                         : 'bg-gray-200 text-gray-700'}`}>
-                                                    {match.matchPercentage.toFixed(1)}% Uyum
+                                                    {match.matchPercentage.toFixed(1)}% Compatible
                                                 </span>
                                             </div>
                                         ))}
@@ -370,7 +370,7 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
         <Card className="mt-6">
             <CardHeader>
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Yapay Zeka Analizi
+                    AI Analysis
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -378,7 +378,7 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                 
                 {analysis?.updatedAt && (
                     <div className="text-sm text-gray-500 mt-4 text-right">
-                        Son güncelleme: {new Date(analysis.updatedAt).toLocaleDateString('tr-TR')}
+                        Last Update: {new Date(analysis.updatedAt).toLocaleDateString('tr-TR')}
                     </div>
                 )}
             </CardContent>
