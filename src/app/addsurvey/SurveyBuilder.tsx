@@ -6,7 +6,7 @@ import { surveyService } from '../services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '../types/index';
 import { toast, Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-
+import FormattedQuestionEditor from '../components/FormattedQuestionEditor';
 
 interface QuestionForm {
     content: string;
@@ -395,19 +395,17 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                                 <CardContent className="space-y-6">
                                     {/* Question Content */}
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Question Content</label>
-                                        <textarea
-                                            value={question.content}
-                                            onChange={(e) => {
-                                                const newQuestions = [...questions];
-                                                newQuestions[qIndex].content = e.target.value;
-                                                setQuestions(newQuestions);
-                                            }}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-black"
-                                            placeholder="Enter your question..."
-                                            rows={3}
-                                        />
-                                    </div>
+                                    <label className="text-sm font-medium text-gray-700">Question Content</label>
+                                    <FormattedQuestionEditor
+                                        value={question.content}
+                                        onChange={(newContent) => {
+                                            const newQuestions = [...questions];
+                                            newQuestions[qIndex].content = newContent;
+                                            setQuestions(newQuestions);
+                                        }}
+                                        placeholder="Enter your question..."
+                                    />
+                                </div>
 
                                     {/* Skill Selection */}
                                     <div className="space-y-2">

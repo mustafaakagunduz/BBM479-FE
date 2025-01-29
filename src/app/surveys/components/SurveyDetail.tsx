@@ -1,4 +1,3 @@
-// app/surveys/components/SurveyDetail.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -55,38 +54,44 @@ export function SurveyDetail({ surveyId }: SurveyDetailProps) {
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle className="text-2xl">{survey.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid gap-6">
-                        {survey.questions?.map((question, index) => (
-                            <div key={question.id} className="border rounded-lg p-6">
-                                <h3 className="text-lg font-semibold mb-4">
-                                    Question {index + 1}: {question.text}
-                                </h3>
-                                <div className="ml-4 space-y-3">
-                                    {question.options.map((option) => (
-                                        <div
-                                            key={option.id}
-                                            className="flex items-center p-3 bg-white rounded-lg border"
-                                        >
-                                            <div className="flex-1">
-                                                <div className="font-medium">
-                                                    Level {option.level}
-                                                </div>
-                                                <div className="text-gray-600">
-                                                    {option.description}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )) ?? []}
+      <CardHeader>
+        <CardTitle className="text-2xl">{survey.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-6">
+          {survey.questions?.map((question, index) => (
+            <div key={question.id} className="border rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4 flex gap-4">
+                <span>Question {index + 1}:</span>
+                <div 
+                  className="prose prose-sm flex-1"
+                  dangerouslySetInnerHTML={{ __html: question.text }}
+                />
+              </h3>
+              <div className="ml-4 space-y-3">
+                {question.options.map((option) => (
+                  <div
+                    key={option.id}
+                    className="flex items-center p-3 bg-white rounded-lg border"
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-300 text-gray-500">
+                        {String.fromCharCode(64 + option.level)}
+                      </div>
+                      <div>
+                        <div className="text-gray-600">
+                          {option.description}
+                        </div>
+                      </div>
                     </div>
-                </CardContent>
-            </Card>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )) ?? []}
+        </div>
+      </CardContent>
+    </Card>
         </div>
     );
 }

@@ -14,7 +14,7 @@ import {
     AlertDialogDescription,
     AlertDialogTitle
 } from "@/app/components/ui/alert-dialog";
-
+import FormattedQuestionDisplay from '@/app/components/FormattedQuestionDisplay';
 interface PageProps {
     params: Promise<{
         surveyId: string;
@@ -256,43 +256,43 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                                 </motion.div>
                             </AnimatePresence>
 
-                            <div className="flex justify-between mt-6">
-                                <Button
-                                    onClick={handleBack}
-                                    disabled={isFirstQuestion}
-                                    className="flex items-center gap-2"
-                                    variant="ghost"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                    Previous
-                                </Button>
+                    <div className="flex justify-between mt-6">
+                        <Button
+                            onClick={handleBack}
+                            disabled={isFirstQuestion}
+                            className="flex items-center gap-2"
+                            variant="ghost"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Previous
+                        </Button>
 
-                                {isLastQuestion ? (
-                                    <Button
-                                        onClick={handleSubmit}
-                                        disabled={submitting}
-                                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
-                                    >
-                                        {submitting ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            'Submit Survey'
-                                        )}
-                                    </Button>
+                        {isLastQuestion ? (
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600"
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Submitting...
+                                    </>
                                 ) : (
-                                    <Button
-                                        onClick={handleNext}
-                                        className="flex items-center gap-2"
-                                    >
-                                        Next
-                                        <ChevronRight className="w-4 h-4" />
-                                    </Button>
+                                    'Submit Survey'
                                 )}
-                            </div>
-                        </div>
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleNext}
+                                className="flex items-center gap-2"
+                            >
+                                Next
+                                <ChevronRight className="w-4 h-4" />
+                            </Button>
+                        )}
+                    </div>
+                </div>
                     </CardContent>
                 </Card>
             </div>
