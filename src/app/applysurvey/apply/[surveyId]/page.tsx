@@ -195,35 +195,35 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-6 overflow-hidden">
-                            <AnimatePresence mode="wait" initial={false}>
-                                <motion.div
-                                    key={currentQuestionIndex}
-                                    custom={direction}
-                                    variants={variants}
-                                    initial="enter"
-                                    animate="center"
-                                    exit="exit"
-                                    transition={{
-                                        y: { type: "tween", duration: 0.3 },
-                                        opacity: { duration: 0.3 }
-                                    }}
-                                >
-                                    <FormattedQuestionDisplay
-                                        question={{
-                                            content: currentQuestion.text,
-                                            options: currentQuestion.options.map(option => ({
-                                                level: option.level,
-                                                description: option.description
-                                            }))
-                                        }}
-                                        selectedLevel={answers[currentQuestion.id]}
-                                        onAnswerSelect={(level) => handleOptionSelect(currentQuestion.id, level)}
-                                    />
-                                </motion.div>
-                            </AnimatePresence>
-                        </div>
-                    </CardContent>
+    <div className="space-y-6 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+                key={currentQuestionIndex}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                    y: { type: "tween", duration: 0.3 },
+                    opacity: { duration: 0.3 }
+                }}
+            >
+                <FormattedQuestionDisplay
+                    question={{
+                        content: currentQuestion.text,
+                        options: currentQuestion.options.map(option => ({
+                            level: option.level,
+                            description: option.description
+                        }))
+                    }}
+                    selectedLevel={answers[currentQuestion.id]}
+                    onAnswerSelect={(level) => handleOptionSelect(currentQuestion.id, level)}
+                />
+            </motion.div>
+        </AnimatePresence>
+    </div>
+</CardContent>
                 </Card>
             </div>
 
