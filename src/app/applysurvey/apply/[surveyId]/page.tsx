@@ -60,13 +60,14 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                     { signal: controller.signal }
                 );
 
-                // Survey datası varsa, completion kontrolü yap
+                // Survey datası varsa, sadece bu anket için completion kontrolü yap
                 if (surveyResponse.data && user) {
                     try {
                         const completionResponse = await axios.get(
                             `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
                         );
 
+                        // Eğer bu spesifik anket için sonuç varsa
                         if (completionResponse.data) {
                             alert('You have already completed this survey.');
                             router.push('/applysurvey');
@@ -126,12 +127,7 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                 return;
             }
 
-            console.log('Submit data:', {
-                userId: user.id,
-                surveyId: Number(resolvedParams.surveyId),
-                answers: Object.entries(answers)
-            });
-
+            // Önce cevapları kaydet
             const surveyResponse = {
                 userId: user.id,
                 surveyId: Number(resolvedParams.surveyId),
@@ -141,6 +137,7 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                 }))
             };
 
+            // Cevapları kaydet
             const responseResult = await axios.post(
                 'http://localhost:8081/api/responses',
                 surveyResponse,
@@ -152,20 +149,50 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                 }
             );
 
-            console.log('Response:', responseResult);
-
             if (responseResult.status === 201 || responseResult.status === 200) {
-                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
-                return;
+                // Sonuçları hesapla ve bekle
+                const waitForResults = async (retryCount = 0): Promise<void> => {
+                    try {
+                        const calculationResult = await axios.post(
+                            `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/calculate`
+                        );
+
+                        if (calculationResult.status === 200) {
+                            // Sonuçların hazır olduğundan emin olmak için get isteği yap
+                            const verifyResult = await axios.get(
+                                `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
+                            );
+
+                            if (verifyResult.data) {
+                                router.push(`/applysurvey/apply/${resolvedParams.surveyId}/result?new=true`);
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        if (retryCount < 3 && axios.isAxiosError(error)) {
+                            const delay = Math.pow(2, retryCount) * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return waitForResults(retryCount + 1);
+                        }
+                        throw error;
+                    }
+                };
+
+                await waitForResults();
             }
         } catch (error) {
             console.error('Submit error:', error);
             if (axios.isAxiosError(error)) {
                 const errorMessage = error.response?.data?.message || error.message;
-                alert(`Error: ${errorMessage}`);
+                if (errorMessage.includes("already completed")) {
+                    alert("You have already completed this survey. You cannot submit it again.");
+                } else {
+                    alert(`Error: ${errorMessage}`);
+                }
             } else {
                 alert('Failed to submit survey. Please try again.');
             }
+            router.push('/applysurvey');
         } finally {
             setSubmitting(false);
         }

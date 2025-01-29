@@ -10,6 +10,7 @@ import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
 import { GeminiAnalysisSection } from './geminiAiTextCreate';
 import { useAuth } from '@/app/context/AuthContext';
+import {srcEmptySsgManifest} from "next/dist/build/webpack/plugins/build-manifest-plugin";
 
 
 interface ProfessionMatch {
@@ -62,54 +63,45 @@ export default function SurveyResultPage({ params }: PageProps) {
 
     const fetchResult = useCallback(async () => {
         if (loading || !user) return;
-    
-        const isNewCalculation = searchParams.get('new') === 'true'; // Buraya taşıdık
-    
+
+        const isNewCalculation = searchParams.get('new') === 'true';
+
         try {
             setLoading(true);
             setError(null);
-    
+
             const API_BASE = 'http://localhost:8081/api/surveys';
-    
-            const makeRequest = async (retryCount = 0): Promise<AxiosResponse<SurveyResult>> => {
+
+            const waitForResult = async (retryCount = 0): Promise<SurveyResult> => {
                 try {
-                    let response: AxiosResponse<SurveyResult>;
-                    if (isNewCalculation) { // Artık burada kullanılabilir
-                        response = await axios.post<SurveyResult>(
-                            `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/calculate?force=true`
-                        );
-    
-                        if (response.data) {
-                            await router.replace(`/applysurvey/apply/${resolvedParams.surveyId}/result`, { scroll: false });
-                            await fetchAllResults();
-                        }
-                    } else {
-                        response = await axios.get<SurveyResult>(
-                            `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
-                        );
-                    }
-    
+                    const response = await axios.get<SurveyResult>(
+                        `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
+                    );
+
                     if (response.data) {
-                        setResult(response.data);
+                        return response.data;
                     }
-                    return response;
-                } catch (err) {
-                    if (axios.isAxiosError(err) && err.response?.status === 429 && retryCount < 3) {
+                    throw new Error('No result data found');
+                } catch (error) {
+                    if (retryCount < 5 && axios.isAxiosError(error)) {
+                        // 404 veya diğer hatalar için tekrar dene
                         const delay = Math.pow(2, retryCount) * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));
-                        return makeRequest(retryCount + 1);
+                        return waitForResult(retryCount + 1);
                     }
-                    throw err;
+                    throw error;
                 }
             };
-    
-            await makeRequest();
-    
+
+            const resultData = await waitForResult();
+            setResult(resultData);
+            await fetchAllResults();
+
         } catch (err) {
             console.error('Error:', err);
             setError('Failed to fetch survey result');
-    
-            if (!isNewCalculation) { // Ve burada
+
+            if (!isNewCalculation) {
                 setTimeout(() => {
                     router.push('/applysurvey');
                 }, 3000);
@@ -118,6 +110,7 @@ export default function SurveyResultPage({ params }: PageProps) {
             setLoading(false);
         }
     }, [resolvedParams.surveyId, searchParams, router, loading, fetchAllResults, user]);
+
     useEffect(() => {
         if (!isInitialized && user) {
             const isNewCalculation = searchParams.get('new') === 'true';
