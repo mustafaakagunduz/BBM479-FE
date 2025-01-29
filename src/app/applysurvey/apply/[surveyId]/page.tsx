@@ -14,7 +14,7 @@ import {
     AlertDialogDescription,
     AlertDialogTitle
 } from "@/app/components/ui/alert-dialog";
-
+import FormattedQuestionDisplay from '@/app/components/FormattedQuestionDisplay';
 interface PageProps {
     params: Promise<{
         surveyId: string;
