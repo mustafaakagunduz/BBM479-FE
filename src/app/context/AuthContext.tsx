@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserRole } from '../types/auth';
 import axios from "axios";
@@ -10,6 +10,10 @@ interface AuthState {
   isAuthenticated: boolean;
   loading: boolean;
 }
+
+
+
+
 
 interface AuthResponse {
   success: boolean;
@@ -25,6 +29,7 @@ interface AuthResponse {
       name: UserRole;
     };
     profileImage?: string;
+    emailVerified?: boolean; // Add this line
   };
 }
 
@@ -120,38 +125,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error updating user data:', error);
     }
   };
+ // Doğrulama durumunu takip eden state ekle
+const [isVerified, setIsVerified] = useState(false);
 
-  const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
-    try {
-      const response = await axios.post<AuthResponse>('http://localhost:8081/api/auth/login', {
-        email,
-        password
-      });
+const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
+  try {
+    const response = await axios.post<AuthResponse>('http://localhost:8081/api/auth/login', {
+      email,
+      password
+    });
 
-      if (response.data.success && response.data.user) {
-        // Kullanıcı verilerini al
-        const userResponse = await axios.get(`http://localhost:8081/api/users/${response.data.user.id}`);
-        const userData = userResponse.data;
-
-        const user: User = {
-          ...response.data.user,
-          profileImage: userData.profileImage
-        };
-
-        localStorage.setItem('auth', JSON.stringify({ user }));
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-
-        return { success: true, user };
+    if (response.data.success && response.data.user) {
+      // Explicitly check email verification
+      if (!response.data.user.emailVerified) {
+        throw new Error('Please verify your email before logging in');
       }
-      return undefined;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || 'Invalid credentials');
-      }
-      throw new Error('An unexpected error occurred');
+
+      const userResponse = await axios.get<User>(`http://localhost:8081/api/users/${response.data.user.id}`);
+      const userData = userResponse.data;
+
+      const user: User = {
+        ...response.data.user,
+        profileImage: userData.profileImage
+      };
+
+      localStorage.setItem('auth', JSON.stringify({ user }));
+      dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+
+      return { success: true, user };
     }
-  };
-
+    return undefined;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || 'Invalid credentials';
+      // More meaningful error messages
+      if (errorMessage.includes('verify')) {
+        throw new Error('Please check your email and verify your account');
+      }
+      throw new Error(errorMessage);
+    }
+    throw new Error('An unexpected error occurred');
+  }
+};  
   const logout = () => {
     localStorage.removeItem('auth');
     dispatch({ type: 'LOGOUT' });

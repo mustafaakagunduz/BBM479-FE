@@ -11,21 +11,33 @@ export default function VerifyEmail({ params }: { params: { token: string } }) {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Güncel kod
     const verifyEmail = async () => {
       try {
+        // İstek başlamadan önce loading state
+        setStatus('Verifying your email...');
+        console.log('Verification started for token:', params.token); // Debug log
+    
         const response = await axios.get(`http://localhost:8081/api/auth/verify/${params.token}`);
+        console.log('Verification response:', response.data); // Debug log
         
         if (response.data.success) {
           setStatus('Email verified successfully! Redirecting to login...');
-          setTimeout(() => router.push('/login'), 3000);
+          // Daha güvenli yönlendirme
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          router.replace('/login'); // replace kullanarak tarayıcı geçmişini temizle
         } else {
-          setError('Verification failed. Please try again.');
+          throw new Error(response.data.message || 'Verification failed');
         }
       } catch (error) {
+        console.error('Verification error:', error); // Debug log
         if (axios.isAxiosError(error)) {
-          setError(error.response?.data?.message || 'Verification failed');
+          setError(error.response?.data?.message || 'Verification failed. Please try again.');
+          // Hata durumunda da yönlendirme yap
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          router.replace('/login');
         } else {
-          setError('An unexpected error occurred');
+          setError('An unexpected error occurred. Please try again.');
         }
       }
     };
