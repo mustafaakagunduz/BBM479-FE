@@ -6,6 +6,7 @@ import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2 } from 'lucide-r
 import axios from 'axios';
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
+import {PasswordValidation, validatePassword} from "@/app/login/passwordValidation";
 
 interface Company {
   id: number;
@@ -46,6 +47,13 @@ const LoginSignUp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidation>({
+    isMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    isValid: false
+  });
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -64,7 +72,11 @@ const LoginSignUp = () => {
       }
     };
     fetchCompanies();
-  }, []); 
+  }, []);
+
+  useEffect(() => {
+    setPasswordValidation(validatePassword(password));
+  }, [password]);
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -188,222 +200,244 @@ const LoginSignUp = () => {
     }
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent text-center">
-            {isForgotPassword ? "Reset Password" : (isLogin ? "Welcome Back" : "Create Account")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {success && (
-            <Alert>
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
-          
-          {isForgotPassword ? (
-            // Forgot Password Form
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              {companies && companies.length > 0 ? (
-            <div className="relative">
-              <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <select
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
-                value={selectedCompany?.id || ''}
-                onChange={(e) => {
-                  const company = companies.find(c => c.id === Number(e.target.value));
-                  setSelectedCompany(company || null);
-                }}
-              >
-                <option value="">Select a Company</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>
-                    {company.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div className="text-center text-gray-500">
-              Loading companies...
-            </div>
-          )}
-            <button
-              type="submit"
-              disabled={isLoading || resetEmailSent}
-              className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center"
-            >
-              {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-              {resetEmailSent ? 'Email Sent' : 'Send Reset Link'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsForgotPassword(false);
-                setResetEmail('');
-                setResetEmailSent(false);
-                setError('');
-                setSuccess('');
-              }}
-              className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 w-full"
-            >
-              <ArrowLeft size={20} />
-              Back to Login
-            </button>
-          </form>
-          ) : (
-            <>
-              {isLogin ? (
-                // Login Form
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotPassword(true)}
-                      className="text-purple-600 hover:text-purple-700 text-sm"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-                    Login
-                  </button>
-                </form>
-              ) : (
-                // Sign Up Form
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="flex space-x-4">
-                    <div className="relative flex-1">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        placeholder="First Name"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div className="relative flex-1">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        placeholder="Last Name"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                      />
-                    </div>
-                  </div>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="password"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="relative">
-                  <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <select
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
-                    value={selectedCompany?.id || ''}
-                    onChange={(e) => {
-                      const company = companies.find(c => c.id === Number(e.target.value));
-                      setSelectedCompany(company || null);
-                    }}
-                  >
-                    <option value="">Select a Company</option>
-                    {companies.map((company) => (
-                      <option key={company.id} value={company.id}>
-                        {company.name}
-                      </option>
-                    ))}
-                  </select>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center"
-                  >
-                    {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
-                    Sign Up
-                  </button>
-                </form>
-              )}
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent text-center">
+              {isForgotPassword ? "Reset Password" : (isLogin ? "Welcome Back" : "Create Account")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+            {success && (
+                <Alert>
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+            )}
 
-              <div className="text-center mt-4">
-                <p className="text-gray-600">
-                  {isLogin ? "Don't have an account?" : "Already have an account?"}
+            {isForgotPassword ? (
+                // Forgot Password Form
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        required
+                    />
+                  </div>
                   <button
-                    onClick={() => {
-                      setIsLogin(!isLogin);
-                      setError('');
-                      setSuccess('');
-                    }}
-                    className="ml-2 text-purple-600 hover:text-purple-700 font-medium"
+                      type="submit"
+                      disabled={isLoading || resetEmailSent}
+                      className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
                   >
-                    {isLogin ? "Sign Up" : "Login"}
+                    {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+                    {resetEmailSent ? 'Email Sent' : 'Send Reset Link'}
                   </button>
-                </p>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                  <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setResetEmail('');
+                        setResetEmailSent(false);
+                        setError('');
+                        setSuccess('');
+                      }}
+                      className="flex items-center justify-center gap-2 text-gray-600 hover:text-gray-800 w-full"
+                  >
+                    <ArrowLeft size={20} />
+                    Back to Login
+                  </button>
+                </form>
+            ) : (
+                <>
+                  {isLogin ? (
+                      // Login Form
+                      <form onSubmit={handleLogin} className="space-y-4">
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                              type="email"
+                              placeholder="Email"
+                              value={loginEmail}
+                              onChange={(e) => setLoginEmail(e.target.value)}
+                              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              required
+                          />
+                        </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                              type="password"
+                              placeholder="Password"
+                              value={loginPassword}
+                              onChange={(e) => setLoginPassword(e.target.value)}
+                              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              required
+                          />
+                        </div>
+                        <div className="text-right">
+                          <button
+                              type="button"
+                              onClick={() => setIsForgotPassword(true)}
+                              className="text-purple-600 hover:text-purple-700 text-sm"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
+                        >
+                          {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+                          Login
+                        </button>
+                      </form>
+                  ) : (
+                      // Sign Up Form
+                      <form onSubmit={handleSignUp} className="space-y-4">
+                        <div className="flex space-x-4">
+                          <div className="relative flex-1">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="First Name"
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                required
+                            />
+                          </div>
+                          <div className="relative flex-1">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Last Name"
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                required
+                            />
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                              type="email"
+                              placeholder="Email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              required
+                          />
+                        </div>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                              type="password"
+                              placeholder="Password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                                  password && !passwordValidation.isValid ? 'border-red-300' : 'border-gray-200'
+                              }`}
+                              required
+                          />
+                        </div>
+
+                        {/* Password validation feedback */}
+                        {password && (
+                            <div className="space-y-2 text-sm rounded-lg bg-gray-50 p-3">
+                              <div className={`flex items-center ${passwordValidation.isMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                                <span className="mr-2">{passwordValidation.isMinLength ? '✓' : '○'}</span>
+                                At least 8 characters
+                              </div>
+                              <div className={`flex items-center ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
+                                <span className="mr-2">{passwordValidation.hasUpperCase ? '✓' : '○'}</span>
+                                One uppercase letter
+                              </div>
+                              <div className={`flex items-center ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
+                                <span className="mr-2">{passwordValidation.hasLowerCase ? '✓' : '○'}</span>
+                                One lowercase letter
+                              </div>
+                              <div className={`flex items-center ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-500'}`}>
+                                <span className="mr-2">{passwordValidation.hasNumber ? '✓' : '○'}</span>
+                                One number
+                              </div>
+                            </div>
+                        )}
+
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                              type="password"
+                              placeholder="Confirm Password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                                  confirmPassword && password !== confirmPassword ? 'border-red-300' : 'border-gray-200'
+                              }`}
+                              required
+                          />
+                        </div>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <select
+                              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
+                              value={selectedCompany?.id || ''}
+                              onChange={(e) => {
+                                const company = companies.find(c => c.id === Number(e.target.value));
+                                setSelectedCompany(company || null);
+                              }}
+                              required
+                          >
+                            <option value="">Select a Company</option>
+                            {companies.map((company) => (
+                                <option key={company.id} value={company.id}>
+                                  {company.name}
+                                </option>
+                            ))}
+                          </select>
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={isLoading || !passwordValidation.isValid || password !== confirmPassword}
+                            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
+                        >
+                          {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+                          Sign Up
+                        </button>
+                      </form>
+                  )}
+
+                  <div className="text-center mt-4">
+                    <p className="text-gray-600">
+                      {isLogin ? "Don't have an account?" : "Already have an account?"}
+                      <button
+                          onClick={() => {
+                            setIsLogin(!isLogin);
+                            setError('');
+                            setSuccess('');
+                          }}
+                          className="ml-2 text-purple-600 hover:text-purple-700 font-medium"
+                      >
+                        {isLogin ? "Sign Up" : "Login"}
+                      </button>
+                    </p>
+                  </div>
+                </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
   );
 };
 
