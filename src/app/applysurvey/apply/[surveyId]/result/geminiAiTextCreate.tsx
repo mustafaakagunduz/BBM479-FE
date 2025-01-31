@@ -75,49 +75,49 @@ const analyzeSurveyWithGemini = async (
     }));
 
     const prompt = `
-    cevaplar alt alt cümleler olsun ve de kısa olsun
-    Aşağıdaki kariyer testi sonuçlarını analiz ederek profesyonel bir rapor hazırla.
-    Test sonuçları:
+    Responses should be in separate sentences and be concise.
+    Please prepare a professional report analyzing the following career test results.
+    Test results:
     ${JSON.stringify(surveyData, null, 2)}
 
-    Lütfen aşağıdaki başlıklar altında analiz yap, ancak başlıkları '#' veya '*' gibi özel karakterler KULLANMADAN yaz:
+    Please analyze under the following sections, but write the headings WITHOUT using special characters like '#' or '*':
 
-    GİRİŞ
-    - Test sonuçlarının genel değerlendirmesi
-    - Öne çıkan güçlü yönler
+    INTRODUCTION
+    - General evaluation of test results
+    - Notable strengths
 
-    MESLEK ANALİZİ
-    [İlk üç mesleği sıralarken "p1, p2" gibi kodlar yerine tam meslek isimlerini kullan]
-    - İlk üç meslek ve uyum yüzdeleri
-    - Her meslek için:
-      > Neden uygun olduğu
-      > Gerektirdiği yetenekler
-      > Sunduğu fırsatlar
-      > Gelişim alanları
+    CAREER ANALYSIS
+    [Use full profession names instead of codes like "p1, p2" when listing the top three professions]
+    - Top three professions and compatibility percentages
+    - For each profession:
+      > Why it's suitable
+      > Required skills
+      > Opportunities offered
+      > Areas for development
 
-    GELİŞİM PLANI
-    - Mevcut güçlü yetenekler
-    - Geliştirilebilecek alanlar
-    - Önerilen adımlar:
-      > Eğitim önerileri
-      > Sertifika programları
-      > Pratik geliştirme yöntemleri
+    DEVELOPMENT PLAN
+    - Current strong abilities
+    - Areas for improvement
+    - Recommended steps:
+      > Educational recommendations
+      > Certificate programs
+      > Practical development methods
 
-    KARİYER YOLU
-    - Kısa vadeli hedefler (0-1 yıl)
-    - Orta vadeli hedefler (1-3 yıl)
-    - Uzun vadeli hedefler (3+ yıl)
+    CAREER PATH
+    - Short-term goals (0-1 year)
+    - Medium-term goals (1-3 years)
+    - Long-term goals (3+ years)
     
-    Her bölümü paragraflar halinde, açık ve anlaşılır bir dille yaz. 
-    Özel karakterler (*,#,-) kullanma, bunun yerine numaralandırma ve düz metin kullan.
-    Meslek isimlerini "p1, p2" gibi kodlar yerine tam isimleriyle belirt.
+    Write each section in paragraphs with clear and understandable language.
+    Do not use special characters (*,#,-), use numbering and plain text instead.
+    Specify profession names in full instead of codes like "p1, p2".
     
-    Yazım formatı:
-    - Profesyonel ve pozitif bir ton kullan
-    - Her bölüm için açık başlıklar kullan (kalın veya büyük harflerle)
-    - Paragraflar arasında uygun boşluklar bırak
-    - Madde işaretleri yerine numaralandırma kullan
-    - Önemli noktaları paragraf içinde vurgula
+    Writing format:
+    - Use a professional and positive tone
+    - Use clear headings for each section (in bold or capital letters)
+    - Leave appropriate spacing between paragraphs
+    - Use numbering instead of bullet points
+    - Emphasize important points within paragraphs
 `;
 
 // Ayrıca DetailedAnalysis component'inde çıktıyı düzenleyelim:
