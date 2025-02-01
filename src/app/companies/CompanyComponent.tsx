@@ -13,9 +13,12 @@ import {
     Typography,
     CircularProgress,
     Card,
-    CardContent
+    CardContent,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Search } from 'lucide-react';
 
 interface Company {
     id: number;
@@ -39,7 +42,9 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 
 const CompanyComponent: React.FC = () => {
     const [companies, setCompanies] = useState<Company[]>([]);
+    const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -48,6 +53,7 @@ const CompanyComponent: React.FC = () => {
                 setLoading(true);
                 const response = await axios.get('http://localhost:8081/api/companies');
                 setCompanies(response.data);
+                setFilteredCompanies(response.data);
             } catch (error) {
                 console.error('Error fetching companies:', error);
             } finally {
@@ -57,6 +63,13 @@ const CompanyComponent: React.FC = () => {
 
         fetchCompanies();
     }, []);
+
+    useEffect(() => {
+        const filtered = companies.filter(company =>
+            company.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredCompanies(filtered);
+    }, [searchTerm, companies]);
 
     const handleRowClick = (companyId: number) => {
         router.push(`/companies/${companyId}`);
@@ -89,6 +102,34 @@ const CompanyComponent: React.FC = () => {
 
                 <Card elevation={3}>
                     <CardContent>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Search companies..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            sx={{
+                                marginBottom: '1.5rem',
+                                '& .MuiOutlinedInput-root': {
+                                    '& fieldset': {
+                                        borderColor: '#e9d5ff',
+                                    },
+                                    '&:hover fieldset': {
+                                        borderColor: '#9333ea',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#9333ea',
+                                    },
+                                },
+                            }}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search className="text-purple-600" size={20} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
@@ -99,7 +140,7 @@ const CompanyComponent: React.FC = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {companies.map((company) => (
+                                    {filteredCompanies.map((company) => (
                                         <StyledTableRow
                                             key={company.id}
                                             onClick={() => handleRowClick(company.id)}
@@ -125,7 +166,7 @@ const CompanyComponent: React.FC = () => {
                                     ))}
                                 </TableBody>
                             </Table>
-                            {companies.length === 0 && (
+                            {filteredCompanies.length === 0 && (
                                 <Typography
                                     variant="body1"
                                     sx={{
@@ -134,7 +175,7 @@ const CompanyComponent: React.FC = () => {
                                         color: 'text.secondary'
                                     }}
                                 >
-                                    No companies found in the system.
+                                    {searchTerm ? 'No companies found matching your search.' : 'No companies found in the system.'}
                                 </Typography>
                             )}
                         </TableContainer>
