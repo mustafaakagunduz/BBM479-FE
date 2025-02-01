@@ -18,8 +18,12 @@ const CompanyDetailPage: React.FC<CompanyDetailPageProps> = ({ params }) => {
     return (
         <AdminGuard>
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <CompanyDetailComponent companyId={companyId} />
-                <CompanySurveyChart companyId={companyId} />
+                <div className="max-w-4xl mx-auto px-4">
+                    <div className="space-y-8 py-8">
+                        <CompanyDetailComponent companyId={companyId} />
+                        <CompanySurveyChart companyId={companyId} />
+                    </div>
+                </div>
             </div>
         </AdminGuard>
     );

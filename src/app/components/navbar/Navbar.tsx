@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     ChevronDown,
     Building2,
@@ -13,32 +13,42 @@ import {
     PlusCircle,
     Edit,
     LayoutDashboard,
-    ClipboardCheck,
-    User
+    User,
+    BarChart,
+    Users,
+    Building
 } from 'lucide-react';
-import axios from 'axios';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const router = useRouter();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showSurveySubmenu, setShowSurveySubmenu] = useState(false);
+    const [showResultSubmenu, setShowResultSubmenu] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const navigationLinks = {
         ADMIN: [
             { href: '/homepageadmin', label: 'Admin Dashboard', icon: LayoutDashboard },
-            { href: '/user-results', label: 'Check Survey Results', icon: ClipboardCheck },
-            { href: '/addindustry', label: 'Add & Edit Industry', icon: Building2 },
-            { href: '/addskill', label: 'Add & Edit Skill', icon: Lightbulb },
-            { href: '/addprofession', label: 'Add & Edit Profession', icon: UserCircle },
             {
                 label: 'Survey Management',
                 icon: ClipboardList,
                 hasSubmenu: true,
                 submenuItems: [
                     { href: '/addsurvey', label: 'Create a New Survey', icon: PlusCircle },
-                    { href: '/surveys', label: 'Show & Edit Existing Survey', icon: Edit }
+                    { href: '/surveys', label: 'Show & Edit Existing Survey', icon: Edit },
+                    { href: '/addindustry', label: 'Add & Edit Industry', icon: Building2 },
+                    { href: '/addskill', label: 'Add & Edit Skill', icon: Lightbulb },
+                    { href: '/addprofession', label: 'Add & Edit Profession', icon: UserCircle }
+                ]
+            },
+            {
+                label: 'Result Management',
+                icon: BarChart,
+                hasSubmenu: true,
+                submenuItems: [
+                    { href: '/user-results', label: 'User-Based Evaluations', icon: Users },
+                    { href: '/company-based-evaluations', label: 'Company-Based Evaluations', icon: Building }
                 ]
             },
             { href: '/authorization-system', label: 'Authorization System', icon: Shield }
@@ -49,7 +59,6 @@ const Navbar = () => {
         ]
     };
 
-    // Navbar.tsx içinde
     const homeLink = user?.role?.name === 'ADMIN' ? '/homepageadmin' : user ? '/homepageuser' : '/homepageuser';
 
     useEffect(() => {
@@ -57,6 +66,7 @@ const Navbar = () => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsDropdownOpen(false);
                 setShowSurveySubmenu(false);
+                setShowResultSubmenu(false);
             }
         };
 
@@ -112,8 +122,22 @@ const Navbar = () => {
                                                         <div
                                                             key={link.label}
                                                             className="relative group"
-                                                            onMouseEnter={() => setShowSurveySubmenu(true)}
-                                                            onMouseLeave={() => setShowSurveySubmenu(false)}
+                                                            onMouseEnter={() => {
+                                                                if (link.label === 'Survey Management') {
+                                                                    setShowSurveySubmenu(true);
+                                                                    setShowResultSubmenu(false);
+                                                                } else if (link.label === 'Result Management') {
+                                                                    setShowResultSubmenu(true);
+                                                                    setShowSurveySubmenu(false);
+                                                                }
+                                                            }}
+                                                            onMouseLeave={() => {
+                                                                if (link.label === 'Survey Management') {
+                                                                    setShowSurveySubmenu(false);
+                                                                } else if (link.label === 'Result Management') {
+                                                                    setShowResultSubmenu(false);
+                                                                }
+                                                            }}
                                                         >
                                                             <div className="px-4 py-3 flex items-center justify-between hover:bg-purple-50 cursor-pointer">
                                                                 <div className="flex items-center space-x-3">
@@ -123,7 +147,8 @@ const Navbar = () => {
                                                                 <ChevronRight className="w-4 h-4 text-purple-600" />
                                                             </div>
 
-                                                            {showSurveySubmenu && (
+                                                            {((link.label === 'Survey Management' && showSurveySubmenu) ||
+                                                                (link.label === 'Result Management' && showResultSubmenu)) && (
                                                                 <div className="absolute left-[calc(100%-1px)] top-0 w-64 bg-white rounded-r-lg shadow-xl border border-purple-100 border-l-0 animate-in slide-in-from-left-2 duration-200">
                                                                     {link.submenuItems.map((subItem: any) => {
                                                                         const SubIcon = subItem.icon;
@@ -134,6 +159,7 @@ const Navbar = () => {
                                                                                 onClick={() => {
                                                                                     setIsDropdownOpen(false);
                                                                                     setShowSurveySubmenu(false);
+                                                                                    setShowResultSubmenu(false);
                                                                                 }}
                                                                             >
                                                                                 <div className="px-4 py-3 flex items-center space-x-3 hover:bg-purple-50 group first:rounded-tr-lg">
@@ -172,17 +198,6 @@ const Navbar = () => {
                                         </div>
                                     )}
                                 </div>
-
-                                <Link href="/user-results">
-                                    <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
-                                        User Results
-                                    </button>
-                                </Link>
-                                <Link href="/company-based-evaluations">
-                                    <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30">
-                                        Company Based Evaluations
-                                    </button>
-                                </Link>
                             </div>
                         )}
 
@@ -213,7 +228,6 @@ const Navbar = () => {
                                 )}
                             </div>
                         </Link>
-
 
                         <button
                             onClick={handleLogout}

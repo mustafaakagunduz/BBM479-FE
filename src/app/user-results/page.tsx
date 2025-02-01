@@ -13,9 +13,12 @@ import {
     Typography,
     CircularProgress,
     Card,
-    CardContent
+    CardContent,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Search } from 'lucide-react';
 
 interface User {
     id: number;
@@ -46,6 +49,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const UserResults = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -64,6 +68,16 @@ const UserResults = () => {
 
         fetchUsers();
     }, []);
+
+    // Geliştirilmiş arama filtreleme fonksiyonu
+    const filteredUsers = users.filter(user => {
+        const searchTerms = searchQuery.toLowerCase();
+        return (
+            user.name.toLowerCase().includes(searchTerms) ||
+            user.email.toLowerCase().includes(searchTerms) ||
+            user.company?.name.toLowerCase().includes(searchTerms)
+        );
+    });
 
     if (loading) {
         return (
@@ -92,17 +106,47 @@ const UserResults = () => {
 
                 <Card elevation={3}>
                     <CardContent>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <TextField
+                                fullWidth
+                                variant="outlined"
+                                placeholder="Search by name, email or company..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search size={20} className="text-gray-500" />
+                                        </InputAdornment>
+                                    ),
+                                    sx: {
+                                        '&:hover': {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#9333ea',
+                                            }
+                                        },
+                                        '&.Mui-focused': {
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderColor: '#9333ea',
+                                            }
+                                        }
+                                    }
+                                }}
+                            />
+                        </div>
+
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Name</TableCell>
                                         <TableCell>Email</TableCell>
+                                        <TableCell>Company</TableCell>
                                         <TableCell align="right">Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {users.map((user) => (
+                                    {filteredUsers.map((user) => (
                                         <StyledTableRow
                                             key={user.id}
                                             onClick={() => router.push(`/user-results/${user.id}`)}
@@ -110,6 +154,13 @@ const UserResults = () => {
                                         >
                                             <TableCell>{user.name}</TableCell>
                                             <TableCell>{user.email}</TableCell>
+                                            <TableCell>
+                                                {user.company?.name || (
+                                                    <span style={{ color: '#6b7280', fontStyle: 'italic' }}>
+                                                        Not Assigned
+                                                    </span>
+                                                )}
+                                            </TableCell>
                                             <TableCell align="right">
                                                 <span
                                                     className="action-badge"
@@ -128,7 +179,7 @@ const UserResults = () => {
                                     ))}
                                 </TableBody>
                             </Table>
-                            {users.length === 0 && (
+                            {filteredUsers.length === 0 && (
                                 <Typography
                                     variant="body1"
                                     sx={{
@@ -137,7 +188,7 @@ const UserResults = () => {
                                         color: 'text.secondary'
                                     }}
                                 >
-                                    No users found in the system.
+                                    No users found matching your search.
                                 </Typography>
                             )}
                         </TableContainer>

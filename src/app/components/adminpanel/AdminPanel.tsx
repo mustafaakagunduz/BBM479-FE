@@ -1,7 +1,7 @@
 "use client"
 
 import {Card, CardContent, CardHeader, CardTitle} from '../ui/card';
-import { Building2, FileSpreadsheet, Building } from 'lucide-react';
+import { FileSpreadsheet, Building } from 'lucide-react';
 import Link from 'next/link';
 
 function AdminPanel() {
@@ -17,12 +17,6 @@ function AdminPanel() {
             icon: <Building className="w-12 h-12 mb-4 text-purple-600" />,
             href: "/companies",
             description: "Manage and monitor company profiles"
-        },
-        {
-            title: "Authorization System",
-            icon: <FileSpreadsheet className="w-12 h-12 mb-4 text-purple-600" />,
-            href: "/authorization-system",
-            description: "Manage user permissions"
         }
     ];
 
@@ -37,24 +31,30 @@ function AdminPanel() {
 
                 <Card className="mb-8 w-full">
                     <CardContent className="space-y-4 text-center">
-                        <p className="text-lg text-purple-600 font-bold">In this page you can:</p>
+                        <p className="text-lg text-purple-600 font-bold">Welcome to Admin Control Panel</p>
                         <ul className="space-y-4 list-none p-0">
-                            {adminCards.map((card, index) => (
-                                <li key={index}>
-                                    <Link
-                                        href={card.href}
-                                        className="text-purple-600 hover:text-purple-800 transition-colors underline decoration-purple-300 hover:decoration-purple-800"
-                                    >
-                                        <span className="font-medium cursor-pointer">{card.description}</span>
-                                    </Link>
-                                </li>
-                            ))}
+                            <li>
+                                <Link
+                                    href="/surveymanagement"
+                                    className="text-purple-600 hover:text-purple-800 transition-colors underline decoration-purple-300 hover:decoration-purple-800"
+                                >
+                                    <span className="font-medium cursor-pointer">Create and manage surveys for your organization</span>
+                                </Link>
+                            </li>
+                            <li>
+                                <Link
+                                    href="/companies"
+                                    className="text-purple-600 hover:text-purple-800 transition-colors underline decoration-purple-300 hover:decoration-purple-800"
+                                >
+                                    <span className="font-medium cursor-pointer">Monitor and manage company profiles and their data</span>
+                                </Link>
+                            </li>
                         </ul>
-                        <p className="mt-4 text-purple-600 font-bold">Select a section from the menu below to get started.</p>
+                        <p className="mt-4 text-purple-600 font-bold">Click on a card below to access the related management system.</p>
                     </CardContent>
                 </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {adminCards.map((card, index) => (
                         <Link href={card.href} key={index}
                               className="relative group hover:z-10 transition-all duration-300 w-full">

@@ -13,26 +13,15 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TableRow
+    TableRow,
+    TextField,
+    InputAdornment
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { Search } from 'lucide-react';
+import {User} from "@/app/types/auth";
 
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
 
-interface CompanyDetail {
-    id: number;
-    name: string;
-    description: string;
-    users: User[];
-}
-
-interface CompanyDetailComponentProps {
-    companyId: string;
-}
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
     cursor: 'pointer',
@@ -48,10 +37,22 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
     },
 }));
 
+interface CompanyDetail {
+    id: number;
+    name: string;
+    description: string;
+    users: User[];
+}
+
+interface CompanyDetailComponentProps {
+    companyId: string;
+}
+
 const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ companyId }) => {
     const [company, setCompany] = useState<CompanyDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -77,6 +78,15 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
     const handleRowClick = (userId: number) => {
         router.push(`/companies/${companyId}/${userId}`);
     };
+
+    // Filtreleme fonksiyonu
+    const filteredUsers = company?.users?.filter(user => {
+        const searchTerms = searchQuery.toLowerCase();
+        return (
+            user.name.toLowerCase().includes(searchTerms) ||
+            user.email.toLowerCase().includes(searchTerms)
+        );
+    }) || [];
 
     if (loading) {
         return (
@@ -124,6 +134,35 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
 
             <Card elevation={3}>
                 <CardContent>
+                    <div style={{ marginBottom: '1rem' }}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            placeholder="Search employees by name or email..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search size={20} className="text-gray-500" />
+                                    </InputAdornment>
+                                ),
+                                sx: {
+                                    '&:hover': {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#9333ea',
+                                        }
+                                    },
+                                    '&.Mui-focused': {
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderColor: '#9333ea',
+                                        }
+                                    }
+                                }
+                            }}
+                        />
+                    </div>
+
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
@@ -134,7 +173,7 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {company.users && company.users.map((user) => (
+                                {filteredUsers.map((user) => (
                                     <StyledTableRow
                                         key={user.id}
                                         onClick={() => handleRowClick(user.id)}
@@ -165,7 +204,7 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
                                 ))}
                             </TableBody>
                         </Table>
-                        {(!company.users || company.users.length === 0) && (
+                        {filteredUsers.length === 0 && (
                             <Typography
                                 variant="body1"
                                 sx={{
@@ -174,7 +213,9 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
                                     color: 'text.secondary'
                                 }}
                             >
-                                No employees found in this company.
+                                {searchQuery
+                                    ? "No employees found matching your search."
+                                    : "No employees found in this company."}
                             </Typography>
                         )}
                     </TableContainer>

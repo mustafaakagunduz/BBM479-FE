@@ -197,7 +197,7 @@ const CompanyComponent: React.FC = () => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Company Name</TableCell>
-                                        <TableCell>Description</TableCell>
+
                                         <TableCell align="center">Number of Employees</TableCell>
                                         <TableCell align="right">Actions</TableCell>
                                     </TableRow>
@@ -210,7 +210,7 @@ const CompanyComponent: React.FC = () => {
                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                         >
                                             <TableCell>{company.name}</TableCell>
-                                            <TableCell>{company.description}</TableCell>
+
                                             <TableCell align="center">{company.userCount || 0}</TableCell>
                                             <TableCell align="right">
                                                 <div className="flex items-center justify-end gap-2">
