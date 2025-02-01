@@ -54,16 +54,31 @@ const ProfilePageComponent: React.FC = () => {
     });
     const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
+    // İlk mount'ta ve gerekli durumlarda user verilerini çekmek için
     useEffect(() => {
+        let isMounted = true;
+
+        const fetchData = async () => {
+            if (user?.id && isMounted) {
+                try {
+                    await updateUserData(user.id);
+                } catch (error) {
+                    console.error('Error updating user data:', error);
+                }
+            }
+        };
+
+        // İlk kez user.id olduğunda veya update gerektiğinde çalışacak
         if (user?.id) {
-            // Sadece component mount olduğunda çalışsın
-            const fetchData = async () => {
-                await updateUserData(user.id);
-            };
             fetchData();
         }
-    }, [user?.id]); // updateUserData'yı bağımlılıklardan çıkardık
 
+        return () => {
+            isMounted = false;
+        };
+    }, []); // Boş dependency array ile sadece mount'ta çalışacak
+
+// Form verilerini güncellemek için ayrı bir useEffect
     useEffect(() => {
         if (user) {
             setFormData({
@@ -72,7 +87,7 @@ const ProfilePageComponent: React.FC = () => {
                 username: user.username || ''
             });
         }
-    }, [user]);
+    }, [user]); // Sadece user değiştiğinde form verilerini güncelle
 
     const handleUserDataChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

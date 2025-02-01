@@ -110,17 +110,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Network response was not ok');
       }
       const userData = await response.json();
-      console.log('Received user data:', userData); // Debug için
 
-      if (state.user) {
-        const updatedUser: User = {
-          ...state.user,
-          ...userData, // Direkt olarak gelen datayı kullan
-        };
+      // Kritik değişiklik burada
+      const updatedUser: User = {
+        ...state.user,
+        ...userData,
+        role: state.user?.role // Role bilgisini koruyalım
+      };
 
-        localStorage.setItem('auth', JSON.stringify({ user: updatedUser }));
-        dispatch({ type: 'UPDATE_USER', payload: updatedUser });
-      }
+      localStorage.setItem('auth', JSON.stringify({ user: updatedUser }));
+      dispatch({ type: 'UPDATE_USER', payload: updatedUser });
     } catch (error) {
       console.error('Error updating user data:', error);
     }
