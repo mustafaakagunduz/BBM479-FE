@@ -47,17 +47,6 @@ interface Company {
     description?: string;
 }
 
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    username: string;
-    profileImage?: string;
-    company?: {  // Bu kısmı daha önce tanımlamıştık ama AuthContext'teki User tipi ile uyumsuz
-        id: number;
-        name: string;
-    };
-}
 
 interface UserUpdateData {
     name: string;
@@ -111,6 +100,7 @@ const ProfilePageComponent: React.FC = () => {
     const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
     // Fetch companies when editing mode is activated
+    // Replace the existing companies useEffect with this
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
@@ -122,10 +112,8 @@ const ProfilePageComponent: React.FC = () => {
             }
         };
 
-        if (isEditing) {
-            fetchCompanies();
-        }
-    }, [isEditing]);
+        fetchCompanies(); // Always fetch companies on mount
+    }, []); // Empty dependency array to run once
 
     // Initial user data fetch
     useEffect(() => {
@@ -384,6 +372,7 @@ const ProfilePageComponent: React.FC = () => {
                     />
                 )
             ) : (
+                // Update the ProfileInput component's display logic
                 <Typography className="p-2">
                     {type === "select"
                         ? companies.find(c => c.id === value)?.name || "No Company"
