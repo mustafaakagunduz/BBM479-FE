@@ -1,16 +1,37 @@
 'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/app/context/AuthContext';
 import axios from 'axios';
 import { AlertCircle, Check, Pencil } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button, Typography, Box, Slider } from '@mui/material';
+import {
+    Button,
+    Typography,
+    Box,
+    Slider,
+    Select,
+    MenuItem,
+    FormControl,
+    SelectChangeEvent
+} from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Cropper from 'react-easy-crop';
 
+// Type Definitions
 interface Point {
     x: number;
     y: number;
+}
+
+type SelectValue = string | number | null;
+
+interface ProfileInputProps {
+    label: string;
+    name: string;
+    value: string | SelectValue;
+    onChange: (e: CustomChangeEvent) => void;
+    type?: "text" | "email" | "select";
 }
 
 interface Area {
@@ -20,16 +41,46 @@ interface Area {
     height: number;
 }
 
+interface Company {
+    id: number;
+    name: string;
+    description?: string;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+    username: string;
+    profileImage?: string;
+    company?: {  // Bu kısmı daha önce tanımlamıştık ama AuthContext'teki User tipi ile uyumsuz
+        id: number;
+        name: string;
+    };
+}
+
 interface UserUpdateData {
     name: string;
     email: string;
     username: string;
+    companyId: number | null;
 }
 
 interface PasswordUpdate {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
+}
+
+// Custom event type for both input and select changes
+type CustomChangeEvent = React.ChangeEvent<HTMLInputElement> | SelectChangeEvent;
+
+interface ProfileInputProps {
+    label: string;
+    name: string;
+    value: string | number | null;
+    onChange: (e: CustomChangeEvent) => void;
+    type?: "text" | "email" | "select";
 }
 
 const ProfilePageComponent: React.FC = () => {
@@ -40,21 +91,43 @@ const ProfilePageComponent: React.FC = () => {
     const [zoom, setZoom] = useState(1.5);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const [showCropper, setShowCropper] = useState(false);
+    const [originalImage, setOriginalImage] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [companies, setCompanies] = useState<Company[]>([]);
+
     const [formData, setFormData] = useState<UserUpdateData>({
         name: '',
         email: '',
-        username: ''
+        username: '',
+        companyId: null
     });
-    const [originalImage, setOriginalImage] = useState<string | null>(null);
-    const [isEditing, setIsEditing] = useState(false);
+
     const [passwordData, setPasswordData] = useState<PasswordUpdate>({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
+
     const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-    // İlk mount'ta ve gerekli durumlarda user verilerini çekmek için
+    // Fetch companies when editing mode is activated
+    useEffect(() => {
+        const fetchCompanies = async () => {
+            try {
+                const response = await axios.get('http://localhost:8081/api/companies');
+                setCompanies(response.data);
+            } catch (error) {
+                console.error('Error fetching companies:', error);
+                setMessage({ type: 'error', text: 'Failed to load companies' });
+            }
+        };
+
+        if (isEditing) {
+            fetchCompanies();
+        }
+    }, [isEditing]);
+
+    // Initial user data fetch
     useEffect(() => {
         let isMounted = true;
 
@@ -68,7 +141,6 @@ const ProfilePageComponent: React.FC = () => {
             }
         };
 
-        // İlk kez user.id olduğunda veya update gerektiğinde çalışacak
         if (user?.id) {
             fetchData();
         }
@@ -76,27 +148,29 @@ const ProfilePageComponent: React.FC = () => {
         return () => {
             isMounted = false;
         };
-    }, []); // Boş dependency array ile sadece mount'ta çalışacak
+    }, []);
 
-// Form verilerini güncellemek için ayrı bir useEffect
+    // Update form data when user changes
     useEffect(() => {
         if (user) {
             setFormData({
                 name: user.name || '',
                 email: user.email || '',
-                username: user.username || ''
+                username: user.username || '',
+                companyId: user.company?.id || null
             });
         }
-    }, [user]); // Sadece user değiştiğinde form verilerini güncelle
+    }, [user]);
 
-    const handleUserDataChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Form handlers
+    const handleUserDataChange = useCallback((e: CustomChangeEvent) => {
         const { name, value } = e.target;
-        e.preventDefault();
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
     }, []);
+
     const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setPasswordData(prev => ({
@@ -105,6 +179,7 @@ const ProfilePageComponent: React.FC = () => {
         }));
     }, []);
 
+    // Image handling functions
     const handleEditPicture = useCallback(() => {
         if (user?.profileImage) {
             const imageUrl = `data:image/jpeg;base64,${user.profileImage}`;
@@ -180,6 +255,7 @@ const ProfilePageComponent: React.FC = () => {
         }
     }, []);
 
+    // API calls
     const handleCropSave = async () => {
         if (originalImage && croppedAreaPixels) {
             try {
@@ -198,6 +274,7 @@ const ProfilePageComponent: React.FC = () => {
         setCrop({ x: 0, y: 0 });
         setZoom(1.5);
     }, []);
+
     const uploadProfilePicture = async (file: Blob) => {
         if (!user?.id) return;
         const formData = new FormData();
@@ -273,32 +350,53 @@ const ProfilePageComponent: React.FC = () => {
         }
     };
 
-    const ProfileInput = useCallback(({ label, name, value, onChange }: {
-        label: string;
-        name: string;
-        value: string;
-        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    }) => (
+    // ProfileInput component
+    const ProfileInput: React.FC<ProfileInputProps> = useCallback(({ label, name, value, onChange, type = "text" }) => (
         <Box className="space-y-4">
             <Typography variant="subtitle1" className="font-medium">{label}</Typography>
             {isEditing ? (
-                <input
-                    key={`${name}-input`}
-                    type={name === 'email' ? 'email' : 'text'}
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    className="w-full p-2 border rounded"
-                    autoComplete="off"
-                />
+                type === "select" ? (
+                    <FormControl fullWidth>
+                        <Select
+                            name={name}
+                            value={String(value ?? '')}
+                            onChange={onChange}
+                            className="w-full"
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            {companies.map((company) => (
+                                <MenuItem key={company.id} value={company.id}>
+                                    {company.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                ) : (
+                    <input
+                        type={type}
+                        name={name}
+                        value={value?.toString() ?? ''}
+                        onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
+                        className="w-full p-2 border rounded"
+                        autoComplete="off"
+                    />
+                )
             ) : (
-                <Typography className="p-2">{value}</Typography>
+                <Typography className="p-2">
+                    {type === "select"
+                        ? companies.find(c => c.id === value)?.name || "No Company"
+                        : value?.toString()}
+                </Typography>
             )}
         </Box>
-    ), [isEditing]);
+    ), [isEditing, companies]);
 
+    // JSX
     return (
         <Box className="max-w-4xl mx-auto p-6">
+            {/* Alert Messages */}
             {message && (
                 <Alert className={`mb-4 ${message.type === 'success' ? 'bg-green-50' : 'bg-red-50'}`}>
                     {message.type === 'success' ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
@@ -306,6 +404,7 @@ const ProfilePageComponent: React.FC = () => {
                 </Alert>
             )}
 
+            {/* Profile Picture Section */}
             <Box className="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <Box className="flex justify-between items-center mb-6">
                     <Typography variant="h4">Profile Picture</Typography>
@@ -356,9 +455,9 @@ const ProfilePageComponent: React.FC = () => {
                                     <Typography variant="subtitle1" className="mb-2">Zoom</Typography>
                                     <Slider
                                         value={zoom}
-                                        min={-10}
-                                        max={10}
-                                        step={0.01}
+                                        min={1}
+                                        max={3}
+                                        step={0.1}
                                         onChange={(e, value) => setZoom(value as number)}
                                         sx={{
                                             '& .MuiSlider-track': { backgroundColor: '#9333ea' },
@@ -418,6 +517,7 @@ const ProfilePageComponent: React.FC = () => {
                 </Box>
             </Box>
 
+            {/* Profile Information Section */}
             <Box className="bg-white rounded-lg shadow-lg p-6 mb-6">
                 <Box className="flex justify-between items-center mb-6">
                     <Typography variant="h4">My Profile</Typography>
@@ -436,14 +536,23 @@ const ProfilePageComponent: React.FC = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleUserDataChange}
+                        type="text"
                     />
                     <ProfileInput
                         label="E-Mail"
                         name="email"
                         value={formData.email}
                         onChange={handleUserDataChange}
+                        type="email"
                     />
 
+                    <ProfileInput
+                        label="Company"
+                        name="companyId"
+                        value={formData.companyId}
+                        onChange={handleUserDataChange}
+                        type="select"
+                    />
 
                     {isEditing && (
                         <Box className="flex gap-2">
@@ -468,6 +577,7 @@ const ProfilePageComponent: React.FC = () => {
                 </form>
             </Box>
 
+            {/* Password Change Section */}
             <Box className="bg-white rounded-lg shadow-lg p-6">
                 <Typography variant="h4" className="mb-6">Change Password</Typography>
                 <form onSubmit={updatePassword} className="space-y-4">

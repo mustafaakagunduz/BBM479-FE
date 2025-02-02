@@ -45,6 +45,8 @@ interface AuthContextType extends AuthState {
   updateUserData: (userId: number) => Promise<void>;
 }
 
+
+
 type AuthAction =
     | { type: 'LOGIN_SUCCESS'; payload: User }
     | { type: 'LOGOUT' }

@@ -8,12 +8,15 @@ export interface User {
     email: string;
     name: string;
     role: {
-      name: UserRole;
+        name: UserRole;
     };
-    profileImage?: string; // Changed to string and made optional
+    profileImage?: string;
     emailVerified?: boolean;
-  }
-  
+    company?: {
+        id: number;
+        name: string;
+    };
+}
 
 export interface AuthResponse {
   success: boolean;
