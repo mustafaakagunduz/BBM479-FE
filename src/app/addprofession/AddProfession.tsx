@@ -147,19 +147,23 @@ const AddProfession = () => {
     };
 
     const handleAddSkillToNewProfession = () => {
-        if (availableSkills.length > 0) {
-            const firstSkill = availableSkills[0];
-            const newSkill = {
-                id: firstSkill.id,
-                name: firstSkill.name,
-                level: 1,
-                tempId: Date.now() + Math.random()
-            };
-            setNewProfession({
-                ...newProfession,
-                requiredSkills: [...newProfession.requiredSkills, newSkill]
-            });
+        // Eğer mevcut skill sayısı, mevcut endüstrideki toplam skill sayısına eşit veya fazlaysa ekleme yapma
+        if (newProfession.requiredSkills.length >= availableSkills.length) {
+            toast.error(`You can only add up to ${availableSkills.length} skills for this industry`);
+            return;
         }
+
+        const newSkill = {
+            id: 0, // Başlangıçta 0 olarak ayarla
+            name: "Select a skill", // Başlangıç metni
+            level: 1,
+            tempId: Date.now() + Math.random()
+        };
+
+        setNewProfession({
+            ...newProfession,
+            requiredSkills: [...newProfession.requiredSkills, newSkill]
+        });
     };
 
     const handleDeleteSkill = (index: number) => {
@@ -240,14 +244,20 @@ const AddProfession = () => {
         </div>
     );
     const [skillSearchTerms, setSkillSearchTerms] = useState<{[key: string]: string}>({});
+
     const renderSkillDropdown = (skill: Skill, index: number, isNewProfession: boolean) => {
         const dropdownKey = `${isNewProfession ? 'new' : skill.tempId || skill.id}-${index}`;
 
         // Skills'leri alfabetik sırala ve ara
         const filteredAndSortedSkills = availableSkills
-            .filter(option =>
-                option.name.toLowerCase().includes((skillSearchTerms[dropdownKey] || '').toLowerCase())
-            )
+            .filter(option => {
+                // Halihazırda seçili olan skilleri filtreleme
+                const isAlreadySelected = newProfession.requiredSkills.some(
+                    (selectedSkill, idx) => idx !== index && selectedSkill.id === option.id
+                );
+
+                return !isAlreadySelected && option.name.toLowerCase().includes((skillSearchTerms[dropdownKey] || '').toLowerCase());
+            })
             .sort((a, b) => a.name.localeCompare(b.name));
 
         return (
@@ -258,9 +268,11 @@ const AddProfession = () => {
                         ...prev,
                         [dropdownKey]: !prev[dropdownKey]
                     }))}
-                    className="w-full flex justify-between items-center px-4 py-3 bg-gray-100 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800"
+                    className={`w-full flex justify-between items-center px-4 py-3 rounded-lg border ${
+                        skill.id === 0 ? 'text-gray-400 bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                 >
-                    {skill.name}
+                    {skill.id === 0 ? "Select a skill" : skill.name}
                     <ChevronDown size={20}/>
                 </button>
                 {isSkillDropdownOpen[dropdownKey] && (
@@ -296,14 +308,10 @@ const AddProfession = () => {
                                             const updatedSkills = [...newProfession.requiredSkills];
                                             updatedSkills[index] = updatedSkill;
                                             setNewProfession({...newProfession, requiredSkills: updatedSkills});
-                                        } else if (editingProfession) {
-                                            const updatedSkills = [...editingProfession.requiredSkills];
-                                            updatedSkills[index] = updatedSkill;
-                                            setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
                                         }
 
                                         setIsSkillDropdownOpen(prev => ({...prev, [dropdownKey]: false}));
-                                        setSkillSearchTerms(prev => ({...prev, [dropdownKey]: ''})); // Reset search
+                                        setSkillSearchTerms(prev => ({...prev, [dropdownKey]: ''}));
                                     }}
                                     className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
                                         skill.id === option.id ? "bg-purple-200 text-purple-800 font-medium" : "text-gray-700"
@@ -318,6 +326,7 @@ const AddProfession = () => {
             </div>
         );
     };
+
     const renderExistingProfessionSkills = (profession: Profession, isEditing: boolean) => (
         <div className="space-y-2">
             {profession.requiredSkills.map((skill, index) => (
@@ -621,10 +630,15 @@ const AddProfession = () => {
                         {isEditing && (
                             <div className="space-y-2">
                                 <button
-                                    onClick={handleAddSkillToExistingProfession}
-                                    className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                                    onClick={handleAddSkillToNewProfession}
+                                    className={`px-4 py-2 rounded-lg ${
+                                        newProfession.requiredSkills.length >= availableSkills.length
+                                            ? 'bg-gray-400 cursor-not-allowed'
+                                            : 'bg-purple-600 hover:bg-purple-700'
+                                    } text-white font-medium transition`}
+                                    disabled={newProfession.requiredSkills.length >= availableSkills.length}
                                 >
-                                    Add Skill
+                                    Add Skill {newProfession.requiredSkills.length}/{availableSkills.length}
                                 </button>
                                 <button
                                     onClick={handleSaveEdit}
