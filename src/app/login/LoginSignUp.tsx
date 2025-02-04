@@ -7,6 +7,7 @@ import axios from 'axios';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
 import {PasswordValidation, validatePassword} from "@/app/login/passwordValidation";
+import LoginButton from "@/app/login/LoginButton";
 
 interface Company {
   id: number;
@@ -239,14 +240,10 @@ const LoginSignUp = () => {
                         required
                     />
                   </div>
-                  <button
-                      type="submit"
-                      disabled={isLoading || resetEmailSent}
-                      className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
-                  >
+                  <LoginButton isLoading={isLoading || resetEmailSent}>
                     {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
                     {resetEmailSent ? 'Email Sent' : 'Send Reset Link'}
-                  </button>
+                  </LoginButton>
                   <button
                       type="button"
                       onClick={() => {
@@ -305,14 +302,10 @@ const LoginSignUp = () => {
                             Forgot Password?
                           </button>
                         </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
-                        >
+                        <LoginButton isLoading={isLoading}>
                           {isLoading ? <Loader2 className="animate-spin mr-2" size={20}/> : null}
                           Login
-                        </button>
+                        </LoginButton>
                       </form>
                   ) : (
                       // Sign Up Form
@@ -376,18 +369,15 @@ const LoginSignUp = () => {
                         {/* Password validation feedback */}
                         {password && (
                             <div className="space-y-2 text-sm rounded-lg bg-gray-50 p-3">
-                              <div
-                                  className={`flex items-center ${passwordValidation.isMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div className={`flex items-center ${passwordValidation.isMinLength ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.isMinLength ? '✓' : '○'}</span>
                                 At least 8 characters
                               </div>
-                              <div
-                                  className={`flex items-center ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div className={`flex items-center ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.hasUpperCase ? '✓' : '○'}</span>
                                 One uppercase letter
                               </div>
-                              <div
-                                  className={`flex items-center ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div className={`flex items-center ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.hasLowerCase ? '✓' : '○'}</span>
                                 One lowercase letter
                               </div>
@@ -437,14 +427,10 @@ const LoginSignUp = () => {
                             ))}
                           </select>
                         </div>
-                        <button
-                            type="submit"
-                            disabled={isLoading || !passwordValidation.isValid || password !== confirmPassword}
-                            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
-                        >
+                        <LoginButton isLoading={isLoading || !passwordValidation.isValid || password !== confirmPassword}>
                           {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
                           Sign Up
-                        </button>
+                        </LoginButton>
                       </form>
                   )}
 
