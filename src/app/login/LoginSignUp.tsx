@@ -2,9 +2,9 @@
 import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2, Eye, EyeOff  } from 'lucide-react';
 import axios from 'axios';
-import { Alert, AlertDescription } from "../../components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
 import {PasswordValidation, validatePassword} from "@/app/login/passwordValidation";
 
@@ -36,6 +36,9 @@ const LoginSignUp = () => {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const { login } = useAuth();
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Sign Up states
   const [firstName, setFirstName] = useState('');
@@ -103,14 +106,17 @@ const LoginSignUp = () => {
         } else if (
             errorMessage.includes('user not found') ||
             errorMessage.includes('invalid credentials') ||
-            errorMessage.includes('invalid password')
+            errorMessage.includes('invalid password') ||
+            errorMessage.includes('bad credentials')
         ) {
           setError('Invalid email or password');
+        } else if (errorMessage.includes('email') || errorMessage.includes('password')) {
+          setError('Invalid email or password');
         } else {
-          setError('An error occurred during login. Please try again.');
+          setError('Invalid email or password');
         }
       } else {
-        setError('An unexpected error occurred');
+        setError('Invalid email or password');
       }
     } finally {
       setIsLoading(false);
@@ -154,7 +160,7 @@ const LoginSignUp = () => {
         setConfirmPassword('');
         setSelectedCompany(null);
 
-        // Switch to login form after delay
+
         setTimeout(() => {
           setIsLogin(true);
         }, 5000);
@@ -262,7 +268,7 @@ const LoginSignUp = () => {
                       // Login Form
                       <form onSubmit={handleLogin} className="space-y-4">
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                           <input
                               type="email"
                               placeholder="Email"
@@ -273,15 +279,22 @@ const LoginSignUp = () => {
                           />
                         </div>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                           <input
-                              type="password"
+                              type={showLoginPassword ? "text" : "password"}
                               placeholder="Password"
                               value={loginPassword}
                               onChange={(e) => setLoginPassword(e.target.value)}
-                              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                               required
                           />
+                          <button
+                              type="button"
+                              onClick={() => setShowLoginPassword(!showLoginPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showLoginPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                          </button>
                         </div>
                         <div className="text-right">
                           <button
@@ -297,7 +310,7 @@ const LoginSignUp = () => {
                             disabled={isLoading}
                             className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:opacity-90 flex items-center justify-center disabled:opacity-50"
                         >
-                          {isLoading ? <Loader2 className="animate-spin mr-2" size={20} /> : null}
+                          {isLoading ? <Loader2 className="animate-spin mr-2" size={20}/> : null}
                           Login
                         </button>
                       </form>
@@ -306,7 +319,7 @@ const LoginSignUp = () => {
                       <form onSubmit={handleSignUp} className="space-y-4">
                         <div className="flex space-x-4">
                           <div className="relative flex-1">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                             <input
                                 type="text"
                                 placeholder="First Name"
@@ -317,7 +330,7 @@ const LoginSignUp = () => {
                             />
                           </div>
                           <div className="relative flex-1">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                             <input
                                 type="text"
                                 placeholder="Last Name"
@@ -340,31 +353,41 @@ const LoginSignUp = () => {
                           />
                         </div>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                           <input
-                              type="password"
+                              type={showPassword ? "text" : "password"}
                               placeholder="Password"
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
-                              className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                              className={`w-full pl-10 pr-12 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                                   password && !passwordValidation.isValid ? 'border-red-300' : 'border-gray-200'
                               }`}
                               required
                           />
+                          <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                          </button>
                         </div>
 
                         {/* Password validation feedback */}
                         {password && (
                             <div className="space-y-2 text-sm rounded-lg bg-gray-50 p-3">
-                              <div className={`flex items-center ${passwordValidation.isMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div
+                                  className={`flex items-center ${passwordValidation.isMinLength ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.isMinLength ? '✓' : '○'}</span>
                                 At least 8 characters
                               </div>
-                              <div className={`flex items-center ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div
+                                  className={`flex items-center ${passwordValidation.hasUpperCase ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.hasUpperCase ? '✓' : '○'}</span>
                                 One uppercase letter
                               </div>
-                              <div className={`flex items-center ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
+                              <div
+                                  className={`flex items-center ${passwordValidation.hasLowerCase ? 'text-green-600' : 'text-gray-500'}`}>
                                 <span className="mr-2">{passwordValidation.hasLowerCase ? '✓' : '○'}</span>
                                 One lowercase letter
                               </div>
@@ -376,20 +399,27 @@ const LoginSignUp = () => {
                         )}
 
                         <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                           <input
-                              type="password"
+                              type={showConfirmPassword ? "text" : "password"}
                               placeholder="Confirm Password"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
-                              className={`w-full pl-10 pr-4 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                              className={`w-full pl-10 pr-12 py-3 rounded-lg border focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                                   confirmPassword && password !== confirmPassword ? 'border-red-300' : 'border-gray-200'
                               }`}
                               required
                           />
+                          <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showConfirmPassword ? <EyeOff size={20}/> : <Eye size={20}/>}
+                          </button>
                         </div>
                         <div className="relative">
-                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                          <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
                           <select
                               className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
                               value={selectedCompany?.id || ''}
