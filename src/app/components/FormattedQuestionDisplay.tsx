@@ -26,6 +26,9 @@ const FormattedQuestionDisplay: React.FC<FormattedQuestionDisplayProps> = ({
     // Karıştırılmış seçenekleri tutacak state
     const [shuffledOptions, setShuffledOptions] = useState<QuestionOption[]>([]);
 
+    // Sorunun ID'sini tutacak state
+    const [currentQuestionContent, setCurrentQuestionContent] = useState<string>('');
+
     // Sayıdan harfe çeviren yardımcı fonksiyon (artık indekse göre)
     const getLetter = (index: number): string => {
         return String.fromCharCode(65 + index); // 0 -> A, 1 -> B, 2 -> C, ...
@@ -41,12 +44,25 @@ const FormattedQuestionDisplay: React.FC<FormattedQuestionDisplayProps> = ({
         return shuffled;
     };
 
-    // Component mount olduğunda ve question değiştiğinde seçenekleri karıştır
+    // Sadece soru değiştiğinde seçenekleri karıştır
     useEffect(() => {
-        // Seçenekleri karıştır
-        const shuffled = shuffleArray(question.options);
-        setShuffledOptions(shuffled);
-    }, [question]);
+        // Soru içeriği değiştiyse
+        if (question.content !== currentQuestionContent) {
+            // Yeni soru içeriğini kaydet
+            setCurrentQuestionContent(question.content);
+            // Seçenekleri karıştır
+            const shuffled = shuffleArray(question.options);
+            setShuffledOptions(shuffled);
+        }
+    }, [question.content]); // Sadece soru içeriği değiştiğinde tetiklenecek
+
+    // İlk render için seçenekleri ayarla
+    useEffect(() => {
+        if (shuffledOptions.length === 0) {
+            setShuffledOptions(shuffleArray(question.options));
+            setCurrentQuestionContent(question.content);
+        }
+    }, []);
 
     // Eğer shuffledOptions henüz set edilmediyse loading göster
     if (shuffledOptions.length === 0) {
@@ -79,7 +95,7 @@ const FormattedQuestionDisplay: React.FC<FormattedQuestionDisplayProps> = ({
                                     ? 'border-purple-500 bg-purple-500 text-white'
                                     : 'border-gray-300 text-gray-500'
                             }`}>
-                                {getLetter(index)} {/* Artık level yerine index kullanıyoruz */}
+                                {getLetter(index)}
                             </div>
                             <p className="text-sm sm:text-base">{option.description}</p>
                         </div>
