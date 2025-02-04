@@ -128,7 +128,27 @@ const AddSkill: React.FC = () => {
     const handleAddSkill = async () => {
         if (newSkill.trim() && selectedIndustry) {
             try {
-                setIsProcessing(true); // sadece butonu disable etmek için kullanacağız
+                // Frontend'de önce mevcut skill'ler arasında aynı isimde ve aynı industry'de bir skill var mı kontrol et
+                const existingSkill = skills.find(
+                    skill =>
+                        skill.name.toLowerCase() === newSkill.trim().toLowerCase() &&
+                        skill.industryId === selectedIndustry.id
+                );
+
+                if (existingSkill) {
+                    toast.error('This skill has already been added for this industry', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                    return;
+                }
+
+                setIsProcessing(true);
                 const createDTO: CreateSkillDTO = {
                     name: newSkill.trim(),
                     industryId: selectedIndustry.id
@@ -148,16 +168,28 @@ const AddSkill: React.FC = () => {
                     },
                 });
             } catch (error: any) {
-                const errorMessage = error.response?.data?.message || 'Failed to add skill';
-                toast.error(errorMessage, {
-                    duration: 2000,
-                    style: {
-                        border: '1px solid #EF4444',
-                        padding: '12px',
-                        color: '#DC2626',
-                        backgroundColor: '#FEE2E2'
-                    },
-                });
+                if (error.response?.data?.message === "Skill with this name already exists in this industry") {
+                    toast.error('This skill has already been added for this industry', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                } else {
+                    const errorMessage = error.response?.data?.message || 'Failed to add skill';
+                    toast.error(errorMessage, {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                }
             } finally {
                 setIsProcessing(false);
             }

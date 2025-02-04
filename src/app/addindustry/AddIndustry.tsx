@@ -49,10 +49,27 @@ const AddIndustry = () => {
     const handleAddIndustry = async () => {
         if (newIndustry.name.trim()) {
             try {
+                // Önce mevcut endüstriler arasında aynı isimde bir endüstri var mı kontrol et
+                const existingIndustry = industries.find(
+                    industry => industry.name.toLowerCase() === newIndustry.name.trim().toLowerCase()
+                );
+
+                if (existingIndustry) {
+                    toast.error('This industry has already been added', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                    return;
+                }
+
                 setIsProcessing(true);
                 const createdIndustry = await industryService.createIndustry(newIndustry);
 
-                // Direkt state'e ekle
                 setIndustries(prev => [...prev, createdIndustry]);
                 setNewIndustry({ name: '' });
 
@@ -66,16 +83,28 @@ const AddIndustry = () => {
                     },
                 });
             } catch (error: any) {
-                const errorMessage = error.response?.data?.message || 'Failed to add industry';
-                toast.error(errorMessage, {
-                    duration: 2000,
-                    style: {
-                        border: '1px solid #EF4444',
-                        padding: '12px',
-                        color: '#DC2626',
-                        backgroundColor: '#FEE2E2'
-                    },
-                });
+                if (error.response?.data?.message === "Industry with this name already exists") {
+                    toast.error('This industry has already been added', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                } else {
+                    const errorMessage = error.response?.data?.message || 'Failed to add industry';
+                    toast.error(errorMessage, {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                }
             } finally {
                 setIsProcessing(false);
             }

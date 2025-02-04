@@ -239,9 +239,16 @@ const AddProfession = () => {
             ))}
         </div>
     );
-
+    const [skillSearchTerms, setSkillSearchTerms] = useState<{[key: string]: string}>({});
     const renderSkillDropdown = (skill: Skill, index: number, isNewProfession: boolean) => {
         const dropdownKey = `${isNewProfession ? 'new' : skill.tempId || skill.id}-${index}`;
+
+        // Skills'leri alfabetik sırala ve ara
+        const filteredAndSortedSkills = availableSkills
+            .filter(option =>
+                option.name.toLowerCase().includes((skillSearchTerms[dropdownKey] || '').toLowerCase())
+            )
+            .sort((a, b) => a.name.localeCompare(b.name));
 
         return (
             <div className="relative flex-1">
@@ -257,37 +264,55 @@ const AddProfession = () => {
                     <ChevronDown size={20}/>
                 </button>
                 {isSkillDropdownOpen[dropdownKey] && (
-                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
-                        {availableSkills.map(option => (
-                            <div
-                                key={option.id}
-                                onClick={() => {
-                                    const updatedSkill = {
-                                        ...skill,
-                                        id: option.id,
-                                        name: option.name,
-                                        tempId: skill.tempId || Date.now() + Math.random()
-                                    };
+                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                        {/* Search input */}
+                        <div className="sticky top-0 bg-white p-2 border-b border-gray-200">
+                            <input
+                                type="text"
+                                value={skillSearchTerms[dropdownKey] || ''}
+                                onChange={(e) => setSkillSearchTerms(prev => ({
+                                    ...prev,
+                                    [dropdownKey]: e.target.value
+                                }))}
+                                placeholder="Search skills..."
+                                className="w-full px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        </div>
+                        {/* Skills list */}
+                        <div className="max-h-48 overflow-y-auto">
+                            {filteredAndSortedSkills.map(option => (
+                                <div
+                                    key={option.id}
+                                    onClick={() => {
+                                        const updatedSkill = {
+                                            ...skill,
+                                            id: option.id,
+                                            name: option.name,
+                                            tempId: skill.tempId || Date.now() + Math.random()
+                                        };
 
-                                    if (isNewProfession) {
-                                        const updatedSkills = [...newProfession.requiredSkills];
-                                        updatedSkills[index] = updatedSkill;
-                                        setNewProfession({...newProfession, requiredSkills: updatedSkills});
-                                    } else if (editingProfession) {
-                                        const updatedSkills = [...editingProfession.requiredSkills];
-                                        updatedSkills[index] = updatedSkill;
-                                        setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
-                                    }
+                                        if (isNewProfession) {
+                                            const updatedSkills = [...newProfession.requiredSkills];
+                                            updatedSkills[index] = updatedSkill;
+                                            setNewProfession({...newProfession, requiredSkills: updatedSkills});
+                                        } else if (editingProfession) {
+                                            const updatedSkills = [...editingProfession.requiredSkills];
+                                            updatedSkills[index] = updatedSkill;
+                                            setEditingProfession({...editingProfession, requiredSkills: updatedSkills});
+                                        }
 
-                                    setIsSkillDropdownOpen(prev => ({...prev, [dropdownKey]: false}));
-                                }}
-                                className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
-                                    skill.id === option.id ? "bg-purple-200 text-purple-800 font-medium" : "text-gray-700"
-                                }`}
-                            >
-                                {option.name}
-                            </div>
-                        ))}
+                                        setIsSkillDropdownOpen(prev => ({...prev, [dropdownKey]: false}));
+                                        setSkillSearchTerms(prev => ({...prev, [dropdownKey]: ''})); // Reset search
+                                    }}
+                                    className={`px-4 py-2 cursor-pointer hover:bg-purple-100 ${
+                                        skill.id === option.id ? "bg-purple-200 text-purple-800 font-medium" : "text-gray-700"
+                                    }`}
+                                >
+                                    {option.name}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
@@ -428,6 +453,26 @@ const AddProfession = () => {
 
         if (newProfession.name.trim() && newProfession.industryId && newProfession.requiredSkills.length > 0) {
             try {
+                // Frontend'de önce mevcut meslekler arasında aynı isimde bir meslek var mı kontrol et
+                const existingProfession = professions.find(
+                    profession =>
+                        profession.name.toLowerCase() === newProfession.name.trim().toLowerCase() &&
+                        profession.industryId === newProfession.industryId
+                );
+
+                if (existingProfession) {
+                    toast.error('This profession has already been added for this industry', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                    return;
+                }
+
                 const professionData = {
                     name: newProfession.name,
                     industryId: newProfession.industryId,
@@ -454,10 +499,38 @@ const AddProfession = () => {
                 setProfessions(prevProfessions => [...prevProfessions, formattedProfession]);
                 setIsAddingNew(false);
                 resetNewProfession();
-                toast.success('Profession added successfully');
-            } catch (error) {
-                console.error('Error saving profession:', error);
-                toast.error('Failed to add profession');
+                toast.success('Profession added successfully', {
+                    duration: 2000,
+                    style: {
+                        border: '1px solid #10B981',
+                        padding: '12px',
+                        color: '#059669',
+                        backgroundColor: '#ECFDF5'
+                    },
+                });
+            } catch (error: any) {
+                if (error.response?.data?.message === "Profession with this name already exists in this industry") {
+                    toast.error('This profession has already been added for this industry', {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                } else {
+                    const errorMessage = error.response?.data?.message || 'Failed to add profession';
+                    toast.error(errorMessage, {
+                        duration: 2000,
+                        style: {
+                            border: '1px solid #EF4444',
+                            padding: '12px',
+                            color: '#DC2626',
+                            backgroundColor: '#FEE2E2'
+                        },
+                    });
+                }
             }
         }
     };
