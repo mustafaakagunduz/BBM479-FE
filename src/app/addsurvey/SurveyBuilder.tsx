@@ -226,7 +226,7 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                                 </select>
                             </div>
 
-                            {/* Skills Selection - Artık her zaman görünür */}
+                            {/* Skills Selection */}
                             <div className="space-y-4">
                                 <label className="text-lg font-medium text-gray-700">Select Skills to Measure</label>
                                 <select
@@ -250,6 +250,7 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                                     </option>
                                     {skills
                                         .filter(skill => !selectedSkills.includes(skill.id))
+                                        .sort((a, b) => a.name.localeCompare(b.name)) // Alfabetik sıralama eklendi
                                         .map((skill) => (
                                             <option key={skill.id} value={skill.id}>
                                                 {skill.name}
@@ -431,6 +432,7 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                                                             (q, idx) => idx !== qIndex && q.selectedSkill === skill.id
                                                         ))
                                                 )
+                                                .sort((a, b) => a.name.localeCompare(b.name)) // Alfabetik sıralama eklendi
                                                 .map((skill) => (
                                                     <option key={skill.id} value={skill.id}>
                                                         {skill.name}
