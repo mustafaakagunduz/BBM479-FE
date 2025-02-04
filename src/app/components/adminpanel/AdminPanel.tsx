@@ -46,7 +46,7 @@ function AdminPanel() {
                                     href="/companies"
                                     className="text-purple-600 hover:text-purple-800 transition-colors underline decoration-purple-300 hover:decoration-purple-800"
                                 >
-                                    <span className="font-medium cursor-pointer">Monitor and manage company profiles and their data</span>
+                                    <span className="font-medium cursor-pointer">Monitor and manage company profiles, employees and their data</span>
                                 </Link>
                             </li>
                         </ul>

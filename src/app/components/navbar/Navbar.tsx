@@ -205,7 +205,7 @@ const Navbar = () => {
                             <div className="flex items-center space-x-4">
                                 {navigationLinks.USER.map((link) => (
                                     <Link key={link.href} href={link.href}>
-                                        <button className="px-4 py-2 rounded-lg bg-white text-purple-600 hover:bg-purple-50 transition-all duration-200 shadow-md hover:shadow-lg border border-purple-100">
+                                        <button className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30 flex items-center">
                                             {link.label}
                                         </button>
                                     </Link>
@@ -231,7 +231,7 @@ const Navbar = () => {
 
                         <button
                             onClick={handleLogout}
-                            className="px-4 py-2 rounded-lg border-2 border-white/70 text-white hover:bg-white hover:text-purple-600 transition-all duration-200 shadow-md hover:shadow-lg backdrop-blur-sm"
+                            className="px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-400 transition-all duration-300 shadow-md hover:shadow-lg border border-purple-400/30 flex items-center"
                         >
                             Logout
                         </button>
