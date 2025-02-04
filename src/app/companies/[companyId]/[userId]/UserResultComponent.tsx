@@ -30,6 +30,7 @@ interface SurveyResult {
     id: number;
     userId: number;
     surveyId: number;
+    surveyTitle: string; // Survey ismi için yeni alan
     attemptNumber: number;
     professionMatches: ProfessionMatch[];
     createdAt: string;
@@ -151,6 +152,7 @@ const UserResultComponent: React.FC<UserResultComponentProps> = ({ companyId, us
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Survey Date</TableCell>
+                                    <TableCell>Survey Name</TableCell>
                                     <TableCell align="right">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -162,6 +164,7 @@ const UserResultComponent: React.FC<UserResultComponentProps> = ({ companyId, us
                                         sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                     >
                                         <TableCell>{formatDate(result.createdAt)}</TableCell>
+                                        <TableCell>{result.surveyTitle}</TableCell>
                                         <TableCell align="right">
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                                                 <IconButton

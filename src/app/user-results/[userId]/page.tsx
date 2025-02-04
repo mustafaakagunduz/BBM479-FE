@@ -30,6 +30,7 @@ interface SurveyResult {
     id: number;
     userId: number;
     surveyId: number;
+    surveyTitle: string;  // surveyName yerine surveyTitle kullanıyoruz
     attemptNumber: number;
     professionMatches: ProfessionMatch[];
     createdAt: string;
@@ -55,7 +56,6 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
         }
     },
 }));
-
 
 const UserSurveyResults = ({ params }: PageProps) => {
     const resolvedParams = use(params);
@@ -84,7 +84,7 @@ const UserSurveyResults = ({ params }: PageProps) => {
     }, [resolvedParams.userId]);
 
     const handleDelete = async (resultId: number, e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent row click event
+        e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this result?')) {
             try {
                 await axios.delete(`http://localhost:8081/api/surveys/results/${resultId}`);
@@ -153,6 +153,7 @@ const UserSurveyResults = ({ params }: PageProps) => {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Survey Date</TableCell>
+                                        <TableCell>Survey Name</TableCell>
                                         <TableCell align="right">Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -164,6 +165,7 @@ const UserSurveyResults = ({ params }: PageProps) => {
                                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                         >
                                             <TableCell>{formatDate(result.createdAt)}</TableCell>
+                                            <TableCell>{result.surveyTitle}</TableCell>
                                             <TableCell align="right">
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                                                     <IconButton
@@ -191,9 +193,9 @@ const UserSurveyResults = ({ params }: PageProps) => {
                                                             gap: '0.5rem'
                                                         }}
                                                     >
-                                                    Details
-                                                    <ArrowRight size={16} />
-                                                </span>
+                                                        Details
+                                                        <ArrowRight size={16} />
+                                                    </span>
                                                 </div>
                                             </TableCell>
                                         </StyledTableRow>
