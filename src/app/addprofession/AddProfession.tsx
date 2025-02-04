@@ -18,6 +18,9 @@ const AddProfession = () => {
         level: number;
         tempId?: number;
     };
+    type DropdownState = {
+        [key: string]: boolean;
+    };
 
     type Profession = {
         id: number;
@@ -62,12 +65,26 @@ const AddProfession = () => {
     });
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const [professionToDelete, setProfessionToDelete] = useState<number | null>(null);
-    const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState<{[key: string]: boolean}>({});
-    const [industryDropdowns, setIndustryDropdowns] = useState<{[key: string]: boolean}>({});
-
+    const [isSkillDropdownOpen, setIsSkillDropdownOpen] = useState<DropdownState>({});
+    const [industryDropdowns, setIndustryDropdowns] = useState<DropdownState>({});
     // Initial data fetching
     useEffect(() => {
         fetchInitialData();
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+
+            // Eğer tıklanan element bir dropdown butonu değilse tüm dropdownları kapat
+            if (!target.closest('[data-dropdown-trigger="true"]')) {
+                setIsSkillDropdownOpen({});
+                setIndustryDropdowns({});
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     const fetchInitialData = async () => {
@@ -264,10 +281,18 @@ const AddProfession = () => {
             <div className="relative flex-1">
                 <button
                     type="button"
-                    onClick={() => setIsSkillDropdownOpen(prev => ({
-                        ...prev,
-                        [dropdownKey]: !prev[dropdownKey]
-                    }))}
+                    data-dropdown-trigger="true"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIndustryDropdowns({});
+                        setIsSkillDropdownOpen(prev => {
+                            const newState: DropdownState = {};
+                            if (!prev[dropdownKey]) {
+                                newState[dropdownKey] = true;
+                            }
+                            return newState;
+                        });
+                    }}
                     className={`w-full flex justify-between items-center px-4 py-3 rounded-lg border ${
                         skill.id === 0 ? 'text-gray-400 bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
                     } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
@@ -276,7 +301,9 @@ const AddProfession = () => {
                     <ChevronDown size={20}/>
                 </button>
                 {isSkillDropdownOpen[dropdownKey] && (
-                    <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                    <div
+                        data-dropdown-trigger="true"
+                        className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
                         {/* Search input */}
                         <div className="sticky top-0 bg-white p-2 border-b border-gray-200">
                             <input
@@ -384,14 +411,27 @@ const AddProfession = () => {
         <div className="relative">
             <button
                 type="button"
-                onClick={() => setIndustryDropdowns(prev => ({...prev, [id]: !prev[id]}))}
+                data-dropdown-trigger="true"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsSkillDropdownOpen({});
+                    setIndustryDropdowns(prev => {
+                        const newState: DropdownState = {};
+                        if (!prev[id]) {
+                            newState[id] = true;
+                        }
+                        return newState;
+                    });
+                }}
                 className="w-full flex justify-between items-center px-4 py-3 bg-gray-100 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800"
             >
                 {industries.find(i => i.id === selectedId)?.name || "Select Industry"}
                 <ChevronDown size={20}/>
             </button>
             {industryDropdowns[id] && (
-                <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
+                <div
+                    data-dropdown-trigger="true"
+                    className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-10">
                     {industries.map(industry => (
                         <div
                             key={industry.id}
@@ -410,8 +450,6 @@ const AddProfession = () => {
             )}
         </div>
     );
-
-// ... previous code remains same ...
 
     // Add these handlers that were missing in the first part
     const handleStartEdit = (profession: Profession) => {
