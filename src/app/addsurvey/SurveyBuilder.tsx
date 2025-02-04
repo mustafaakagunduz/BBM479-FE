@@ -87,6 +87,56 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
 
         loadSkills();
     }, [selectedIndustryId]);
+
+    const validateSurveyDetails = () => {
+        if (!surveyTitle.trim()) {
+            toast.error('Please fill in the survey title');
+            return false;
+        }
+        if (!selectedIndustryId) {
+            toast.error('Please select an industry');
+            return false;
+        }
+        if (selectedSkills.length === 0) {
+            toast.error('Please select at least one skill');
+            return false;
+        }
+        return true;
+    };
+
+    const validateProfessions = () => {
+        if (selectedProfessions.length === 0) {
+            toast.error('Please select at least one profession');
+            return false;
+        }
+        return true;
+    };
+
+    const validateQuestions = () => {
+        if (questions.length === 0) {
+            toast.error('Please add at least one question');
+            return false;
+        }
+
+        for (let i = 0; i < questions.length; i++) {
+            const question = questions[i];
+            if (!question.content.trim()) {
+                toast.error(`Please fill in the content for question ${i + 1}`);
+                return false;
+            }
+            if (!question.selectedSkill) {
+                toast.error(`Please select a skill for question ${i + 1}`);
+                return false;
+            }
+            if (question.options.some(option => !option.trim())) {
+                toast.error(`Please fill in all options for question ${i + 1}`);
+                return false;
+            }
+        }
+        return true;
+    };
+
+
     // Functions for handling professions
     const handleProfessionSelect = (professionId: number) => {
         if (!selectedProfessions.includes(professionId)) {
@@ -532,9 +582,25 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                         <button
                             onClick={() => {
                                 if (activeStep < steps.length - 1) {
-                                    setActiveStep(activeStep + 1);
+                                    let isValid = true;
+
+                                    switch (activeStep) {
+                                        case 0:
+                                            isValid = validateSurveyDetails();
+                                            break;
+                                        case 1:
+                                            isValid = validateProfessions();
+                                            break;
+                                    }
+
+                                    if (isValid) {
+                                        setActiveStep(activeStep + 1);
+                                    }
                                 } else {
-                                    handleSubmit();
+                                    // Final step validation before submission
+                                    if (validateQuestions()) {
+                                        handleSubmit();
+                                    }
                                 }
                             }}
                             disabled={loading}
@@ -542,13 +608,13 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
                         >
                             {activeStep === steps.length - 1 ? (
                                 <>
-                                    <Save size={20} />
+                                    <Save size={20}/>
                                     {loading ? 'Saving...' : 'Save Survey'}
                                 </>
                             ) : (
                                 <>
                                     Next
-                                    <ChevronRight size={20} />
+                                    <ChevronRight size={20}/>
                                 </>
                             )}
                         </button>
@@ -557,5 +623,5 @@ const { user, loading: authLoading } = useAuth(); // loading'i authLoading olara
             </div>
         );
 
-    };
-    export default SurveyBuilder;
+};
+export default SurveyBuilder;
