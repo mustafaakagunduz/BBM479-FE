@@ -3,10 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import {
-    Typography,
     CircularProgress,
-    Card,
-    CardContent,
+    TextField,
+    InputAdornment,
     Paper,
     Table,
     TableBody,
@@ -14,14 +13,11 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
-    InputAdornment
+    Typography
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Search } from 'lucide-react';
-import {User} from "@/app/types/auth";
-
-
+import { User } from "@/app/types/auth";
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
     cursor: 'pointer',
@@ -79,7 +75,6 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
         router.push(`/companies/${companyId}/${userId}`);
     };
 
-    // Filtreleme fonksiyonu
     const filteredUsers = company?.users?.filter(user => {
         const searchTerms = searchQuery.toLowerCase();
         return (
@@ -90,7 +85,7 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen">
+            <div className="flex items-center justify-center p-4">
                 <CircularProgress />
             </div>
         );
@@ -98,129 +93,106 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
 
     if (error) {
         return (
-            <div className="p-8">
-                <Typography variant="h6" color="error">
-                    {error}
-                </Typography>
-            </div>
+            <Typography variant="body1" color="error" className="p-4">
+                {error}
+            </Typography>
         );
     }
 
     if (!company) {
         return (
-            <div className="p-8">
-                <Typography variant="h6" color="error">
-                    Company not found
-                </Typography>
-            </div>
+            <Typography variant="body1" color="error" className="p-4">
+                Company not found
+            </Typography>
         );
     }
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-            <Typography
-                variant="h4"
-                gutterBottom
-                sx={{
-                    background: 'linear-gradient(to right, #9333ea, #ec4899)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    marginBottom: '2rem',
-                    fontWeight: 'bold'
+        <div className="p-4">
+            <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search employees by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mb: 3 }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <Search size={20} className="text-gray-500" />
+                        </InputAdornment>
+                    ),
+                    sx: {
+                        '&:hover': {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#9333ea',
+                            }
+                        },
+                        '&.Mui-focused': {
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#9333ea',
+                            }
+                        }
+                    }
                 }}
-            >
-                {company.name} - Employee List
-            </Typography>
+            />
 
-            <Card elevation={3}>
-                <CardContent>
-                    <div style={{ marginBottom: '1rem' }}>
-                        <TextField
-                            fullWidth
-                            variant="outlined"
-                            placeholder="Search employees by name or email..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search size={20} className="text-gray-500" />
-                                    </InputAdornment>
-                                ),
-                                sx: {
-                                    '&:hover': {
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#9333ea',
-                                        }
-                                    },
-                                    '&.Mui-focused': {
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#9333ea',
-                                        }
-                                    }
-                                }
-                            }}
-                        />
-                    </div>
-
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Full Name</TableCell>
-                                    <TableCell>Email</TableCell>
-                                    <TableCell align="right">Actions</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredUsers.map((user) => (
-                                    <StyledTableRow
-                                        key={user.id}
-                                        onClick={() => handleRowClick(user.id)}
-                                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                                    >
-                                        <TableCell>{user.name}</TableCell>
-                                        <TableCell>{user.email}</TableCell>
-                                        <TableCell align="right">
-                                            <span
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleRowClick(user.id);
-                                                }}
-                                                className="action-badge"
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '16px',
-                                                    backgroundColor: '#f3e8ff',
-                                                    color: '#9333ea',
-                                                    fontSize: '0.875rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                View Test Results
-                                            </span>
-                                        </TableCell>
-                                    </StyledTableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                        {filteredUsers.length === 0 && (
-                            <Typography
-                                variant="body1"
-                                sx={{
-                                    textAlign: 'center',
-                                    py: 3,
-                                    color: 'text.secondary'
-                                }}
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Full Name</TableCell>
+                            <TableCell>Email</TableCell>
+                            <TableCell align="right">Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {filteredUsers.map((user) => (
+                            <StyledTableRow
+                                key={user.id}
+                                onClick={() => handleRowClick(user.id)}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                             >
-                                {searchQuery
-                                    ? "No employees found matching your search."
-                                    : "No employees found in this company."}
-                            </Typography>
-                        )}
-                    </TableContainer>
-                </CardContent>
-            </Card>
+                                <TableCell>{user.name}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell align="right">
+                                    <span
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRowClick(user.id);
+                                        }}
+                                        className="action-badge"
+                                        style={{
+                                            padding: '6px 12px',
+                                            borderRadius: '16px',
+                                            backgroundColor: '#f3e8ff',
+                                            color: '#9333ea',
+                                            fontSize: '0.875rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        View Test Results
+                                    </span>
+                                </TableCell>
+                            </StyledTableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                {filteredUsers.length === 0 && (
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            textAlign: 'center',
+                            py: 3,
+                            color: 'text.secondary'
+                        }}
+                    >
+                        {searchQuery
+                            ? "No employees found matching your search."
+                            : "No employees found in this company."}
+                    </Typography>
+                )}
+            </TableContainer>
         </div>
     );
 };

@@ -41,7 +41,7 @@ const CompanyDetailPage: React.FC<CompanyDetailPageProps> = ({ params }) => {
     return (
         <AdminGuard>
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-                <div className="max-w-4xl mx-auto px-4">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
                     <div className="space-y-8 py-8">
                         <Typography
                             variant="h3"
@@ -51,39 +51,38 @@ const CompanyDetailPage: React.FC<CompanyDetailPageProps> = ({ params }) => {
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
                                 fontWeight: 'bold',
-                                mb: 4
+                                mb: 4,
+                                fontSize: {
+                                    xs: '1.75rem',
+                                    sm: '2rem',
+                                    md: '2.5rem'
+                                }
                             }}
                         >
                             {companyName}
                         </Typography>
 
-                        <CompanyDescriptionCard companyId={companyId} />
+                        <div className="w-full">
+                            <CompanyDescriptionCard companyId={companyId} />
+                        </div>
 
                         <Accordion type="single" collapsible className="w-full">
                             <AccordionItem value="employees" className="border rounded-lg bg-white shadow-sm">
                                 <AccordionTrigger className="px-4 hover:bg-purple-50">
-                                    <span className="text-lg font-semibold text-purple-600">
+                                    <span className="text-base sm:text-lg font-semibold text-purple-600">
                                         Employee List
                                     </span>
                                 </AccordionTrigger>
-                                <AccordionContent>
-                                    <CompanyDetailComponent companyId={companyId} />
-                                </AccordionContent>
-                            </AccordionItem>
-
-                            <AccordionItem value="survey" className="border rounded-lg bg-white shadow-sm mt-4">
-                                <AccordionTrigger className="px-4 hover:bg-purple-50">
-                                    <span className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
-                                        Survey Results
-                                    </span>
-                                </AccordionTrigger>
-                                <AccordionContent className="px-4">
-                                    <div className="pt-2">
-                                        <CompanySurveyChart companyId={companyId} />
+                                <AccordionContent className="w-full">
+                                    <div className="w-full">
+                                        <CompanyDetailComponent companyId={companyId} />
                                     </div>
                                 </AccordionContent>
                             </AccordionItem>
+
+
                         </Accordion>
+                        <CompanySurveyChart companyId={companyId} />
                     </div>
                 </div>
             </div>
