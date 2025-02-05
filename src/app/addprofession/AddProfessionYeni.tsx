@@ -7,10 +7,12 @@ import {
     AlertDialog,
     AlertDialogContent,
     AlertDialogDescription,
-    AlertDialogTitle
+    AlertDialogTitle,
+    AlertDialogHeader,
+    AlertDialogFooter
 } from "@/app/components/ui/alert-dialog";
 
-const AddProfession = () => {
+const AddProfession2 = () => {
     // Types
     type Skill = {
         id: number;
@@ -103,6 +105,65 @@ const AddProfession = () => {
             tempId: Date.now() + Math.random()
         }))
     }));
+
+    const renderAddProfessionDialog = () => (
+        <AlertDialog open={isAddingNew} onOpenChange={setIsAddingNew}>
+            <AlertDialogContent className="sm:max-w-[600px]">
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        Add New Profession
+                    </AlertDialogTitle>
+                </AlertDialogHeader>
+
+                <div className="space-y-4 py-4">
+                    <input
+                        type="text"
+                        value={newProfession.name}
+                        onChange={(e) => setNewProfession({...newProfession, name: e.target.value})}
+                        placeholder="Enter profession name..."
+                        className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
+                    />
+                    {renderIndustryDropdown(
+                        'new-profession',
+                        newProfession.industryId,
+                        (id) => handleIndustryChange(id)
+                    )}
+                    {renderExistingProfessionSkills(newProfession, true)}
+                </div>
+
+                <AlertDialogFooter className="flex justify-between sm:justify-between">
+                    <button
+                        onClick={handleAddSkillToNewProfession}
+                        className={`px-4 py-2 rounded-lg ${
+                            newProfession.requiredSkills.length >= availableSkills.length
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-purple-600 hover:bg-purple-700'
+                        } text-white font-medium transition`}
+                        disabled={newProfession.requiredSkills.length >= availableSkills.length}
+                    >
+                        Add Skill {newProfession.requiredSkills.length}/{availableSkills.length}
+                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                setIsAddingNew(false);
+                                resetNewProfession();
+                            }}
+                            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={handleSaveNewProfession}
+                            className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                        >
+                            Save Profession
+                        </button>
+                    </div>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
 
     const handleIndustryChange = async (industryId: number, isEditing: boolean = false) => {
         try {
@@ -676,7 +737,12 @@ const AddProfession = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
             {/* Delete Confirmation Dialog */}
-            <AlertDialog open={professionToDelete !== null}>
+            <AlertDialog
+                open={professionToDelete !== null}
+                onOpenChange={(open) => {
+                    if (!open) setProfessionToDelete(null);
+                }}
+            >
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
                         Delete Profession
@@ -702,7 +768,12 @@ const AddProfession = () => {
             </AlertDialog>
 
             {/* Error Dialog */}
-            <AlertDialog open={!!deleteError}>
+            <AlertDialog
+                open={!!deleteError}
+                onOpenChange={(open) => {
+                    if (!open) setDeleteError(null);
+                }}
+            >
                 <AlertDialogContent className="flex flex-col items-center justify-center p-6 bg-white">
                     <AlertDialogTitle className="text-xl font-semibold text-purple-600 mb-4">
                         Delete Failed
@@ -719,9 +790,82 @@ const AddProfession = () => {
                 </AlertDialogContent>
             </AlertDialog>
 
+            {/* Add New Profession Dialog */}
+            <AlertDialog
+                open={isAddingNew}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setIsAddingNew(false);
+                        resetNewProfession();
+                    }
+                }}
+            >
+                <AlertDialogContent className="sm:max-w-[600px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            Add New Profession
+                        </AlertDialogTitle>
+                    </AlertDialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <input
+                            type="text"
+                            value={newProfession.name}
+                            onChange={(e) => setNewProfession({...newProfession, name: e.target.value})}
+                            placeholder="Enter profession name..."
+                            className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
+                        />
+                        {renderIndustryDropdown(
+                            'new-profession',
+                            newProfession.industryId,
+                            (id) => handleIndustryChange(id)
+                        )}
+                        {renderExistingProfessionSkills(newProfession, true)}
+                    </div>
+
+                    <AlertDialogFooter className="flex justify-between sm:justify-between">
+                        <button
+                            onClick={handleAddSkillToNewProfession}
+                            className={`px-4 py-2 rounded-lg ${
+                                newProfession.requiredSkills.length >= availableSkills.length
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-purple-600 hover:bg-purple-700'
+                            } text-white font-medium transition`}
+                            disabled={newProfession.requiredSkills.length >= availableSkills.length}
+                        >
+                            Add Skill {newProfession.requiredSkills.length}/{availableSkills.length}
+                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => {
+                                    setIsAddingNew(false);
+                                    resetNewProfession();
+                                }}
+                                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveNewProfession}
+                                className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
+                            >
+                                Save Profession
+                            </button>
+
+                        </div>
+
+                    </AlertDialogFooter>
+                    <div
+                        className="w-full px-4 py-2 rounded-lg focus:ring-2 focus:ring-purple-500 text-gray-500 text-right text-sm">
+                        Press 'Esc' key or 'Cancel' button to exit..
+                    </div>
+
+                </AlertDialogContent>
+            </AlertDialog>
+
             {/* Main Content */}
             <div className="max-w-4xl mx-auto">
-                <Card className="bg-white/90 backdrop-blur-sm">
+            <Card className="bg-white/90 backdrop-blur-sm">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                             Professions & Required Skills
@@ -729,60 +873,12 @@ const AddProfession = () => {
                         <button
                             onClick={() => setIsAddingNew(true)}
                             className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-all duration-200 flex items-center gap-2"
-                            disabled={isAddingNew}
                         >
                             <Plus size={20} />
                             Add New Profession
                         </button>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        {/* Add New Profession Form */}
-                        {isAddingNew && (
-                            <div className="border border-purple-200 rounded-lg p-4 space-y-4">
-                                <input
-                                    type="text"
-                                    value={newProfession.name}
-                                    onChange={(e) => setNewProfession({...newProfession, name: e.target.value})}
-                                    placeholder="Enter profession name..."
-                                    className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 text-black"
-                                />
-                                {renderIndustryDropdown(
-                                    'new-profession',
-                                    newProfession.industryId,
-                                    (id) => handleIndustryChange(id)
-                                )}
-                                {renderExistingProfessionSkills(newProfession, true)}
-                                <div className="flex justify-evenly">
-                                    <button
-                                        onClick={handleAddSkillToNewProfession}
-                                        className={`px-4 py-2 rounded-lg ${
-                                            newProfession.requiredSkills.length >= availableSkills.length
-                                                ? 'bg-gray-400 cursor-not-allowed'
-                                                : 'bg-purple-600 hover:bg-purple-700'
-                                        } text-white font-medium transition`}
-                                        disabled={newProfession.requiredSkills.length >= availableSkills.length}
-                                    >
-                                        Add Skill {newProfession.requiredSkills.length}/{availableSkills.length}
-                                    </button>
-                                    <button
-                                        onClick={handleSaveNewProfession}
-                                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-                                    >
-                                        Save Profession
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setIsAddingNew(false);
-                                            resetNewProfession();
-                                        }}
-                                        className="px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
                         {/* Existing Professions List */}
                         {professions.map(renderProfessionItem)}
                     </CardContent>
@@ -792,4 +888,4 @@ const AddProfession = () => {
     );
 };
 
-export default AddProfession;
+export default AddProfession2;
