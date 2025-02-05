@@ -651,11 +651,11 @@ const AddProfession = () => {
                                 <button
                                     onClick={handleAddSkillToExistingProfession}
                                     className={`px-4 py-2 rounded-lg ${
-                                        editingProfession?.requiredSkills.length >= availableSkills.length
+                                        (editingProfession?.requiredSkills.length ?? 0) >= availableSkills.length
                                             ? 'bg-gray-400 cursor-not-allowed'
                                             : 'bg-purple-600 hover:bg-purple-700'
                                     } text-white font-medium transition`}
-                                    disabled={editingProfession?.requiredSkills.length >= availableSkills.length}
+                                    disabled={(editingProfession?.requiredSkills.length ?? 0) >= availableSkills.length}
                                 >
                                     Add Skill {editingProfession?.requiredSkills.length}/{availableSkills.length}
                                 </button>
