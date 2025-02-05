@@ -130,19 +130,24 @@ const AddProfession = () => {
     };
 
     const handleAddSkillToExistingProfession = () => {
-        if (editingProfession && availableSkills.length > 0) {
-            const firstSkill = availableSkills[0];
-            const newSkill = {
-                id: firstSkill.id,
-                name: firstSkill.name,
-                level: 1,
-                tempId: Date.now() + Math.random()
-            };
+        if (editingProfession) {
+            // Henüz seçilmemiş ilk skill'i bul
+            const selectedSkillIds = new Set(editingProfession.requiredSkills.map(skill => skill.id));
+            const availableSkill = availableSkills.find(skill => !selectedSkillIds.has(skill.id));
 
-            setEditingProfession({
-                ...editingProfession,
-                requiredSkills: [...editingProfession.requiredSkills, newSkill]
-            });
+            if (availableSkill) {
+                const newSkill = {
+                    id: 0, // Başlangıçta 0 olarak ayarla
+                    name: "Select a skill", // Başlangıç metni
+                    level: 1,
+                    tempId: Date.now() + Math.random()
+                };
+
+                setEditingProfession({
+                    ...editingProfession,
+                    requiredSkills: [...editingProfession.requiredSkills, newSkill]
+                });
+            }
         }
     };
 
@@ -251,7 +256,11 @@ const AddProfession = () => {
         const filteredAndSortedSkills = availableSkills
             .filter(option => {
                 // Halihazırda seçili olan skilleri filtreleme
-                const isAlreadySelected = newProfession.requiredSkills.some(
+                const selectedSkills = isNewProfession
+                    ? newProfession.requiredSkills
+                    : editingProfession?.requiredSkills || [];
+
+                const isAlreadySelected = selectedSkills.some(
                     (selectedSkill, idx) => idx !== index && selectedSkill.id === option.id
                 );
 
@@ -307,6 +316,13 @@ const AddProfession = () => {
                                             const updatedSkills = [...newProfession.requiredSkills];
                                             updatedSkills[index] = updatedSkill;
                                             setNewProfession({...newProfession, requiredSkills: updatedSkills});
+                                        } else if (editingProfession) { // Add this condition
+                                            const updatedSkills = [...editingProfession.requiredSkills];
+                                            updatedSkills[index] = updatedSkill;
+                                            setEditingProfession({
+                                                ...editingProfession,
+                                                requiredSkills: updatedSkills
+                                            });
                                         }
 
                                         setIsSkillDropdownOpen(prev => ({...prev, [dropdownKey]: false}));
@@ -633,15 +649,15 @@ const AddProfession = () => {
                         {isEditing && (
                             <div className="space-y-2">
                                 <button
-                                    onClick={handleAddSkillToNewProfession}
+                                    onClick={handleAddSkillToExistingProfession}
                                     className={`px-4 py-2 rounded-lg ${
-                                        newProfession.requiredSkills.length >= availableSkills.length
+                                        editingProfession?.requiredSkills.length >= availableSkills.length
                                             ? 'bg-gray-400 cursor-not-allowed'
                                             : 'bg-purple-600 hover:bg-purple-700'
                                     } text-white font-medium transition`}
-                                    disabled={newProfession.requiredSkills.length >= availableSkills.length}
+                                    disabled={editingProfession?.requiredSkills.length >= availableSkills.length}
                                 >
-                                    Add Skill {newProfession.requiredSkills.length}/{availableSkills.length}
+                                    Add Skill {editingProfession?.requiredSkills.length}/{availableSkills.length}
                                 </button>
                                 <button
                                     onClick={handleSaveEdit}
