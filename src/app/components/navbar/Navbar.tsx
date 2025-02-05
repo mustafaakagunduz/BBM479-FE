@@ -48,7 +48,7 @@ const Navbar = () => {
                 hasSubmenu: true,
                 submenuItems: [
                     { href: '/user-results', label: 'User-Based Evaluations', icon: Users },
-                    { href: '/company-based-evaluations', label: 'Company-Based Evaluations', icon: Building }
+                    { href: '/companies', label: 'Company-Based Evaluations', icon: Building }
                 ]
             },
             { href: '/authorization-system', label: 'Authorization System', icon: Shield }

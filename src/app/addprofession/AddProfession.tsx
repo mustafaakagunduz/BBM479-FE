@@ -559,24 +559,28 @@ const AddProfession = () => {
 
         return (
             <div key={prof.id} className="border border-gray-300 rounded-lg p-4 text-black">
-                <div className="flex justify-between items-center">
-                    <div className="flex flex-col">
+                <div className="flex justify-between items-start">
+                    <div className="flex flex-col space-y-2 flex-grow">
                         {isEditing ? (
                             <>
-                                <input
-                                    type="text"
-                                    value={professionToRender.name}
-                                    onChange={(e) => setEditingProfession({
-                                        ...professionToRender,
-                                        name: e.target.value
-                                    })}
-                                    className="px-2 py-1 border rounded mb-2"
-                                />
-                                {renderIndustryDropdown(
-                                    `edit-profession-${prof.id}`,
-                                    editingProfession?.industryId,
-                                    (id) => handleIndustryChange(id, true)
-                                )}
+                                <div className="flex flex-col space-y-1">
+                                    <label className="text-sm text-gray-600">Profession Name:</label>
+                                    <input
+                                        type="text"
+                                        value={professionToRender.name}
+                                        onChange={(e) => setEditingProfession({
+                                            ...professionToRender,
+                                            name: e.target.value
+                                        })}
+                                        className="px-2 py-1 border rounded"
+                                    />
+                                </div>
+                                <div className="flex flex-col space-y-1">
+                                    <label className="text-sm text-gray-600">Industry:</label>
+                                    <div className="px-2 py-1 bg-gray-100 rounded text-gray-700">
+                                        {professionToRender.industry}
+                                    </div>
+                                </div>
                             </>
                         ) : (
                             <>
