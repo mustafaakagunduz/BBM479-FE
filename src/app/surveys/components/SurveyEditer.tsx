@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/ca
 import { surveyService } from '@/app/services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '@/app/types/index';
 import {toast, Toaster} from 'react-hot-toast';
+import FormattedQuestionEditor from '@/app/components/FormattedQuestionEditor';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -503,16 +505,14 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                     {/* Question Content */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Question Content</label>
-                                        <textarea
+                                        <FormattedQuestionEditor
                                             value={question.content}
-                                            onChange={(e) => {
+                                            onChange={(newContent) => {
                                                 const newQuestions = [...questions];
-                                                newQuestions[qIndex].content = e.target.value;
+                                                newQuestions[qIndex].content = newContent;
                                                 setQuestions(newQuestions);
                                             }}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 text-black"
                                             placeholder="Enter your question..."
-                                            rows={3}
                                         />
                                     </div>
 
