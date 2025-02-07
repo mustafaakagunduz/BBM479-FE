@@ -3,6 +3,17 @@ import { PlusCircle, Save, ChevronRight, Trash2, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { surveyService } from '@/app/services/surveyService';
 import { Industry, Skill, Question, Option ,Profession } from '@/app/types/index';
+import {toast, Toaster} from 'react-hot-toast';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/app/components/ui/alert-dialog";
 interface QuestionForm {
     content: string;
     options: string[];
@@ -20,7 +31,8 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
     const [skills, setSkills] = useState<Skill[]>([]);
     const [loading, setLoading] = useState(false);
     const [professions, setProfessions] = useState<Profession[]>([]);
-
+    const [isDeleteSkillDialogOpen, setIsDeleteSkillDialogOpen] = useState(false);
+    const [skillToDelete, setSkillToDelete] = useState<number | null>(null);
     // Form states
     const [surveyTitle, setSurveyTitle] = useState<string>('');
     const [selectedIndustryId, setSelectedIndustryId] = useState<number | null>(null);
@@ -29,7 +41,6 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
     const [activeStep, setActiveStep] = useState<number>(0);
     const [selectedProfessions, setSelectedProfessions] = useState<number[]>([]);
 
-    // Mevcut anketi yüklemek için yeni useEffect
     useEffect(() => {
         const loadSurvey = async () => {
             if (mode === 'edit' && surveyId) {
@@ -64,7 +75,58 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
         loadSurvey();
     }, [mode, surveyId]);
 
-    // handleSubmit fonksiyonunu güncelle
+    useEffect(() => {
+        const loadProfessions = async () => {
+            if (selectedIndustryId) {
+                try {
+                    setLoading(true);
+                    const response = await surveyService.getProfessionsByIndustry(selectedIndustryId);
+                    setProfessions(response.data);
+                } catch (error) {
+                    console.error('Failed to load professions:', error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadProfessions();
+    }, [selectedIndustryId]);
+
+    useEffect(() => {
+        const loadIndustries = async () => {
+            try {
+                setLoading(true);
+                const response = await surveyService.getIndustries();
+                setIndustries(response.data);
+            } catch (error) {
+                console.error('Failed to load industries:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadIndustries();
+    }, []);
+
+    useEffect(() => {
+        const loadSkills = async () => {
+            if (selectedIndustryId) {
+                try {
+                    setLoading(true);
+                    const response = await surveyService.getSkillsByIndustry(selectedIndustryId);
+                    setSkills(response.data);
+                } catch (error) {
+                    console.error('Failed to load skills:', error);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadSkills();
+    }, [selectedIndustryId]);
+
     const handleSubmit = async () => {
         try {
             setLoading(true);
@@ -87,79 +149,139 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
 
             if (mode === 'edit' && surveyId) {
                 await surveyService.updateSurvey(surveyId, surveyData);
+                toast.success('Survey updated successfully!');
             } else {
                 await surveyService.createSurvey(surveyData);
+                toast.success('Survey created successfully!');
             }
 
-            alert(mode === 'edit' ? 'Survey updated successfully!' : 'Survey created successfully!');
             window.location.href = '/surveys';
 
         } catch (error) {
             console.error('Failed to submit survey:', error);
-            alert('An error occurred while saving the survey');
+            toast.error('Failed to save survey. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-
-    useEffect(() => {
-        const loadProfessions = async () => {
-            if (selectedIndustryId) {
-                try {
-                    setLoading(true);
-                    const response = await surveyService.getProfessionsByIndustry(selectedIndustryId);
-                    setProfessions(response.data);
-                } catch (error) {
-                    console.error('Failed to load professions:', error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-
-        loadProfessions();
-    }, [selectedIndustryId]);   
-    // Load initial data
-    useEffect(() => {
-        const loadIndustries = async () => {
-            try {
-                setLoading(true);
-                const response = await surveyService.getIndustries();
-                setIndustries(response.data);
-            } catch (error) {
-                console.error('Failed to load industries:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadIndustries();
-    }, []);
-
-    // Load skills when industry is selected
-    useEffect(() => {
-        const loadSkills = async () => {
-            if (selectedIndustryId) {
-                try {
-                    setLoading(true);
-                    const response = await surveyService.getSkillsByIndustry(selectedIndustryId);
-                    setSkills(response.data);
-                } catch (error) {
-                    console.error('Failed to load skills:', error);
-                } finally {
-                    setLoading(false);
-                }
-            }
-        };
-
-        loadSkills();
-    }, [selectedIndustryId]);
-    // Functions for handling professions
     const handleProfessionSelect = (professionId: number) => {
         if (!selectedProfessions.includes(professionId)) {
             setSelectedProfessions([...selectedProfessions, professionId]);
         }
+    };
+
+    const handleSkillRemove = (skillId: number) => {
+        setSkillToDelete(skillId);
+        setIsDeleteSkillDialogOpen(true);
+    };
+
+    const confirmSkillRemoval = () => {
+        if (skillToDelete) {
+            // İlgili soruyu bul ve sil
+            const updatedQuestions = questions.filter(
+                question => question.selectedSkill !== skillToDelete
+            );
+            setQuestions(updatedQuestions);
+
+            // Skill'i seçili listeden kaldır
+            setSelectedSkills(selectedSkills.filter(id => id !== skillToDelete));
+
+            // Dialog'u kapat
+            setIsDeleteSkillDialogOpen(false);
+            setSkillToDelete(null);
+        }
+    };
+
+    // Validasyon fonksiyonları
+    const validateSurveyDetails = () => {
+        if (!surveyTitle.trim()) {
+            toast.error('Please fill in the survey title');
+            return false;
+        }
+        if (!selectedIndustryId) {
+            toast.error('Please select an industry');
+            return false;
+        }
+        if (selectedSkills.length === 0) {
+            toast.error('Please select at least one skill');
+            return false;
+        }
+        return true;
+    };
+
+    const validateProfessions = () => {
+        if (selectedProfessions.length === 0) {
+            toast.error('Please select at least one profession');
+            return false;
+        }
+        return true;
+    };
+
+    const validateQuestions = () => {
+        // Soru sayısı kontrolü
+        if (questions.length !== selectedSkills.length) {
+            toast.error(`Please create exactly ${selectedSkills.length} questions (one per skill)`);
+            return false;
+        }
+
+        // Her soru için detaylı kontrol
+        for (let i = 0; i < questions.length; i++) {
+            const question = questions[i];
+
+            // Soru içeriği kontrolü
+            if (!question.content.trim()) {
+                toast.error(`Please fill in the content for question ${i + 1}`);
+                return false;
+            }
+
+            // Skill seçimi kontrolü
+            if (!question.selectedSkill) {
+                toast.error(`Please select a skill for question ${i + 1}`);
+                return false;
+            }
+
+            // Seçenekler kontrolü
+            if (question.options.some(option => !option.trim())) {
+                toast.error(`Please fill in all options for question ${i + 1}`);
+                return false;
+            }
+        }
+        return true;
+    };
+
+// Next/Save butonu için click handler
+    const handleNextClick = () => {
+        if (activeStep < steps.length - 1) {
+            let isValid = true;
+
+            switch (activeStep) {
+                case 0:
+                    isValid = validateSurveyDetails();
+                    break;
+                case 1:
+                    isValid = validateProfessions();
+                    break;
+            }
+
+            if (isValid) {
+                setActiveStep(activeStep + 1);
+            }
+        } else {
+            if (validateQuestions()) {
+                handleSubmit();
+            }
+        }
+    };
+
+    const isQuestionsValid = () => {
+        // Soru sayısı seçili skill sayısına eşit olmalı
+        if (questions.length !== selectedSkills.length) {
+            return false;
+        }
+
+        // Her soru bir skill ile eşleşmiş olmalı
+        return questions.every(question => selectedSkills.includes(question.selectedSkill));
     };
 
     const handleProfessionRemove = (professionId: number) => {
@@ -174,32 +296,6 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
     });
 
 
-
-    const addSkill = (skillId: number) => {
-        if (!selectedSkills.includes(skillId)) {
-            setSelectedSkills([...selectedSkills, skillId]);
-        }
-    };
-
-    const removeSkill = (skillId: number) => {
-        setSelectedSkills(selectedSkills.filter(id => id !== skillId));
-    };
-
-    const updateQuestion = (index: number, updates: Partial<QuestionForm>) => {
-        const newQuestions = [...questions];
-        newQuestions[index] = { ...newQuestions[index], ...updates };
-        setQuestions(newQuestions);
-    };
-
-    const removeQuestion = (index: number) => {
-        setQuestions(questions.filter((_, i) => i !== index));
-    };
-
-
-    
-        // Initialize a new question
-       
-    
         const steps = [
             {
                 title: "Survey Details",
@@ -275,7 +371,7 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                                 >
                                                     <span>{skill?.name}</span>
                                                     <button
-                                                        onClick={() => setSelectedSkills(selectedSkills.filter(id => id !== skillId))}
+                                                        onClick={() => handleSkillRemove(skillId)}
                                                         className="p-1 hover:bg-purple-200 rounded-full"
                                                     >
                                                         <X size={16}/>
@@ -295,7 +391,8 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                 content: (
                     <Card className="bg-white/90 backdrop-blur-sm">
                         <CardHeader>
-                            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            <CardTitle
+                                className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 Select Professions
                             </CardTitle>
                         </CardHeader>
@@ -373,6 +470,18 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                 title: "Add Questions",
                 content: (
                     <div className="space-y-6">
+                        {/* Uyarı mesajı */}
+                        <div className="p-4 bg-purple-50 rounded-lg">
+                            <p className="text-purple-700">
+                                You need to create exactly {selectedSkills.length} question{selectedSkills.length !== 1 ? 's' : ''}
+                                (one for each selected skill)
+                            </p>
+                            <p className="text-purple-700 mt-2">
+                                Current status: {questions.length} question{questions.length !== 1 ? 's' : ''} created
+                            </p>
+                        </div>
+
+                        {/* Mevcut sorular */}
                         {questions.map((question, qIndex) => (
                             <Card key={qIndex} className="bg-white/90 backdrop-blur-sm">
                                 <CardHeader className="flex flex-row items-center justify-between">
@@ -406,7 +515,7 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                             rows={3}
                                         />
                                     </div>
-    
+
                                     {/* Skill Selection */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Related Skill</label>
@@ -421,7 +530,20 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                         >
                                             <option value="">Select a skill</option>
                                             {skills
-                                                .filter(skill => selectedSkills.includes(skill.id))
+                                                .filter(skill => {
+                                                    // Önce bu skill seçili skillerde var mı kontrol et
+                                                    const isSelectedSkill = selectedSkills.includes(skill.id);
+
+                                                    // Sonra bu skill başka bir soruda kullanılmış mı kontrol et
+                                                    // Eğer bu soru için seçili olan skill ise, onu göster
+                                                    const isUsedInOtherQuestion = questions.some(
+                                                        (q, idx) => idx !== qIndex && q.selectedSkill === skill.id
+                                                    );
+
+                                                    // Skill seçili skillerde varsa VE
+                                                    // (bu soru için seçili olan skill ise VEYA başka bir soruda kullanılmamışsa) göster
+                                                    return isSelectedSkill && (skill.id === question.selectedSkill || !isUsedInOtherQuestion);
+                                                })
                                                 .map((skill) => (
                                                     <option key={skill.id} value={skill.id}>
                                                         {skill.name}
@@ -429,7 +551,7 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                                 ))}
                                         </select>
                                     </div>
-    
+
                                     {/* Options */}
                                     <div className="space-y-4">
                                         <label className="text-sm font-medium text-gray-700">Options (1-5 Level)</label>
@@ -457,15 +579,29 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                                 </CardContent>
                             </Card>
                         ))}
-    
-                        {/* Add Question Button */}
-                        <button
-                            onClick={() => setQuestions([...questions, createNewQuestion()])}
-                            className="w-full py-4 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                            <PlusCircle size={20} />
-                            Add New Question
-                        </button>
+
+                        {/* Add Question Button - Sadece gerekli sayıda soru eklenebilsin */}
+                        {questions.length < selectedSkills.length && (
+                            <button
+                                onClick={() => setQuestions([...questions, createNewQuestion()])}
+                                className="w-full py-4 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center justify-center gap-2"
+                            >
+                                <PlusCircle size={20} />
+                                Add New Question ({questions.length}/{selectedSkills.length})
+                            </button>
+                        )}
+
+                        {/* Validasyon mesajları */}
+                        {questions.length > selectedSkills.length && (
+                            <p className="text-red-500 text-sm mt-2">
+                                You have too many questions. Please remove {questions.length - selectedSkills.length} question(s).
+                            </p>
+                        )}
+                        {questions.some(q => !selectedSkills.includes(q.selectedSkill)) && (
+                            <p className="text-red-500 text-sm mt-2">
+                                Each question must be associated with a skill.
+                            </p>
+                        )}
                     </div>
                 ),
             }
@@ -473,6 +609,28 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
     
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+
+                <AlertDialog
+                    open={isDeleteSkillDialogOpen}
+                    onOpenChange={setIsDeleteSkillDialogOpen}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Remove Skill</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                If you remove this skill, the associated question will also be deleted.
+                                Are you sure you want to continue?
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmSkillRemoval}>
+                                Continue
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
                 <div className="max-w-5xl mx-auto">
                     <div className="mb-8">
                         <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
@@ -497,13 +655,13 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                             ))}
                         </div>
                     </div>
-    
+
                     {/* Active Step Content */}
                     <div className="transition-all duration-300 ease-in-out">
                         {steps[activeStep].content}
                     </div>
-    
-                    {/* Navigation Buttons */}
+
+                    {/* Navigation Buttons - Düzeltilmiş versiyon */}
                     <div className="mt-8 flex justify-between">
                         <button
                             onClick={() => setActiveStep(Math.max(0, activeStep - 1))}
@@ -516,15 +674,13 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                             Back
                         </button>
                         <button
-                            onClick={() => {
-                                if (activeStep < steps.length - 1) {
-                                    setActiveStep(activeStep + 1);
-                                } else {
-                                    handleSubmit();
-                                }
-                            }}
-                            disabled={loading}
-                            className="px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 flex items-center gap-2"
+                            onClick={handleNextClick}
+                            disabled={loading || (activeStep === steps.length - 1 && !isQuestionsValid())}
+                            className={`px-6 py-3 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium 
+            ${(loading || (activeStep === steps.length - 1 && !isQuestionsValid()))
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:from-purple-600 hover:to-pink-600'} 
+            transition-all duration-200 flex items-center gap-2`}
                         >
                             {activeStep === steps.length - 1 ? (
                                 <>
@@ -540,6 +696,9 @@ const SurveyEditer: React.FC<SurveyEditerProps> = ({ mode = 'create', surveyId }
                         </button>
                     </div>
                 </div>
+
+                {/* Toast bildirimleri için Toaster komponenti */}
+                <Toaster position="top-right" />
             </div>
         );
     };

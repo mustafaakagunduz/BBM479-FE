@@ -125,37 +125,42 @@ const SurveyList = () => {
         </Alert>
       )}
 
+      {/* AlertDialog bölümü */}
       <AlertDialog open={!!surveyToDelete} onOpenChange={handleCloseDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Survey</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the survey and all associated data including:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>All survey responses</li>
-                <li>Survey results and analysis</li>
-                <li>Profession matches</li>
-                <li>Questions and options</li>
-              </ul>
-              This action cannot be undone.
-            </AlertDialogDescription>
+            <div className="mt-2">
+              <AlertDialogDescription asChild>
+                <div className="space-y-4">
+                  <span>This will permanently delete the survey and all associated data including:</span>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>All survey responses</li>
+                    <li>Survey results and analysis</li>
+                    <li>Profession matches</li>
+                    <li>Questions and options</li>
+                  </ul>
+                  <span>This action cannot be undone.</span>
+                </div>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isProcessing}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                onClick={handleDeleteConfirm}
+                disabled={isProcessing}
+                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               {isProcessing ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>
-                    {retryCount > 0 ? `Retrying (${retryCount}/3)...` : 'Deleting...'}
-                  </span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>
+              {retryCount > 0 ? `Retrying (${retryCount}/3)...` : 'Deleting...'}
+            </span>
+                  </div>
               ) : (
-                'Delete Survey'
+                  'Delete Survey'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
