@@ -3,10 +3,17 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Trash2, Edit, Eye, FileText } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SurveyCardProps {
     survey: Survey;
     onDelete: (id: number) => void;
+    ActionTooltip: ({ content, children }: { content: string; children: React.ReactNode }) => JSX.Element;
 }
 
 export function SurveyCard({ survey, onDelete }: SurveyCardProps) {
@@ -30,42 +37,74 @@ export function SurveyCard({ survey, onDelete }: SurveyCardProps) {
                     </p>
                 </CardContent>
                 <CardFooter className="flex justify-center gap-2 mt-6 p-0">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/surveys/${survey.id}`);
-                        }}
-                        className="text-gray-600 hover:text-purple-600"
-                        aria-label="View survey"
-                    >
-                        <Eye className="h-5 w-5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/surveys/${survey.id}/edit`);
-                        }}
-                        className="text-gray-600 hover:text-purple-600"
-                        aria-label="Edit survey"
-                    >
-                        <Edit className="h-5 w-5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(survey.id);
-                        }}
-                        className="text-gray-600 hover:text-red-600"
-                        aria-label="Delete survey"
-                    >
-                        <Trash2 className="h-5 w-5" />
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/surveys/${survey.id}`);
+                                    }}
+                                    className="text-gray-600 hover:text-purple-600"
+                                    aria-label="View survey"
+                                >
+                                    <Eye className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Show Survey</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        router.push(`/surveys/${survey.id}/edit`);
+                                    }}
+                                    className="text-gray-600 hover:text-purple-600"
+                                    aria-label="Edit survey"
+                                >
+                                    <Edit className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Edit Survey</p>
+                                <p>Note : In order to keep survey's consistency, </p>
+                                <p>if there are survey results in the system,</p>
+                                <p> the system does not allow you to edit the survey.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(survey.id);
+                                    }}
+                                    className="text-gray-600 hover:text-red-600"
+                                    aria-label="Delete survey"
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Delete Survey</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </CardFooter>
             </div>
         </Card>

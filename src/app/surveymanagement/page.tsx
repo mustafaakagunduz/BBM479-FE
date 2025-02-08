@@ -25,14 +25,9 @@ const SurveyManagement = () => {
             href: "/addprofession",
             description: "Create and update professional roles"
         },
+
         {
-            title: "Create a New Survey",
-            icon: <FilePlus className="w-12 h-12 mb-4 text-purple-600" />,
-            href: "/addsurvey",
-            description: "Design and create new surveys from scratch"
-        },
-        {
-            title: "Show/Edit Existing Survey",
+            title: "Create/Edit/Delete Surveys",
             icon: <FileEdit className="w-12 h-12 mb-4 text-purple-600" />,
             href: "/surveys",
             description: "View and modify your existing surveys"
