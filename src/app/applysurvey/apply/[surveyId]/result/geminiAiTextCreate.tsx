@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle2, BookOpen, Target, Lightbulb, ArrowUpRight } from 'lucide-react';
+import AnalysisPDFExport from './AnalysisPDFExport';
 
 const BACKEND_API_BASE = 'http://localhost:8081/api';
 const GEMINI_API_KEY = 'AIzaSyDqPkde9-C_QySK4bNGhVM2cung_WGphmE';
@@ -28,27 +29,62 @@ interface GeminiAnalysis {
 function extractRecommendations(text: string): string[] {
     const recommendations: string[] = [];
     
-    // Öneriler bölümlerini bul
-    const sections: string[] = text.split(/\d+\.\s*/);
+    // Find Development Plan and Career Path sections
+    const devPlanMatch = text.match(/DEVELOPMENT PLAN([\s\S]*?)(?=CAREER PATH|$)/i);
+    const careerPathMatch = text.match(/CAREER PATH([\s\S]*?)(?=$)/i);
     
-    // Her bölümü kontrol et
-    sections.forEach((section: string) => {
-        if (section.includes('Öneriler') || 
-            section.includes('tavsiye') || 
-            section.includes('öneril') ||
-            section.includes('geliştir')) {
-            
-            // Madde işaretli satırları bul
-            const lines = section.split('\n')
-                .filter((line: string) => line.trim().match(/^[•\-\*\+]\s*(.+)$/))
-                .map((line: string) => line.replace(/^[•\-\*\+]\s*/, '').trim())
-                .filter((line: string) => line.length > 0);
-                
-            recommendations.push(...lines);
-        }
-    });
+    let combinedText = '';
+    if (devPlanMatch && devPlanMatch[1]) combinedText += devPlanMatch[1];
+    if (careerPathMatch && careerPathMatch[1]) combinedText += careerPathMatch[1];
 
-    return recommendations;
+    // Split into lines and process
+    const lines = combinedText.split('\n');
+    let currentRecommendation = '';
+
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        // Skip empty lines and section headers
+        if (!trimmedLine || trimmedLine.toUpperCase() === trimmedLine) {
+            if (currentRecommendation) {
+                recommendations.push(currentRecommendation.trim());
+                currentRecommendation = '';
+            }
+            continue;
+        }
+
+        // Check for numbered or bulleted items
+        const listItemMatch = trimmedLine.match(/^(\d+\.|[•\-\*>]|\(\d+\))\s*(.+)$/);
+        
+        if (listItemMatch) {
+            if (currentRecommendation) {
+                recommendations.push(currentRecommendation.trim());
+            }
+            currentRecommendation = listItemMatch[2];
+        } else if (trimmedLine.length > 5) {
+            // Continue previous recommendation if it exists
+            if (currentRecommendation) {
+                currentRecommendation += ' ' + trimmedLine;
+            }
+        }
+    }
+
+    // Add the last recommendation if exists
+    if (currentRecommendation) {
+        recommendations.push(currentRecommendation.trim());
+    }
+
+    // Clean and filter recommendations
+    return recommendations
+        .map(rec => rec.trim())
+        .filter(rec => 
+            rec.length > 10 && // Remove very short items
+            !rec.toUpperCase().includes('INTRODUCTION') &&
+            !rec.toUpperCase().includes('ANALYSIS') &&
+            !rec.toUpperCase().includes('CAREER PATH') &&
+            !rec.toUpperCase().includes('DEVELOPMENT PLAN')
+        )
+        .filter((rec, index, self) => self.indexOf(rec) === index); // Remove duplicates
 }
 
 const analyzeSurveyWithGemini = async (
@@ -75,52 +111,46 @@ const analyzeSurveyWithGemini = async (
     }));
 
     const prompt = `
-    Responses should be in separate sentences and be concise.
-    Please prepare a professional report analyzing the following career test results.
+    Please prepare a professional report analyzing the following career test results in English.
     Test results:
     ${JSON.stringify(surveyData, null, 2)}
 
-    Please analyze under the following sections, but write the headings WITHOUT using special characters like '#' or '*':
+    Please analyze under the following sections:
 
     INTRODUCTION
     - General evaluation of test results
     - Notable strengths
 
     CAREER ANALYSIS
-    [Use full profession names instead of codes like "p1, p2" when listing the top three professions]
     - Top three professions and compatibility percentages
     - For each profession:
-      > Why it's suitable
-      > Required skills
-      > Opportunities offered
-      > Areas for development
+      1. Why it's suitable
+      2. Required skills
+      3. Opportunities offered
+      4. Areas for development
 
     DEVELOPMENT PLAN
-    - Current strong abilities
-    - Areas for improvement
-    - Recommended steps:
-      > Educational recommendations
-      > Certificate programs
-      > Practical development methods
+    1. Current strong abilities
+    2. Areas for improvement
+    3. Recommended steps:
+      - Educational recommendations
+      - Certificate programs
+      - Practical development methods
 
     CAREER PATH
-    - Short-term goals (0-1 year)
-    - Medium-term goals (1-3 years)
-    - Long-term goals (3+ years)
-    
-    Write each section in paragraphs with clear and understandable language.
-    Do not use special characters (*,#,-), use numbering and plain text instead.
-    Specify profession names in full instead of codes like "p1, p2".
+    1. Short-term goals (0-1 year)
+    2. Medium-term goals (1-3 years)
+    3. Long-term goals (3+ years)
     
     Writing format:
-    - Use a professional and positive tone
-    - Use clear headings for each section (in bold or capital letters)
-    - Leave appropriate spacing between paragraphs
-    - Use numbering instead of bullet points
-    - Emphasize important points within paragraphs
+    - Write each section in clear paragraphs
+    - Use numbering for lists (1., 2., 3., etc.)
+    - Include specific recommendations in the Development Plan and Career Path sections
+    - Keep responses concise but informative
+    - Use a professional tone
+    - Format headings in UPPERCASE
 `;
 
-// Ayrıca DetailedAnalysis component'inde çıktıyı düzenleyelim:
 
 
     try {
@@ -302,32 +332,31 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                             </div>
                         </div>
                     )}
-
-                    {activeTab === 'recommendations' && analysis && analysis.recommendations && (
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <div className="flex items-center mb-6">
-                                <Lightbulb className="h-5 w-5 text-yellow-500 mr-2" />
-                                <h3 className="text-lg font-semibold">Kariyer Önerileri</h3>
+            {activeTab === 'recommendations' && analysis && analysis.recommendations && (
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center mb-6">
+                        <Lightbulb className="h-5 w-5 text-yellow-500 mr-2" />
+                        <h3 className="text-lg font-semibold">Career Recommendations</h3>
+                    </div>
+                    <div className="space-y-4">
+                        {Array.isArray(analysis.recommendations) && analysis.recommendations.length > 0 ? (
+                            analysis.recommendations.map((rec, index) => (
+                                <div 
+                                    key={index}
+                                    className="flex items-start p-4 bg-gray-50 rounded-lg"
+                                >
+                                    <ArrowUpRight className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
+                                    <p className="text-gray-700">{rec}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-gray-500 text-center py-4">
+                                No recommendations found
                             </div>
-                            <div className="space-y-4">
-                                {Array.isArray(analysis.recommendations) && analysis.recommendations.length > 0 ? (
-                                    analysis.recommendations.map((rec, index) => (
-                                        <div 
-                                            key={index}
-                                            className="flex items-start p-4 bg-gray-50 rounded-lg"
-                                        >
-                                            <ArrowUpRight className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
-                                            <p className="text-gray-700">{rec}</p>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="text-gray-500 text-center py-4">
-                                        Henüz öneri bulunmuyor
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
+                </div>
+            )}
 {activeTab === 'details' && analysis && (
     <div className="bg-white rounded-lg shadow-lg p-8">
         <div className="max-w-3xl mx-auto">
@@ -337,6 +366,10 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({ surveyRes
                 </h1>
                 <div className="h-1 w-20 bg-blue-500 rounded"></div>
             </div>
+            <AnalysisPDFExport 
+                    analysis={analysis}
+                    professionMatches={professionMatches}
+                />
             
         <div className="prose max-w-none">
     <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
