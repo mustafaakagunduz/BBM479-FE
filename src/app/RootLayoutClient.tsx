@@ -8,26 +8,30 @@ import { useEffect } from 'react'
 import PageTransition from '@/app/components/PageTransition'
 
 export default function RootLayoutClient({
-                                             children,
-                                         }: Readonly<{
+    children,
+}: Readonly<{
     children: React.ReactNode
 }>) {
     const pathname = usePathname()
     const router = useRouter()
     const { user, loading } = useAuth()
 
-    const noNavbarPages = ['/login', '/register', '/', '/unauthorized']
+    const noNavbarPages = ['/login', '/register', '/', '/unauthorized'];
     const adminPages = ['/admin', '/authorization']
     const userPages = ['/dashboard', '/previousresults', '/applysurvey']
 
+    // Helper function to check if the current path should have a navbar
+    const isNoNavbarPage = (path: string) => {
+        return noNavbarPages.includes(path) || path.startsWith('/reset-password')
+    }
 
     useEffect(() => {
         if (!loading) {
-            console.log('Current User:', user); // User'ı kontrol edelim
-            console.log('Current Pathname:', pathname); // Path'i kontrol edelim
+            console.log('Current User:', user);
+            console.log('Current Pathname:', pathname);
 
             // Kullanıcı yoksa ve navbar gerektiren bir sayfadaysa
-            if (!user && !noNavbarPages.includes(pathname)) {
+            if (!user && !isNoNavbarPage(pathname)) {
                 router.push('/login');
                 return;
             }
@@ -83,7 +87,7 @@ export default function RootLayoutClient({
     }
 
     // Navbar'sız sayfalar için render
-    if (noNavbarPages.includes(pathname)) {
+    if (isNoNavbarPage(pathname)) {
         return (
             <div className="relative">
                 <PageTransition key={pathname}>{children}</PageTransition>

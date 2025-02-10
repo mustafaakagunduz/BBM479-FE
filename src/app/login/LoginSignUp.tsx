@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
 import {PasswordValidation, validatePassword} from "@/app/login/passwordValidation";
 import LoginButton from "@/app/login/LoginButton";
+import { useSearchParams } from 'next/navigation';
 
 interface Company {
   id: number;
@@ -40,7 +41,8 @@ const LoginSignUp = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token');
   // Sign Up states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -81,7 +83,19 @@ const LoginSignUp = () => {
   useEffect(() => {
     setPasswordValidation(validatePassword(password));
   }, [password]);
-
+  useEffect(() => {
+    const verifyEmail = async () => {
+      try {
+        await axios.get(`http://localhost:8081/api/auth/verify/${token}`);        router.push('/login?verified=true');
+      } catch (error) {
+        router.push('/login?error=verification-failed');
+      }
+    };
+  
+    if (token) {
+      verifyEmail();
+    }
+  }, [token]);
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -204,7 +218,7 @@ const LoginSignUp = () => {
       }
     } finally {
       setIsLoading(false);
-    }
+    } 
   };
   return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
