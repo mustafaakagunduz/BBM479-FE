@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { /* Trash2, */ ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from "@/app/context/AuthContext";
 import {
@@ -14,7 +14,8 @@ import {
     Paper,
     Typography,
     Button,
-    Divider
+    Divider,
+    Box
 } from '@mui/material';
 
 interface ProfessionMatch {
@@ -28,10 +29,48 @@ interface SurveyResult {
     id: number;
     userId: number;
     surveyId: number;
+    surveyTitle: string;
     attemptNumber: number;
     professionMatches: ProfessionMatch[];
     createdAt: string;
 }
+
+// Separate component for date rendering to avoid hydration issues
+const FormattedDate: React.FC<{ date: string }> = ({ date }) => {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <Typography component="span" variant="body2" color="text.secondary">{date}</Typography>;
+    }
+
+    const dateObj = new Date(date);
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    const formattedTime = dateObj.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    return (
+        <Box component="span">
+            <Typography component="span" variant="body2" color="text.secondary" display="block">
+                {formattedDate}
+            </Typography>
+            <Typography component="span" variant="body2" color="text.secondary" display="block">
+                {formattedTime}
+            </Typography>
+        </Box>
+    );
+};
 
 const PreviousResults: React.FC = () => {
     const router = useRouter();
@@ -48,7 +87,24 @@ const PreviousResults: React.FC = () => {
             const response = await axios.get(`${API_BASE}/results/user/${user.id}`);
 
             if (response.data) {
-                setResults(response.data);
+                const resultsWithSurveyTitles = await Promise.all(
+                    response.data.map(async (result: SurveyResult) => {
+                        try {
+                            const surveyResponse = await axios.get(`${API_BASE}/${result.surveyId}`);
+                            return {
+                                ...result,
+                                surveyTitle: surveyResponse.data.title
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching survey title for id ${result.surveyId}:`, error);
+                            return {
+                                ...result,
+                                surveyTitle: 'Unknown Survey'
+                            };
+                        }
+                    })
+                );
+                setResults(resultsWithSurveyTitles);
             }
         } catch (error) {
             console.error('Error fetching results:', error);
@@ -118,22 +174,12 @@ const PreviousResults: React.FC = () => {
                                         />
                                         <ListItemText
                                             primary={
-                                                <Typography variant="h6">
-                                                    {new Date(result.createdAt).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'long',
-                                                        day: 'numeric'
-                                                    })}
+                                                <Typography variant="h6" component="div">
+                                                    {result.surveyTitle}
                                                 </Typography>
                                             }
                                             secondary={
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {new Date(result.createdAt).toLocaleTimeString('en-US', {
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                        hour12: false
-                                                    })}
-                                                </Typography>
+                                                <FormattedDate date={result.createdAt} />
                                             }
                                         />
                                         <ListItemSecondaryAction>
