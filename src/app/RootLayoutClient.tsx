@@ -86,7 +86,7 @@ export default function RootLayoutClient({
         )
     }
 
-    // Navbar'sız sayfalar için render
+    // NAVBARSIZ LOGIN AND SIGNUP GİBİ SAYFALAR
     if (isNoNavbarPage(pathname)) {
         return (
             <div className="relative">
@@ -104,6 +104,7 @@ export default function RootLayoutClient({
         )
     }
 
+    //NAVBARLI SAYFLAR
     return (
         <>
             <Navbar />

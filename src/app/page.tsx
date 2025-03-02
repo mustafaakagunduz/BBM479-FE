@@ -24,11 +24,13 @@ const Home: React.FC = () => {
         initializeAuth();
     }, [checkAuth, isLoading, router, user]);
 
+
+    
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex justify-center items-center">
             <CircularProgress />
         </div>
     );
 };
-
+//LAYOUT İÇERİSİNDE ÇALIŞTIRILACAK İLK BİLEŞEN - HOME BİLEŞENİ
 export default Home;

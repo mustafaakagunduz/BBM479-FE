@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
     import axios, { AxiosError } from 'axios';
     import { SurveyCard } from './SurveyCard';
     import { toast } from 'react-hot-toast';
-    import { FilePlus, Loader2 } from "lucide-react";
+    import { FilePlus, Loader2, FileText } from "lucide-react";
     import {
       AlertDialog,
       AlertDialogAction,
@@ -142,6 +142,26 @@ import { useEffect, useState, useCallback } from 'react';
           </Link>
       );
 
+      const LoadSurveyQuestionsCard = () => (
+          <Link
+          href="/loadsurvey"
+          className="block p-6 bg-blue-600 rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-200 h-full relative"
+          >
+            <div className="flex flex-col h-full min-h-[200px]">
+              {/* İkon */}
+              <div className="flex justify-center pt-4">
+                <FileText className="w-12 h-12 text-white" /> {/* veya uygun başka bir ikon */}
+              </div>
+
+              {/* İçerik */}
+              <div className="flex flex-col items-center justify-center flex-grow text-center">
+                <h3 className="text-lg font-semibold mb-2 text-white">Load Survey Questions</h3>
+                <p className="text-blue-100">Import questions from existing templates</p>
+              </div>
+            </div>
+          </Link>
+        );
+
       const ActionTooltip = ({ content, children }: { content: string; children: React.ReactNode }) => (
           <TooltipProvider>
             <Tooltip>
@@ -213,6 +233,7 @@ import { useEffect, useState, useCallback } from 'react';
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <CreateSurveyCard />
+              <LoadSurveyQuestionsCard />
               {surveys.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg col-span-full md:col-span-1">
                     <p className="text-gray-600">No surveys available</p>
