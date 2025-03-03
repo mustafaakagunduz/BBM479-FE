@@ -231,6 +231,10 @@ const SurveyQuestionsLoader: React.FC = () => {
                         questions: questionsFromExcel
                     };
                     
+                    console.log("Excel data parsed:", jsonData);
+                    console.log("Selected skills:", formData.selectedSkills);
+                    console.log("Available skills:", skills);
+
                     // API'ye gönderme
                     const response = await surveyService.createSurvey(surveyData);
                     toast.success('Survey created successfully with imported questions!');
@@ -262,23 +266,37 @@ const SurveyQuestionsLoader: React.FC = () => {
 
 
     const processExcelData = (jsonData: Record<string, any>[]) => {
+        console.log("Processing Excel data:", jsonData);
         const validQuestions = [];
     
         // Seçilen becerilerin ID'leri
         const selectedSkillIds = formData.selectedSkills;
+        console.log("Selected skill IDs:", selectedSkillIds);
     
         // Her satırı kontrol et
         for (const row of jsonData) {
+            console.log("Processing row:", row);
+            
             // A sütunu (Beceri)
             const skillName = row['A'];
-            const skill = skills.find(s => s.name === skillName);
+            console.log("Skill name from Excel:", skillName);
+            
+            // Büyük/küçük harf hassasiyetini kaldıralım
+            // Hem Excel'den gelen adı hem de mevcut skill adlarını küçük harfe çevirip karşılaştıralım
+            const skill = skills.find(s => 
+                s.name.toLowerCase() === (skillName ? skillName.toLowerCase() : '')
+            );
+            
+            console.log("Found matching skill:", skill);
             
             if (!skill || !selectedSkillIds.includes(skill.id)) {
+                console.log("Skipping row: Skill not found or not selected");
                 continue;
             }
     
             // B sütunu (Soru)
             const questionText = row['B'];
+            console.log("Question text:", questionText);
     
             // C-G sütunları (Seçenekler)
             const options = [
@@ -288,8 +306,10 @@ const SurveyQuestionsLoader: React.FC = () => {
                 { level: 4, description: row['F'] || 'Expert' },
                 { level: 5, description: row['G'] || 'Master' }
             ];
+            console.log("Options:", options);
     
             if (!questionText || !options.every(opt => opt.description)) {
+                console.log("Skipping row: Missing question text or options");
                 continue;
             }
     
@@ -300,6 +320,7 @@ const SurveyQuestionsLoader: React.FC = () => {
             });
         }
     
+        console.log("Valid questions found:", validQuestions.length);
         return validQuestions;
     };
     
