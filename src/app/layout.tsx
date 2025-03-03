@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from './context/AuthContext';
+import RootLayoutClient from '@/app/RootLayoutClient';
 
 export const metadata: Metadata = {
   title: "DX-HRSAM",
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          {children}
+        <RootLayoutClient>
+            {children}
+          </RootLayoutClient>
         </AuthProvider>
       </body>
     </html>

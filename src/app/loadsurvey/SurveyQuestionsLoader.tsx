@@ -7,6 +7,8 @@ import { toast, Toaster } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { Save, ChevronRight, X, Upload, AlertTriangle, Info, FileText, Download, CheckCircle } from 'lucide-react';
 
+import * as XLSX from 'xlsx'; // Excel dosyalarını okumak için SheetJS kütüphanesi
+
 interface SurveyFormData {
     title: string;
     industryId: number | null;
@@ -194,37 +196,114 @@ const SurveyQuestionsLoader: React.FC = () => {
                 toast.error('Please select an Excel file with questions');
                 return;
             }
-
+    
             setLoading(true);
             
-            // Gerçek uygulamada yapılacak işlemler:
-            // 1. FormData oluştur
-            // 2. Excel dosyasını yükle
-            // 3. API'ye gönder
+            // Excel dosyasını okuma işlemi
+            const fileReader = new FileReader();
             
-            // Örnek FormData oluşturma:
-            // const formDataToSend = new FormData();
-            // formDataToSend.append('file', selectedFile);
-            // formDataToSend.append('title', formData.title);
-            // formDataToSend.append('industryId', formData.industryId.toString());
-            // formDataToSend.append('skills', JSON.stringify(formData.selectedSkills));
-            // formDataToSend.append('professions', JSON.stringify(formData.selectedProfessions));
+            fileReader.onload = async (e) => {
+                try {
+                    const data = e.target?.result;
+                    const workbook = XLSX.read(data, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    
+                    // Excel verilerini JSON'a dönüştürme
+                    const jsonData: Record<string, any>[] = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet, { header: 'A' });
+
+                    
+                    // Soruları oluşturma
+                    const questionsFromExcel = processExcelData(jsonData);
+                    
+                    if (questionsFromExcel.length === 0) {
+                        toast.error('No valid questions found in the Excel file');
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    // API'ye gönderilecek anket verisi
+                    const surveyData = {
+                        userId: user?.id || 1,
+                        title: formData.title,
+                        industryId: formData.industryId!,
+                        selectedProfessions: formData.selectedProfessions,
+                        questions: questionsFromExcel
+                    };
+                    
+                    // API'ye gönderme
+                    const response = await surveyService.createSurvey(surveyData);
+                    toast.success('Survey created successfully with imported questions!');
+                    
+                    // Yeni oluşturulan anket detayına yönlendirme
+                    router.push(`/surveys/${response.data.id}/edit`);
+                    
+                } catch (error) {
+                    console.error('Error processing Excel file:', error);
+                    toast.error('Failed to process the Excel file');
+                    setLoading(false);
+                }
+            };
             
-            // Örnek API çağrısı:
-            // const response = await surveyService.uploadQuestionsFile(formDataToSend);
+            fileReader.onerror = () => {
+                toast.error('Error reading the file');
+                setLoading(false);
+            };
             
-            // Şimdilik sadece bir başarı mesajı gösterelim
-            toast.success('Excel file processed successfully!');
+            // Dosyayı okumaya başla
+            fileReader.readAsBinaryString(selectedFile);
             
-            // Yeni bir sekmede açılacak şekilde yönlendirme
-            window.open('/surveys', '_blank');
         } catch (error) {
             console.error('Failed to process file:', error);
             toast.error('Failed to process the Excel file');
-        } finally {
             setLoading(false);
         }
     };
+
+
+    const processExcelData = (jsonData: Record<string, any>[]) => {
+        const validQuestions = [];
+    
+        // Seçilen becerilerin ID'leri
+        const selectedSkillIds = formData.selectedSkills;
+    
+        // Her satırı kontrol et
+        for (const row of jsonData) {
+            // A sütunu (Beceri)
+            const skillName = row['A'];
+            const skill = skills.find(s => s.name === skillName);
+            
+            if (!skill || !selectedSkillIds.includes(skill.id)) {
+                continue;
+            }
+    
+            // B sütunu (Soru)
+            const questionText = row['B'];
+    
+            // C-G sütunları (Seçenekler)
+            const options = [
+                { level: 1, description: row['C'] || 'Beginner' },
+                { level: 2, description: row['D'] || 'Intermediate' },
+                { level: 3, description: row['E'] || 'Advanced' },
+                { level: 4, description: row['F'] || 'Expert' },
+                { level: 5, description: row['G'] || 'Master' }
+            ];
+    
+            if (!questionText || !options.every(opt => opt.description)) {
+                continue;
+            }
+    
+            validQuestions.push({
+                text: questionText,
+                skillId: skill.id,
+                options: options
+            });
+        }
+    
+        return validQuestions;
+    };
+    
+    
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
