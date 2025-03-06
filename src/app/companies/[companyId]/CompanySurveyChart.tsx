@@ -210,11 +210,11 @@ function CompanySurveyChart({ companyId }: CompanySurveyChartProps) {
                                     <CardTitle>{selectedSkill} - Individual Scores</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid gap-2 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                                    <div className="flex flex-col space-y-2 w-full">
                                         {[...skillDetails]
-                                            .sort((a, b) => b.score - a.score)
+                                            .sort((a, b) => a.score - b.score)
                                             .map((detail) => (
-                                                <div key={detail.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                                <div key={detail.userId} className="flex justify-between items-center p-2 bg-gray-50 rounded w-full">
                                                     <span className="truncate mr-2">{detail.userName}</span>
                                                     <span className="font-medium whitespace-nowrap">{detail.score * 20}%</span>
                                                 </div>
