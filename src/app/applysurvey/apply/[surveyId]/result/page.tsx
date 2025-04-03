@@ -9,6 +9,7 @@ import { ArrowLeft } from 'lucide-react';
 import ResultDropdownMenu from '@/app/components/survey/ResultDropdownMenu';
 import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
 import { GeminiAnalysisSection } from './geminiAiTextCreate';
+import CareerRoadmap from './CareerRoadmap'; // Yeni bileşeni import ediyoruz
 import { useAuth } from '@/app/context/AuthContext';
 import {srcEmptySsgManifest} from "next/dist/build/webpack/plugins/build-manifest-plugin";
 
@@ -202,6 +203,14 @@ export default function SurveyResultPage({ params }: PageProps) {
                             </div>
                         )}
                     </CardContent>
+                </Card>
+                
+                {/* Kariyer Gelişim Planı bileşenini ekliyoruz */}
+                {result.professionMatches && result.professionMatches.length > 0 && (
+                    <CareerRoadmap professionMatches={result.professionMatches} />
+                )}
+
+                <Card>
                     <CardContent className="p-6">
                         {result.professionMatches && result.professionMatches.length > 0 && (
                             <GeminiAnalysisSection
