@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
+// Development veya production ortamı kontrolü
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Production'da proxy kullan, geliştirme ortamında doğrudan API'ye bağlan
+const baseURL = isProduction
+    ? '/api/proxy'
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081');
 
 const axiosInstance = axios.create({
     baseURL: baseURL,
@@ -8,5 +14,5 @@ const axiosInstance = axios.create({
         'Content-Type': 'application/json',
     },
 });
-//sasd
+
 export default axiosInstance;
