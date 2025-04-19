@@ -1,3 +1,4 @@
+//apiConfig.ts dosyası
 const API_URLS = {
     skills: 'http://localhost:8081/api/skills',
     industries: 'http://localhost:8081/api/industries',

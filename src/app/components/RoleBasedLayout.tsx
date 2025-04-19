@@ -1,5 +1,5 @@
 // components/RoleBasedLayout.tsx
-import { useAuth } from '@/app/surveys/hooks/useAuth';
+import {useAuth} from "@/app/hooks/useAuth";
 import { redirect } from 'next/navigation';
 import Navbar from '@/app/components/navbar/Navbar';
 import { CircularProgress } from '@mui/material';

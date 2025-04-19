@@ -2,7 +2,7 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/surveys/hooks/useAuth";
+import { useAuth } from "@/app/hooks/useAuth";
 import { CircularProgress } from "@mui/material";
 
 interface UserGuardProps {
