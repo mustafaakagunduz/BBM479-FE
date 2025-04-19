@@ -466,7 +466,7 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({
                                                     </h2>
                                                 );
                                             }
-                                            // Normal paragraflar
+                                            // Normal paragraflarr
                                             return (
                                                 <p key={index} className="mb-4 text-gray-700">
                                                     {paragraph}
