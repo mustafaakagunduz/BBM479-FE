@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import { UserSurveyCard } from './UserSurveyCard';
 import { Survey } from '@/app/types/survey';
 import { useAuth } from '@/app/context/AuthContext';  // Auth context'inizi import edin
+
 
 interface SurveyWithCompletionStatus extends Survey {
     isCompleted?: boolean;
@@ -23,8 +24,8 @@ export function UserSurveyList() {
     const fetchSurveysWithStatus = async () => {
         try {
             const [surveysResponse, resultsResponse] = await Promise.all([
-                axios.get('http://localhost:8081/api/surveys'),
-                axios.get(`http://localhost:8081/api/surveys/results/user/${user?.id}`)
+                axiosInstance.get('/api/surveys'),
+                axiosInstance.get(`/api/surveys/results/user/${user?.id}`)
             ]);
 
             // Kullanıcının tamamladığı anketlerin ID'lerini al

@@ -1,10 +1,8 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8081/api/surveys'; // Arka uç URL'sini buraya koyun
+import axiosInstance from "@/utils/axiosInstance";
 
 export const createSurvey = async (surveyData) => {
   try {
-    const response = await axios.post(API_URL, surveyData);
+    const response = await axiosInstance.post('/api/surveys', surveyData);
     return response.data; // Başarılı yanıtı döndür
   } catch (error) {
     console.error('Error creating survey:', error);

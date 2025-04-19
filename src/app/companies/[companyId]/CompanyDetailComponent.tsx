@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     CircularProgress,
     TextField,
@@ -56,7 +56,7 @@ const CompanyDetailComponent: React.FC<CompanyDetailComponentProps> = ({ company
             try {
                 setLoading(true);
                 setError(null);
-                const response = await axios.get(`http://localhost:8081/api/companies/${companyId}`);
+                const response = await axiosInstance.get(`/api/companies/${companyId}`);
                 setCompany(response.data);
             } catch (error) {
                 console.error('Error fetching company details:', error);

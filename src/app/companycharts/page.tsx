@@ -32,7 +32,7 @@ export default function CompanyCharts() {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const response = await fetch('http://localhost:8081/api/companies');
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/companies`);
                 const data = await response.json();
                 console.log('Fetched companies:', data);
                 setCompanies(data);
@@ -54,7 +54,7 @@ export default function CompanyCharts() {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch(`http://localhost:8081/api/company-charts/${companyId}/skills/stats`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/company-charts/${companyId}/skills/stats`);
             const data = await response.json();
             console.log('API Response:', data);
             setSkillStats(data);

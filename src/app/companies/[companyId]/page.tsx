@@ -5,7 +5,7 @@ import AdminGuard from '@/app/components/guards/AdminGuard';
 import { use } from 'react';
 import CompanySurveyChart from "@/app/companies/[companyId]/CompanySurveyChart";
 import CompanyDescriptionCard from './CompanyDescriptionCard';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     Accordion,
     AccordionContent,
@@ -28,7 +28,7 @@ const CompanyDetailPage: React.FC<CompanyDetailPageProps> = ({ params }) => {
     useEffect(() => {
         const fetchCompanyName = async () => {
             try {
-                const response = await axios.get(`http://localhost:8081/api/companies/${companyId}`);
+                const response = await axiosInstance.get(`/api/companies/${companyId}`);
                 setCompanyName(response.data.name);
             } catch (error) {
                 console.error('Error fetching company name:', error);

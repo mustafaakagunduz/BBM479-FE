@@ -2,7 +2,7 @@
 'use client';
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     Paper,
     Table,
@@ -54,10 +54,10 @@ const ResultDetails = ({ params }: PageProps) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const userResponse = await axios.get(`http://localhost:8081/api/users/${resolvedParams.userId}`);
+                const userResponse = await axiosInstance.get(`/api/users/${resolvedParams.userId}`);
                 setUsername(userResponse.data.name);
 
-                const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${resolvedParams.userId}`);
+                const resultsResponse = await axiosInstance.get(`/api/surveys/results/user/${resolvedParams.userId}`);
                 if (resultsResponse.data) {
                     const targetResult = resultsResponse.data.find(
                         (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId)

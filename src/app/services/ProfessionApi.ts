@@ -1,14 +1,12 @@
 // services/ProfessionApi.ts
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:8081/api';
+import axiosInstance from "@/utils/axiosInstance";
 
 export const professionApi = {
     // Mevcut metodlar
-    getAllIndustries: () => axios.get(`${BASE_URL}/industries`),
+    getAllIndustries: () => axiosInstance.get('/api/industries'),
 
     getSkillsByIndustry: (industryId: number) =>
-        axios.get(`${BASE_URL}/skills/industry/${industryId}`),
+        axiosInstance.get(`/api/skills/industry/${industryId}`),
 
     createProfession: (professionData: {
         name: string;
@@ -17,14 +15,14 @@ export const professionApi = {
             skillId: number;
             requiredLevel: number;
         }[];
-    }) => axios.post(`${BASE_URL}/professions`, professionData),
+    }) => axiosInstance.post('/api/professions', professionData),
 
     // Yeni eklenen metodlar
     getAllProfessions: () =>
-        axios.get(`${BASE_URL}/professions`),
+        axiosInstance.get('/api/professions'),
 
     getProfessionById: (id: number) =>
-        axios.get(`${BASE_URL}/professions/${id}`),
+        axiosInstance.get(`/api/professions/${id}`),
 
     updateProfession: (id: number, professionData: {
         name: string;
@@ -33,11 +31,11 @@ export const professionApi = {
             skillId: number;
             requiredLevel: number;
         }[];
-    }) => axios.put(`${BASE_URL}/professions/${id}`, professionData),
+    }) => axiosInstance.put(`/api/professions/${id}`, professionData),
 
     deleteProfession: async (id: number) => {
         try {
-            const response = await axios.delete(`http://localhost:8081/api/professions/${id}`);
+            const response = await axiosInstance.delete(`/api/professions/${id}`);
             return { success: true };
         } catch (error: any) {
             console.log('API Error:', {
@@ -68,5 +66,4 @@ export const professionApi = {
             };
         }
     }
-
 };

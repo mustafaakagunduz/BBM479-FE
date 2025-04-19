@@ -1,6 +1,6 @@
 // GeminiAnalysisSection.tsx
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import AnalysisPDFExport from "./AnalysisPDFExport";
 
-const BACKEND_API_BASE = "http://localhost:8081/api";
 // OpenAI API Key
 const OPENAI_API_KEY = "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";
 
@@ -130,7 +129,7 @@ const analyzeWithOpenAI = async (professionMatches: ProfessionMatch[]): Promise<
             matchPercentage: match.matchPercentage
         }));
 
-        const response = await axios.post(
+        const response = await axiosInstance.post(
             'https://api.openai.com/v1/chat/completions',
             {
                 model: "gpt-3.5-turbo",
@@ -201,8 +200,8 @@ const analyzeSurveyWithAI = async (
     try {
         // Önce mevcut analizi kontrol et
         try {
-            const existing = await axios.get<GeminiAnalysis>(
-                `${BACKEND_API_BASE}/surveys/results/${surveyResultId}/analysis`
+            const existing = await axiosInstance.get<GeminiAnalysis>(
+                `/api/surveys/results/${surveyResultId}/analysis`
             );
             if (existing.data) return existing.data;
         } catch {
@@ -224,8 +223,8 @@ const analyzeSurveyWithAI = async (
         // Backend API hatası durumunda retry mekanizması
         const saveWithRetry = async (retryCount = 0): Promise<GeminiAnalysis> => {
             try {
-                const saved = await axios.post<GeminiAnalysis>(
-                    `${BACKEND_API_BASE}/surveys/${surveyResultId}/results/${surveyResultId}/analysis`,
+                const saved = await axiosInstance.post<GeminiAnalysis>(
+                    `/api/surveys/${surveyResultId}/results/${surveyResultId}/analysis`,
                     analysisData
                 );
                 return saved.data;
@@ -264,8 +263,8 @@ const GeminiAnalysisSection: React.FC<GeminiAnalysisSectionProps> = ({
     useEffect(() => {
         const fetchExistingAnalysis = async () => {
             try {
-                const response = await axios.get<GeminiAnalysis>(
-                    `${BACKEND_API_BASE}/surveys/results/${surveyResultId}/analysis`
+                const response = await axiosInstance.get<GeminiAnalysis>(
+                    `/api/surveys/results/${surveyResultId}/analysis`
                 );
                 if (response.data) setAnalysis(response.data);
             } catch {

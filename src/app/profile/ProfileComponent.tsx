@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import Cropper from 'react-easy-crop';
+import axiosInstance from "@/utils/axiosInstance";
 
 // Type Definitions
 interface Point {
@@ -104,8 +105,7 @@ const ProfilePageComponent: React.FC = () => {
     useEffect(() => {
         const fetchCompanies = async () => {
             try {
-                const response = await axios.get('http://localhost:8081/api/companies');
-                setCompanies(response.data);
+                const response = await axiosInstance.get('/api/companies');setCompanies(response.data);
             } catch (error) {
                 console.error('Error fetching companies:', error);
                 setMessage({ type: 'error', text: 'Failed to load companies' });
@@ -270,8 +270,8 @@ const ProfilePageComponent: React.FC = () => {
         formData.append("userId", user.id.toString());
 
         try {
-            const response = await axios.post(
-                "http://localhost:8081/api/users/upload",
+            const response = await axiosInstance.post(
+                "/api/users/upload",
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
@@ -299,8 +299,7 @@ const ProfilePageComponent: React.FC = () => {
         if (!user?.id) return;
 
         try {
-            const response = await axios.put(`http://localhost:8081/api/users/${user.id}`, formData);
-            if (response.status === 200) {
+            const response = await axiosInstance.put(`/api/users/${user.id}`, formData);if (response.status === 200) {
                 await updateUserData(user.id);
                 setIsEditing(false);
                 setMessage({ type: 'success', text: 'Profile updated successfully' });
@@ -320,7 +319,7 @@ const ProfilePageComponent: React.FC = () => {
         }
 
         try {
-            const response = await axios.put(`http://localhost:8081/api/users/${user.id}/password`, {
+            const response = await axiosInstance.put(`/api/users/${user.id}/password`, {
                 currentPassword: passwordData.currentPassword,
                 newPassword: passwordData.newPassword
             });

@@ -1,7 +1,8 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+
+import axiosInstance from "@/utils/axiosInstance";
 import {
     Paper,
     Table,
@@ -73,7 +74,7 @@ const CompanyComponent: React.FC = () => {
     const fetchCompanies = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:8081/api/companies');
+            const response = await axiosInstance.get('/api/companies');
             const sortedData = response.data.sort((a: Company, b: Company) => a.id - b.id);
             setCompanies(sortedData);
             setFilteredCompanies(sortedData);
@@ -107,7 +108,7 @@ const CompanyComponent: React.FC = () => {
 
         try {
             setIsProcessing(true);
-            await axios.put(`http://localhost:8081/api/companies/${selectedCompany.id}`, editFormData);
+            await axiosInstance.put(`/api/companies/${selectedCompany.id}`, editFormData);
 
             fetchCompanies(); // Refresh the list
             setEditDialogOpen(false);
@@ -124,7 +125,7 @@ const CompanyComponent: React.FC = () => {
 
         try {
             setIsProcessing(true);
-            await axios.delete(`http://localhost:8081/api/companies/${selectedCompany.id}`);
+            await axiosInstance.delete(`/api/companies/${selectedCompany.id}`);
 
             fetchCompanies(); // Refresh the list
             setDeleteDialogOpen(false);

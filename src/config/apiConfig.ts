@@ -1,9 +1,9 @@
-//apiConfig.ts dosyası
+// apiConfig.ts dosyası
+// baseURL zaten axiosInstance'da tanımlandığından yolları göreceli hale getiriyoruz
 const API_URLS = {
-    skills: 'http://localhost:8081/api/skills',
-    industries: 'http://localhost:8081/api/industries',
-    professions: 'http://localhost:8081/api/professions',
-    // Diğer API URL'lerinizi buraya ekleyebilirsiniz
+    skills: '/api/skills',
+    industries: '/api/industries',
+    professions: '/api/professions',
 };
 
 export default API_URLS;

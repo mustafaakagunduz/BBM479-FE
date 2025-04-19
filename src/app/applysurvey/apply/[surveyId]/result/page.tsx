@@ -11,7 +11,7 @@ import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
 import { GeminiAnalysisSection } from './geminiAiTextCreate';
 import CareerRoadmap from './CareerRoadmap'; // Yeni bileşeni import ediyoruz
 import { useAuth } from '@/app/context/AuthContext';
-import {srcEmptySsgManifest} from "next/dist/build/webpack/plugins/build-manifest-plugin";
+import axiosInstance from "@/utils/axiosInstance";
 
 
 interface ProfessionMatch {
@@ -49,9 +49,8 @@ export default function SurveyResultPage({ params }: PageProps) {
         if (!user) return;
 
         try {
-            const API_BASE = 'http://localhost:8081/api/surveys';
-            const response = await axios.get(
-                `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/all`
+            const response = await axiosInstance.get(
+                `/api/surveys/${resolvedParams.surveyId}/results/${user.id}/all`
             );
 
             if (response.data) {
@@ -75,8 +74,8 @@ export default function SurveyResultPage({ params }: PageProps) {
 
             const waitForResult = async (retryCount = 0): Promise<SurveyResult> => {
                 try {
-                    const response = await axios.get<SurveyResult>(
-                        `${API_BASE}/${resolvedParams.surveyId}/results/${user.id}/latest`
+                    const response = await axiosInstance.get<SurveyResult>(
+                        `/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
                     );
 
                     if (response.data) {
@@ -84,7 +83,7 @@ export default function SurveyResultPage({ params }: PageProps) {
                     }
                     throw new Error('No result data found');
                 } catch (error) {
-                    if (retryCount < 5 && axios.isAxiosError(error)) {
+                    if (retryCount < 5 && axios.isAxiosError(error)) { // Bu satır axios.isAxiosError için kalmalı
                         // 404 veya diğer hatalar için tekrar dene
                         const delay = Math.pow(2, retryCount) * 1000;
                         await new Promise(resolve => setTimeout(resolve, delay));

@@ -3,12 +3,13 @@ import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2, Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
 import { PasswordValidation, validatePassword } from "@/app/login/passwordValidation";
 import LoginButton from "@/app/login/LoginButton";
 import { useSearchParams } from 'next/navigation';
+import axiosInstance from "@/utils/axiosInstance";
+import axios from "axios";
 
 interface Company {
   id: number;
@@ -64,7 +65,7 @@ const LoginSignUp = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get('http://localhost:8081/api/companies');
+        const response = await axiosInstance.get('/api/companies');
         // Parse response data and get only the fields we need
         const companiesData = response.data.map((company: any) => ({
           id: company.id,
@@ -126,7 +127,7 @@ const LoginSignUp = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/register', {
+      const response = await axiosInstance.post('/api/auth/register', {
         firstName,
         lastName,
         email,
@@ -180,7 +181,7 @@ const LoginSignUp = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:8081/api/auth/forgot-password', {
+      const response = await axiosInstance.post('/api/auth/forgot-password', {
         email: resetEmail
       });
 

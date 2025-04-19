@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/ca
 import { Button } from '@/app/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-
+import axiosInstance from "@/utils/axiosInstance";
 interface SurveyDetailProps {
     surveyId: number;
 }
@@ -23,8 +23,7 @@ export function SurveyDetail({ surveyId }: SurveyDetailProps) {
 
     const fetchSurveyDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:8081/api/surveys/${surveyId}`);
-            setSurvey(response.data);
+            const response = await axiosInstance.get(`/api/surveys/${surveyId}`);            setSurvey(response.data);
         } catch (error) {
             console.error('Error fetching survey details:', error);
         } finally {

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Card, CardContent, Typography } from '@mui/material';
 
+import axiosInstance from "@/utils/axiosInstance";
+
 interface CompanyDescriptionCardProps {
     companyId: string;
 }
@@ -15,8 +17,7 @@ const CompanyDescriptionCard: React.FC<CompanyDescriptionCardProps> = ({ company
         const fetchCompanyDescription = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:8081/api/companies/${companyId}`);
-                setDescription(response.data.description || 'No description available');
+                const response = await axiosInstance.get(`/api/companies/${companyId}`);setDescription(response.data.description || 'No description available');
             } catch (error) {
                 console.error('Error fetching company description:', error);
                 setError('Failed to load company description');

@@ -13,6 +13,7 @@ import {
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { ChevronDown } from 'lucide-react';
+import axiosInstance from "@/utils/axiosInstance";
 
 ChartJS.register(
     CategoryScale,
@@ -64,29 +65,26 @@ function CompanyBasedEvaluationsComponent() {
     const [skillDetails, setSkillDetails] = useState<SkillDetail[]>([]);
 
     useEffect(() => {
-        axios.get('http://localhost:8081/api/companies')
-            .then(response => setCompanies(response.data))
+        axiosInstance.get('/api/companies').then(response => setCompanies(response.data))
             .catch(error => console.error('Error fetching companies:', error));
     }, []);
 
     useEffect(() => {
-        axios.get('http://localhost:8081/api/surveys')
-            .then(response => setSurveys(response.data))
+        axiosInstance.get('/api/surveys').then(response => setSurveys(response.data))
             .catch(error => console.error('Error fetching surveys:', error));
     }, []);
 
     useEffect(() => {
         if (selectedCompany && selectedSurvey) {
-            axios.get(`http://localhost:8081/api/analysis/company/${selectedCompany}/survey/${selectedSurvey}/skills`)
-                .then(response => setAnalysisData(response.data))
+            axiosInstance.get(`/api/analysis/company/${selectedCompany}/survey/${selectedSurvey}/skills`).then(response => setAnalysisData(response.data))
                 .catch(error => console.error('Error fetching analysis:', error));
         }
     }, [selectedCompany, selectedSurvey]);
 
     const fetchSkillDetails = async (skillName: string) => {
         try {
-            const response = await axios.get(
-                `http://localhost:8081/api/analysis/company/${selectedCompany}/survey/${selectedSurvey}/skill/${skillName}/details`
+            const response = await axiosInstance.get(
+                `/api/analysis/company/${selectedCompany}/survey/${selectedSurvey}/skill/${skillName}/details`
             );
             setSkillDetails(response.data);
         } catch (error) {

@@ -8,6 +8,7 @@ import { Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import LoginButton from "@/app/login/LoginButton";
 import { useRouter } from 'next/navigation';
 import { validatePassword } from "@/app/login/passwordValidation";
+import axiosInstance from "@/utils/axiosInstance";
 
 const ResetPassword = () => {
   const [mounted, setMounted] = useState(false);
@@ -43,9 +44,9 @@ const ResetPassword = () => {
         throw new Error("Passwords don't match!");
       }
 
-      const response = await axios.post(
-        `http://localhost:8081/api/auth/reset-password/${token}`,
-        { password }
+      const response = await axiosInstance.post(
+          `/api/auth/reset-password/${token}`,
+          { password }
       );
 
       if (response.data.success) {

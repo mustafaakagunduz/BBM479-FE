@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { ArrowLeft, ArrowRight, Trash2 } from 'lucide-react';
+import axiosInstance from "@/utils/axiosInstance";
 
 interface ProfessionMatch {
     id: number;
@@ -68,10 +69,10 @@ const UserResultComponent: React.FC<UserResultComponentProps> = ({ companyId, us
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const userResponse = await axios.get(`http://localhost:8081/api/users/${userId}`);
+                const userResponse = await axiosInstance.get(`/api/users/${userId}`);
                 setUsername(userResponse.data.name);
 
-                const resultsResponse = await axios.get(`http://localhost:8081/api/surveys/results/user/${userId}`);
+                const resultsResponse = await axiosInstance.get(`/api/surveys/results/user/${userId}`);
                 setResults(resultsResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -87,7 +88,7 @@ const UserResultComponent: React.FC<UserResultComponentProps> = ({ companyId, us
         e.stopPropagation();
         if (window.confirm('Are you sure you want to delete this result?')) {
             try {
-                await axios.delete(`http://localhost:8081/api/surveys/results/${resultId}`);
+                await axiosInstance.delete(`/api/surveys/results/${resultId}`);
                 setResults(prevResults => prevResults.filter(result => result.id !== resultId));
             } catch (error) {
                 console.error('Error deleting result:', error);

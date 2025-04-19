@@ -17,6 +17,7 @@ import {
     CardContent
 } from '@mui/material';
 import { toast, Toaster } from 'react-hot-toast';
+import axiosInstance from "@/utils/axiosInstance";
 
 interface User {
     id: number;
@@ -36,10 +37,8 @@ const AuthorizationSystem = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch('http://localhost:8081/api/users');
-            if (!response.ok) throw new Error('Failed to fetch users');
-            const data = await response.json();
-            setUsers(data);
+            const response = await axiosInstance.get('/api/users');
+            setUsers(response.data);
         } catch (error) {
             console.error('Error details:', error);
             toast.error('Failed to load users', {
@@ -58,17 +57,9 @@ const AuthorizationSystem = () => {
 
     const handleRoleChange = async (userId: number, newRole: string) => {
         try {
-            const response = await fetch(`http://localhost:8081/api/users/${userId}/role`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    roleName: newRole
-                })
+            await axiosInstance.put(`/api/users/${userId}/role`, {
+                roleName: newRole
             });
-
-            if (!response.ok) throw new Error('Failed to update role');
 
             await fetchUsers();
             toast.success('User role updated successfully', {

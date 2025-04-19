@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 import { useAuth } from "@/app/context/AuthContext";
+import axiosInstance from "@/utils/axiosInstance";
 
 interface PageProps {
     params: Promise<{ resultId: string }>;
@@ -22,8 +22,7 @@ export default function ResultDetailsRedirect({ params }: PageProps) {
 
             try {
                 setLoading(true);
-                const API_BASE = 'http://localhost:8081/api/surveys';
-                const allResultsResponse = await axios.get(`${API_BASE}/results/user/${user.id}`);
+                const allResultsResponse = await axiosInstance.get(`/api/surveys/results/user/${user.id}`);
 
                 if (allResultsResponse.data) {
                     const targetResult = allResultsResponse.data.find(

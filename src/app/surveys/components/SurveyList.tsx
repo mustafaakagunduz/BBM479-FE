@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
     import { SurveyCard } from './SurveyCard';
     import { toast } from 'react-hot-toast';
     import { FilePlus, Loader2, FileText } from "lucide-react";
+import axiosInstance from "@/utils/axiosInstance";
     import {
       AlertDialog,
       AlertDialogAction,
@@ -67,7 +68,7 @@ import { useEffect, useState, useCallback } from 'react';
         try {
           setIsLoading(true);
           setError(null);
-          const response = await axios.get<Survey[]>('http://localhost:8081/api/surveys');
+            const response = await axiosInstance.get<Survey[]>('/api/surveys');
           setSurveys(response.data);
         } catch (err) {
           const error = err as AxiosError<ApiError>;
@@ -94,7 +95,7 @@ import { useEffect, useState, useCallback } from 'react';
 
         try {
           setIsProcessing(true);
-          await axios.delete(`http://localhost:8081/api/surveys/${surveyToDelete}`);
+            await axiosInstance.delete(`/api/surveys/${surveyToDelete}`);
           setSurveys(surveys.filter(survey => survey.id !== surveyToDelete));
           setSurveyToDelete(null);
           toast.success("Survey deleted successfully");

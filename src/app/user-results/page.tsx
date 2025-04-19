@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     Paper,
     Table,
@@ -56,7 +56,7 @@ const UserResults = () => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8081/api/users');
+                const response = await axiosInstance.get('/api/users');
                 const filteredUsers = response.data.filter((user: User) => user.role === 'USER');
                 setUsers(filteredUsers);
             } catch (error) {

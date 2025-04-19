@@ -13,6 +13,7 @@ import {
 import axios from 'axios';
 import { ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import axiosInstance from "@/utils/axiosInstance";
 
 ChartJS.register(
     CategoryScale,
@@ -59,23 +60,22 @@ function CompanySurveyChart({ companyId }: CompanySurveyChartProps) {
     const [skillDetails, setSkillDetails] = useState<SkillDetail[]>([]);
 
     useEffect(() => {
-        axios.get('http://localhost:8081/api/surveys')
+        axiosInstance.get('/api/surveys')
             .then(response => setSurveys(response.data))
             .catch(error => console.error('Error fetching surveys:', error));
     }, [companyId]);
 
     useEffect(() => {
         if (selectedSurvey) {
-            axios.get(`http://localhost:8081/api/analysis/company/${companyId}/survey/${selectedSurvey}/skills`)
-                .then(response => setAnalysisData(response.data))
+            axiosInstance.get(`/api/analysis/company/${companyId}/survey/${selectedSurvey}/skills`)  .then(response => setAnalysisData(response.data))
                 .catch(error => console.error('Error fetching analysis:', error));
         }
     }, [companyId, selectedSurvey]);
 
     const fetchSkillDetails = async (skillName: string) => {
         try {
-            const response = await axios.get(
-                `http://localhost:8081/api/analysis/company/${companyId}/survey/${selectedSurvey}/skill/${skillName}/details`
+            const response = await axiosInstance.get(
+                `/api/analysis/company/${companyId}/survey/${selectedSurvey}/skill/${skillName}/details`
             );
             setSkillDetails(response.data);
         } catch (error) {

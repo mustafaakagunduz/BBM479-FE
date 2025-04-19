@@ -3,17 +3,14 @@
 import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserRole } from '../types/auth';
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
+import axios, { AxiosError } from 'axios'; // isAxiosError için axios'u import ediyoruz
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
 }
-
-
-
-
 
 interface AuthResponse {
   success: boolean;
@@ -29,7 +26,7 @@ interface AuthResponse {
       name: UserRole;
     };
     profileImage?: string;
-    emailVerified?: boolean; // Add this line
+    emailVerified?: boolean;
   };
 }
 
@@ -44,8 +41,6 @@ interface AuthContextType extends AuthState {
   setLoading: (loading: boolean) => void;
   updateUserData: (userId: number) => Promise<void>;
 }
-
-
 
 type AuthAction =
     | { type: 'LOGIN_SUCCESS'; payload: User }
@@ -107,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserData = async (userId: number) => {
     try {
-      const response = await fetch(`http://localhost:8081/api/users/${userId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081'}/api/users/${userId}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -126,48 +121,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error updating user data:', error);
     }
   };
- // Doğrulama durumunu takip eden state ekle
-const [isVerified, setIsVerified] = useState(false);
 
-const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
-  try {
-    const response = await axios.post<AuthResponse>('http://localhost:8081/api/auth/login', {
-      email,
-      password
-    });
+  // Doğrulama durumunu takip eden state ekle
+  const [isVerified, setIsVerified] = useState(false);
 
-    if (response.data.success && response.data.user) {
-      // Explicitly check email verification
-      if (!response.data.user.emailVerified) {
-        throw new Error('Please verify your email before logging in');
+  const login = async (email: string, password: string): Promise<LoginResult | undefined> => {
+    try {
+      const response = await axiosInstance.post<AuthResponse>('/api/auth/login', {
+        email,
+        password
+      });
+
+      if (response.data.success && response.data.user) {
+        // Explicitly check email verification
+        if (!response.data.user.emailVerified) {
+          throw new Error('Please verify your email before logging in');
+        }
+
+        const userResponse = await axiosInstance.get<User>(`/api/users/${response.data.user.id}`);
+        const userData = userResponse.data;
+
+        const user: User = {
+          ...response.data.user,
+          profileImage: userData.profileImage
+        };
+
+        localStorage.setItem('auth', JSON.stringify({ user }));
+        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+
+        return { success: true, user };
       }
-
-      const userResponse = await axios.get<User>(`http://localhost:8081/api/users/${response.data.user.id}`);
-      const userData = userResponse.data;
-
-      const user: User = {
-        ...response.data.user,
-        profileImage: userData.profileImage
-      };
-
-      localStorage.setItem('auth', JSON.stringify({ user }));
-      dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-
-      return { success: true, user };
-    }
-    return undefined;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = error.response?.data?.message || 'Invalid credentials';
-      // More meaningful error messages
-      if (errorMessage.includes('verify')) {
-        throw new Error('Please check your email and verify your account');
+      return undefined;
+    } catch (error) {
+      if (axios.isAxiosError(error)) { // axios.isAxiosError kullanıyoruz, axiosInstance değil
+        const errorMessage = error.response?.data?.message || 'Invalid credentials';
+        // More meaningful error messages
+        if (errorMessage.includes('verify')) {
+          throw new Error('Please check your email and verify your account');
+        }
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
+      throw new Error('An unexpected error occurred');
     }
-    throw new Error('An unexpected error occurred');
-  }
-};  
+  };
+
   const logout = () => {
     localStorage.removeItem('auth');
     dispatch({ type: 'LOGOUT' });

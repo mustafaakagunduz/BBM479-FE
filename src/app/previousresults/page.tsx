@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ClipboardCheck } from 'lucide-react';
-import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import { useAuth } from "@/app/context/AuthContext";
 import {
     List,
@@ -83,14 +83,14 @@ const PreviousResults: React.FC = () => {
 
         try {
             setLoading(true);
-            const API_BASE = 'http://localhost:8081/api/surveys';
-            const response = await axios.get(`${API_BASE}/results/user/${user.id}`);
+
+            const response = await axiosInstance.get(`/api/surveys/results/user/${user.id}`);
 
             if (response.data) {
                 const resultsWithSurveyTitles = await Promise.all(
                     response.data.map(async (result: SurveyResult) => {
                         try {
-                            const surveyResponse = await axios.get(`${API_BASE}/${result.surveyId}`);
+                            const surveyResponse = await axiosInstance.get(`/api/surveys/${result.surveyId}`);
                             return {
                                 ...result,
                                 surveyTitle: surveyResponse.data.title
@@ -120,8 +120,8 @@ const PreviousResults: React.FC = () => {
     const handleDelete = async (resultId: number) => {
         if (window.confirm('Are you sure you want to delete this result?')) {
             try {
-                const API_BASE = 'http://localhost:8081/api/surveys';
-                await axios.delete(`${API_BASE}/results/${resultId}`);
+
+                await axiosInstance.delete(`/api/surveys/results/${resultId}`);
                 setResults(prevResults => prevResults.filter(result => result.id !== resultId));
             } catch (error) {
                 console.error('Error deleting result:', error);

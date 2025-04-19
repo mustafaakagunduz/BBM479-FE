@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { Card } from '@/app/components/ui/card';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     Accordion,
     AccordionContent,
@@ -19,7 +20,7 @@ const CompanyAdder = () => {
         if (newCompany.name.trim()) {
             try {
                 setIsProcessing(true);
-                const response = await axios.post('http://localhost:8081/api/companies', newCompany);
+                const response = await axiosInstance.post('/api/companies', newCompany);
                 setNewCompany({ name: '', description: '' });
 
                 toast.success('Company added successfully', {

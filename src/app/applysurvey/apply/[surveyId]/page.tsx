@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
+import axiosInstance from "@/utils/axiosInstance";
 import {
     AlertDialog,
     AlertDialogContent,
@@ -55,16 +56,16 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                 setLoading(true);
 
                 // Önce survey detaylarını al
-                const surveyResponse = await axios.get(
-                    `http://localhost:8081/api/surveys/${resolvedParams.surveyId}`,
+                const surveyResponse = await axiosInstance.get(
+                    `/api/surveys/${resolvedParams.surveyId}`,
                     { signal: controller.signal }
                 );
 
                 // Survey datası varsa, sadece bu anket için completion kontrolü yap
                 if (surveyResponse.data && user) {
                     try {
-                        const completionResponse = await axios.get(
-                            `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
+                        const completionResponse = await axiosInstance.get(
+                            `/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
                         );
 
                         // Eğer bu spesifik anket için sonuç varsa
@@ -138,8 +139,8 @@ const ApplySurveyPage = ({ params }: PageProps) => {
             };
 
             // Cevapları kaydet
-            const responseResult = await axios.post(
-                'http://localhost:8081/api/responses',
+            const responseResult = await axiosInstance.post(
+                '/api/responses',
                 surveyResponse,
                 {
                     headers: {
@@ -153,14 +154,14 @@ const ApplySurveyPage = ({ params }: PageProps) => {
                 // Sonuçları hesapla ve bekle
                 const waitForResults = async (retryCount = 0): Promise<void> => {
                     try {
-                        const calculationResult = await axios.post(
-                            `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/calculate`
+                        const calculationResult = await axiosInstance.post(
+                            `/api/surveys/${resolvedParams.surveyId}/results/${user.id}/calculate`
                         );
 
                         if (calculationResult.status === 200) {
                             // Sonuçların hazır olduğundan emin olmak için get isteği yap
-                            const verifyResult = await axios.get(
-                                `http://localhost:8081/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
+                            const verifyResult = await axiosInstance.get(
+                                `/api/surveys/${resolvedParams.surveyId}/results/${user.id}/latest`
                             );
 
                             if (verifyResult.data) {
