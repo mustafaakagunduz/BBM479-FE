@@ -233,7 +233,7 @@ import { useEffect, useState, useCallback } from 'react';
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <CreateSurveyCard />
-              <LoadSurveyQuestionsCard />
+                {/* <LoadSurveyQuestionsCard /> */}
               {surveys.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg col-span-full md:col-span-1">
                     <p className="text-gray-600">No surveys available</p>

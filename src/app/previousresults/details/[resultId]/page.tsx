@@ -3,42 +3,21 @@
 import React, { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import SurveySpiderChart from "@/app/components/charts/SurveySpiderChart";
-import Navbar from "@/app/components/navbar/Navbar";
-import {useAuth} from "@/app/context/AuthContext";
-
-interface ProfessionMatch {
-    id: number;
-    professionId: number;
-    professionName: string;
-    matchPercentage: number;
-}
-
-interface SurveyResult {
-    id: number;
-    userId: number;
-    surveyId: number;
-    attemptNumber: number;
-    professionMatches: ProfessionMatch[];
-    createdAt: string;
-}
+import { useAuth } from "@/app/context/AuthContext";
 
 interface PageProps {
     params: Promise<{ resultId: string }>;
 }
 
-export default function ResultDetails({ params }: PageProps) {
-    const resolvedParams = use(params); // params'ı çözümlüyoruz
+export default function ResultDetailsRedirect({ params }: PageProps) {
+    const resolvedParams = use(params);
     const router = useRouter();
-    const [result, setResult] = useState<SurveyResult | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { user } = useAuth();
+
     useEffect(() => {
-        const fetchResult = async () => {
+        const redirectToSurveyResult = async () => {
             if (!user) return;
 
             try {
@@ -48,104 +27,56 @@ export default function ResultDetails({ params }: PageProps) {
 
                 if (allResultsResponse.data) {
                     const targetResult = allResultsResponse.data.find(
-                        (r: SurveyResult) => r.id === parseInt(resolvedParams.resultId)
+                        (r: any) => r.id === parseInt(resolvedParams.resultId)
                     );
 
                     if (targetResult) {
-                        setResult(targetResult);
+                        // İlgili surveyId'yi alıp doğru URL'ye yönlendirme yapıyoruz
+                        router.replace(`/applysurvey/apply/${targetResult.surveyId}/result`);
                     } else {
                         setError('Result not found');
+                        setLoading(false);
                     }
                 }
             } catch (err) {
                 console.error('Error fetching result:', err);
                 setError('Failed to fetch result details');
-            } finally {
                 setLoading(false);
             }
         };
 
-        fetchResult();
-    }, [resolvedParams.resultId, user]);
+        redirectToSurveyResult();
+    }, [resolvedParams.resultId, user, router]);
 
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-
-                <Navbar></Navbar>
-
                 <div className="container mx-auto p-6">
                     <div className="flex justify-center items-center h-64">
-                        <div className="text-lg">Loading result details...</div>
+                        <div className="text-lg">Redirecting...</div>
                     </div>
                 </div>
             </div>
         );
     }
 
-    if (error || !result) {
+    if (error) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-
                 <div className="container mx-auto p-6">
-                    <Card className="bg-red-50">
-                        <CardContent className="p-6">
-                            <div className="text-red-600">{error || 'Result not found'}</div>
-                            <Button
-                                onClick={() => router.push('/previousresults')}
-                                className="mt-4"
-                            >
-                                Return to Previous Results
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <div className="bg-red-50 p-6 rounded-lg shadow">
+                        <div className="text-red-600">{error || 'Result not found'}</div>
+                        <button
+                            onClick={() => router.push('/previousresults')}
+                            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                        >
+                            Return to Previous Results
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-
-            <div className="container mx-auto p-6 space-y-6">
-                <Button
-                    variant="ghost"
-                    onClick={() => router.push('/previousresults')}
-                    className="flex items-center gap-2"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to Results
-                </Button>
-
-                <Card>
-                    <CardHeader>
-                        <div className="flex justify-between items-center">
-                            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                                Your Professional Match Results
-                            </CardTitle>
-                        </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-
-                            {/* <div>Result ID: #{result.id}</div> */}
-                            <div>Completed on: {new Date(result.createdAt).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: false
-                            })}</div>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        {result.professionMatches && result.professionMatches.length > 0 && (
-                            <div className="h-[500px] w-full flex items-center justify-center">
-                                <SurveySpiderChart professionMatches={result.professionMatches} />
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    );
+    return null;
 }

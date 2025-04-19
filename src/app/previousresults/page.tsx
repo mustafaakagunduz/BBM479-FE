@@ -129,6 +129,12 @@ const PreviousResults: React.FC = () => {
         }
     };
 
+    // Değiştirilen fonksiyon: resultId yerine surveyId'yi kullanarak doğrudan
+    // applysurvey/apply/[surveyId]/result sayfasına yönlendiriyoruz
+    const handleViewDetails = (result: SurveyResult) => {
+        router.push(`/applysurvey/apply/${result.surveyId}/result`);
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
@@ -192,7 +198,7 @@ const PreviousResults: React.FC = () => {
                                                         backgroundColor: '#7928ca'
                                                     }
                                                 }}
-                                                onClick={() => router.push(`/previousresults/details/${result.id}`)}
+                                                onClick={() => handleViewDetails(result)}
                                             >
                                                 View Details
                                             </Button>

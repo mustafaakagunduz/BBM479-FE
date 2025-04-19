@@ -2,11 +2,11 @@
 import React, { useState, FormEvent, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2, Eye, EyeOff  } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, User, Building, Search, Loader2, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/app/context/AuthContext';
-import {PasswordValidation, validatePassword} from "@/app/login/passwordValidation";
+import { PasswordValidation, validatePassword } from "@/app/login/passwordValidation";
 import LoginButton from "@/app/login/LoginButton";
 import { useSearchParams } from 'next/navigation';
 
@@ -29,7 +29,7 @@ interface LoginResult {
 
 const LoginSignUp = () => {
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]); // Boş dizi ile başlat
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -42,7 +42,7 @@ const LoginSignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+
   // Sign Up states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -65,7 +65,7 @@ const LoginSignUp = () => {
     const fetchCompanies = async () => {
       try {
         const response = await axios.get('http://localhost:8081/api/companies');
-        // Response data'yı parse edip sadece ihtiyacımız olan alanları alalım
+        // Parse response data and get only the fields we need
         const companiesData = response.data.map((company: any) => ({
           id: company.id,
           name: company.name
@@ -83,19 +83,7 @@ const LoginSignUp = () => {
   useEffect(() => {
     setPasswordValidation(validatePassword(password));
   }, [password]);
-  useEffect(() => {
-    const verifyEmail = async () => {
-      try {
-        await axios.get(`http://localhost:8081/api/auth/verify/${token}`);        router.push('/login?verified=true');
-      } catch (error) {
-        router.push('/login?error=verification-failed');
-      }
-    };
-  
-    if (token) {
-      verifyEmail();
-    }
-  }, [token]);
+
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -112,27 +100,8 @@ const LoginSignUp = () => {
         setError('Login failed');
       }
     } catch (error) {
-      if (error instanceof Error) {
-        const errorMessage = error.message.toLowerCase();
-
-        if (errorMessage.includes('verify your email')) {
-          setError('Please verify your email address before logging in.');
-          setSuccess('Check your email for the verification link.');
-        } else if (
-            errorMessage.includes('user not found') ||
-            errorMessage.includes('invalid credentials') ||
-            errorMessage.includes('invalid password') ||
-            errorMessage.includes('bad credentials')
-        ) {
-          setError('Invalid email or password');
-        } else if (errorMessage.includes('email') || errorMessage.includes('password')) {
-          setError('Invalid email or password');
-        } else {
-          setError('Invalid email or password');
-        }
-      } else {
-        setError('Invalid email or password');
-      }
+      // Simplified error handling - no email verification check
+      setError('Invalid email or password');
     } finally {
       setIsLoading(false);
     }
@@ -166,19 +135,32 @@ const LoginSignUp = () => {
       });
 
       if (response.data.success) {
-        setSuccess('Registration successful! We have sent a verification link to your email. Please check your inbox and spam folder.');
-        // Reset form
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
-        setSelectedCompany(null);
+        setSuccess('Registration successful! You can now log in.');
 
+        // Option 1: Auto-login after registration
+        try {
+          const loginResult = await login(email, password);
+          if (loginResult && loginResult.success && loginResult.user) {
+            const destination = loginResult.user.role.name === 'ADMIN' ? '/homepageadmin' : '/homepageuser';
+            router.push(destination);
+            return; // Stop execution after router push
+          }
+        } catch (loginError) {
+          console.error('Auto login failed:', loginError);
+          // If auto-login fails, redirect to login screen
+        }
 
+        // Option 2: Return to login form if auto-login fails
         setTimeout(() => {
           setIsLogin(true);
-        }, 5000);
+          // Reset form
+          setFirstName('');
+          setLastName('');
+          setEmail('');
+          setPassword('');
+          setConfirmPassword('');
+          setSelectedCompany(null);
+        }, 2000);
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -196,12 +178,12 @@ const LoginSignUp = () => {
     setIsLoading(true);
     setError('');
     setSuccess('');
-  
+
     try {
       const response = await axios.post('http://localhost:8081/api/auth/forgot-password', {
         email: resetEmail
       });
-  
+
       if (response.data.success) {
         setResetEmailSent(true);
         setSuccess('Password reset link has been sent to your email. Please check your inbox.');
@@ -218,8 +200,9 @@ const LoginSignUp = () => {
       }
     } finally {
       setIsLoading(false);
-    } 
+    }
   };
+
   return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm">
